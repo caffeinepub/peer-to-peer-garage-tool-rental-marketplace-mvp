@@ -1,0 +1,4 @@
+{
+  "frontend/src/pages/ListingFormPage.tsx": "Form page for creating and editing tool listings with fields for title, category, description, condition, pricing, location, photos, and availability. Fixed React Hooks rules violation by calling useParams unconditionally at the top level.",
+  "frontend/src/pages/RentalDetailPage.tsx": "Displays detailed information about a rental request including tool details, rental period, cost summary, and status-specific actions for owners and renters. Fixed TypeScript error by ensuring isOwner and isRenter are always boolean values using double negation."
+}

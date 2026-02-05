@@ -1,0 +1,252 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "ToolShare — Peer-to-peer garage tool rental marketplace (frontend)",
+  "requirements": [
+    {
+      "id": "REQ-9",
+      "summary": "Add Internet Identity sign-in UI plus a minimal user profile create/read/update flow for the signed-in principal.",
+      "acceptanceCriteria": [
+        "User can sign in and sign out using Internet Identity",
+        "After sign-in, user can set and later edit a profile display name and optional contact note",
+        "Profile data is stored server-side and is retrievable on subsequent sessions for the same principal"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "create",
+          "description": "Create the app shell and route layout that includes authentication-aware navigation (sign-in/sign-out) and a profile entry point for the signed-in user."
+        },
+        {
+          "path": "frontend/src/components/auth/LoginButton.tsx",
+          "operation": "create",
+          "description": "Implement a Login/Logout button using the Internet Identity hook and clear React Query cache on logout. Use the selected authorization component patterns for login/logout behavior; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/auth/RequireAuth.tsx",
+          "operation": "create",
+          "description": "Add an auth gate wrapper that blocks tool/profile/rental data views until authenticated and provides an access-denied/sign-in prompt. Use the selected authorization component guidance for authenticated-only data access; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/hooks/useCurrentUserProfile.ts",
+          "operation": "create",
+          "description": "Add React Query hooks to call backend getCallerUserProfile and createOrUpdateProfile/saveCallerUserProfile, including the 'prevent profile setup modal flash' loading semantics described by the selected authorization component; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/profile/ProfileSetupDialog.tsx",
+          "operation": "create",
+          "description": "Create a modal/dialog that prompts first-time signed-in users to set display name and optional contact note, and allows later edits. Use shadcn-ui Dialog/Form primitives by composition (do not edit immutable UI sources)."
+        },
+        {
+          "path": "frontend/src/components/profile/ProfileMenu.tsx",
+          "operation": "create",
+          "description": "Add a small header menu showing the user's display name (not principal) and an option to edit profile. Use the selected authorization component guidance to avoid displaying principal IDs; verify the component's usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "summary": "Implement authenticated tool listing create/edit/delete UI with frontend-managed photos (store only photo references as strings).",
+      "acceptanceCriteria": [
+        "Owner can create a new listing and see it in their 'My Tools' dashboard",
+        "Owner can edit and delete only their own listings",
+        "Listing detail view displays all listing fields including photo references",
+        "Backend stores photo references, not raw image bytes"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/MyToolsPage.tsx",
+          "operation": "create",
+          "description": "Create the 'My Tools' dashboard page showing the signed-in owner's listings with links to view/edit and a way to remove a listing (with confirmation)."
+        },
+        {
+          "path": "frontend/src/pages/ListingFormPage.tsx",
+          "operation": "create",
+          "description": "Create a page used for both adding and editing a tool listing, with fields: title, category, description, condition, daily price, optional security deposit, location text, availability flag, and photos (as references)."
+        },
+        {
+          "path": "frontend/src/components/listings/PhotoReferencesField.tsx",
+          "operation": "create",
+          "description": "Implement a photo reference manager UI that only stores and submits an array of string references/URLs/asset paths (no raw image bytes), supports add/remove/reorder, and provides previews when possible."
+        },
+        {
+          "path": "frontend/src/pages/ListingDetailPage.tsx",
+          "operation": "create",
+          "description": "Create a listing detail view that renders all listing fields, photo reference previews, and owner-only actions (edit/remove) when the viewer is the owner."
+        },
+        {
+          "path": "frontend/src/hooks/useListings.ts",
+          "operation": "create",
+          "description": "Add React Query hooks for tool listing capabilities used by the UI: getTool, getToolsByOwner, addToolListing, editToolListing (and any listing removal capability if present in the backend interface), with optimistic/invalidating updates where appropriate."
+        },
+        {
+          "path": "frontend/src/components/listings/OwnerActions.tsx",
+          "operation": "create",
+          "description": "Create a small component for owner-only listing actions (edit/remove, availability toggle) that compares the listing owner principal with the authenticated principal. Use the selected authorization component's frontend guidance for principal comparison; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire routes/navigation to 'My Tools', listing create, listing edit, and listing detail pages; ensure these routes are wrapped with RequireAuth so listings management requires login."
+        }
+      ]
+    },
+    {
+      "id": "REQ-13",
+      "summary": "Add marketplace browsing UI for tool listings with search, filters, sorting, and a responsive grid.",
+      "acceptanceCriteria": [
+        "User can browse a listings grid and open a listing detail page",
+        "Search and filters update results correctly",
+        "Sorting changes the displayed order according to the selected option",
+        "The listings grid is usable on mobile and desktop widths"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/BrowseListingsPage.tsx",
+          "operation": "create",
+          "description": "Create the marketplace browsing page with keyword search over title/description, category filter, price range filter, an 'available only' toggle, and sorting (newest, price low-to-high, price high-to-low), rendering results in a responsive grid."
+        },
+        {
+          "path": "frontend/src/components/listings/ListingsGrid.tsx",
+          "operation": "create",
+          "description": "Implement a responsive listings grid component with listing cards that link to the listing detail page; compose shadcn-ui Card/Button components without editing immutable UI sources."
+        },
+        {
+          "path": "frontend/src/components/listings/BrowseFiltersBar.tsx",
+          "operation": "create",
+          "description": "Create a filter/sort controls component for browse (search input, category select, min/max price inputs, availability toggle, sort select) that updates query state."
+        },
+        {
+          "path": "frontend/src/hooks/useToolSearch.ts",
+          "operation": "create",
+          "description": "Add a React Query hook that calls backend searchTools with the required parameters and maps UI state to the backend sortBy string values used by the app."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire a route and nav link for browsing listings, and ensure listing detail navigation is reachable from the browse grid."
+        }
+      ]
+    },
+    {
+      "id": "REQ-14",
+      "summary": "Implement the rental request and booking workflow UI (request date range, approve/decline, status visibility, and status transitions).",
+      "acceptanceCriteria": [
+        "Authenticated renter can submit a rental request with a start and end date for a listing",
+        "Owner can approve or decline incoming requests for their listing",
+        "Approving a request marks it Approved and prevents overlapping approved bookings for that tool/date range",
+        "Renter and owner can view the current status and key details of the request/booking"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/rentals/RentalRequestForm.tsx",
+          "operation": "create",
+          "description": "Add a rental request form (start date, end date) displayed on listing detail pages for non-owners; submit using backend requestRental and show validation/errors."
+        },
+        {
+          "path": "frontend/src/pages/RentalDetailPage.tsx",
+          "operation": "create",
+          "description": "Create a rental request/booking detail page that shows tool reference, date range, current status, and allowed actions based on whether the user is owner or renter (approve/decline/cancel/complete where applicable)."
+        },
+        {
+          "path": "frontend/src/components/rentals/RentalStatusActions.tsx",
+          "operation": "create",
+          "description": "Implement action buttons to update status via backend updateRentalStatus, with UI guards so only involved parties see actions and status transitions presented are consistent with the supported statuses."
+        },
+        {
+          "path": "frontend/src/hooks/useRentals.ts",
+          "operation": "create",
+          "description": "Add React Query hooks for rental data: getRentalsForUser, plus a mutation wrapper for updateRentalStatus and requestRental, including cache invalidation for dashboards and detail views."
+        },
+        {
+          "path": "frontend/src/pages/ListingDetailPage.tsx",
+          "operation": "modify",
+          "description": "Integrate the RentalRequestForm into the listing detail view, gated to authenticated non-owners, and show current availability (via getToolAvailability) to guide renters."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire navigation/route for the rental detail view so dashboard items can link to it."
+        }
+      ]
+    },
+    {
+      "id": "REQ-15",
+      "summary": "Create signed-in user dashboards for 'My Tools', 'Requests' (incoming), and 'My Rentals' (outgoing), with correct deep links.",
+      "acceptanceCriteria": [
+        "Signed-in owners can see their listings in 'My Tools'",
+        "Signed-in owners can see incoming rental requests in 'Requests'",
+        "Signed-in renters can see their submitted requests/bookings in 'My Rentals'",
+        "Each dashboard item links to the correct listing and request/booking details"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/RequestsPage.tsx",
+          "operation": "create",
+          "description": "Create the owner 'Requests' dashboard page listing incoming rental requests for the signed-in user's owned tools, with links to the rental detail view and quick approve/decline entry points."
+        },
+        {
+          "path": "frontend/src/pages/MyRentalsPage.tsx",
+          "operation": "create",
+          "description": "Create the renter 'My Rentals' dashboard page listing the signed-in user's submitted requests/bookings, with links to the rental detail view and the associated tool listing."
+        },
+        {
+          "path": "frontend/src/components/dashboard/DashboardLayout.tsx",
+          "operation": "create",
+          "description": "Add a shared dashboard layout (tabs/side nav) to host My Tools, Requests, and My Rentals while composing shadcn-ui components (Tabs, Card, Badge) without editing immutable UI sources."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire dashboard routes and navigation entries for 'My Tools', 'Requests', and 'My Rentals', and wrap them in RequireAuth."
+        }
+      ]
+    },
+    {
+      "id": "REQ-16",
+      "summary": "Apply a consistent garage/tool marketplace theme (non blue/purple primary) and render generated logo/hero imagery from frontend/public/assets/generated.",
+      "acceptanceCriteria": [
+        "App uses a consistent theme (not blue/purple as the primary palette) across main views (landing, browse, listing detail, dashboards, create/edit listing)",
+        "No edits are made to immutable UI component source paths; components are composed instead",
+        "Logo and hero illustration are present in frontend/public/assets/generated and rendered in the UI"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "create",
+          "description": "Create global styles and theme tokens (CSS variables/Tailwind usage) to establish a coherent tool/garage aesthetic with a non-blue/purple primary palette (e.g., amber/orange/stone) applied consistently across the app."
+        },
+        {
+          "path": "frontend/public/assets/generated/toolshare-logo.dim_512x512.png",
+          "operation": "create",
+          "description": "Add the generated static logo asset file at the required path so the frontend can reference it directly."
+        },
+        {
+          "path": "frontend/public/assets/generated/toolshare-hero.dim_1600x900.png",
+          "operation": "create",
+          "description": "Add the generated static hero illustration asset file at the required path so the frontend can reference it directly."
+        },
+        {
+          "path": "frontend/src/pages/LandingPage.tsx",
+          "operation": "create",
+          "description": "Create a landing section/page that renders the generated imagery from frontend/public/assets/generated/toolshare-logo.dim_512x512.png and frontend/public/assets/generated/toolshare-hero.dim_1600x900.png, and provides clear CTAs to browse listings and sign in."
+        },
+        {
+          "path": "frontend/src/components/layout/AppHeader.tsx",
+          "operation": "create",
+          "description": "Implement a header that includes the brand logo image, primary navigation, and authentication/profile controls by composing shadcn-ui components (no edits to immutable UI sources)."
+        },
+        {
+          "path": "frontend/src/components/layout/AppLayout.tsx",
+          "operation": "create",
+          "description": "Add a reusable layout wrapper that standardizes spacing/typography/background across views and ensures responsive behavior for mobile and desktop."
+        },
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Wire the landing view into the app and ensure the header/layout are applied consistently across landing, browse, listing detail, dashboards, and create/edit listing pages; ensure UI composition uses the existing component library rather than editing immutable UI source paths."
+        }
+      ]
+    }
+  ]
+}

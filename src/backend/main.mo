@@ -1,0 +1,398 @@
+import Map "mo:core/Map";
+import Time "mo:core/Time";
+import List "mo:core/List";
+import Array "mo:core/Array";
+import Text "mo:core/Text";
+import Order "mo:core/Order";
+import Principal "mo:core/Principal";
+import Runtime "mo:core/Runtime";
+import Iter "mo:core/Iter";
+import MixinAuthorization "authorization/MixinAuthorization";
+import AccessControl "authorization/access-control";
+
+actor {
+  // Types
+  public type ToolCondition = {
+    #new;
+    #gentlyUsed;
+    #wellUsed;
+    #needsRepair;
+  };
+
+  public type ToolCategory = {
+    #powerTools;
+    #handTools;
+    #gardenTools;
+    #automotive;
+    #specialty;
+  };
+
+  public type RentalStatus = {
+    #requested;
+    #approved;
+    #declined;
+    #cancelledByOwner;
+    #cancelledByRenter;
+    #completed;
+  };
+
+  public type UserProfile = {
+    id : Principal;
+    displayName : Text;
+    contactInfo : ?Text;
+  };
+
+  public type ToolListing = {
+    id : Nat;
+    owner : Principal;
+    title : Text;
+    category : ToolCategory;
+    description : Text;
+    condition : ToolCondition;
+    dailyPrice : Nat;
+    securityDeposit : ?Nat;
+    location : Text;
+    available : Bool;
+    photos : [Text];
+    created : Time.Time;
+  };
+
+  public type RentalRequest = {
+    id : Nat;
+    toolId : Nat;
+    renter : Principal;
+    owner : Principal;
+    startDate : Time.Time;
+    endDate : Time.Time;
+    status : RentalStatus;
+    created : Time.Time;
+    lastUpdated : Time.Time;
+  };
+
+  module ToolListing {
+    public func compareByPriceAsc(a : ToolListing, b : ToolListing) : Order.Order {
+      if (a.dailyPrice < b.dailyPrice) { #less } else if (a.dailyPrice > b.dailyPrice) {
+        #greater;
+      } else { #equal };
+    };
+
+    public func compareByPriceDesc(a : ToolListing, b : ToolListing) : Order.Order {
+      if (a.dailyPrice > b.dailyPrice) { #less } else if (a.dailyPrice < b.dailyPrice) {
+        #greater;
+      } else { #equal };
+    };
+
+    public func compareByCreatedDesc(a : ToolListing, b : ToolListing) : Order.Order {
+      if (a.created > b.created) { #less } else if (a.created < b.created) {
+        #greater;
+      } else { #equal };
+    };
+  };
+
+  let accessControlState = AccessControl.initState();
+  include MixinAuthorization(accessControlState);
+
+  // State
+  let profiles = Map.empty<Principal, UserProfile>();
+  let tools = Map.empty<Nat, ToolListing>();
+  let rentals = Map.empty<Nat, RentalRequest>();
+
+  var nextToolId = 1;
+  var nextRentalId = 1;
+
+  // User Profile Management
+  public shared ({ caller }) func createOrUpdateProfile(displayName : Text, contactInfo : ?Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Must be logged in to create/update profile");
+    };
+    let profile : UserProfile = {
+      id = caller;
+      displayName;
+      contactInfo;
+    };
+    profiles.add(caller, profile);
+  };
+
+  public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view profiles");
+    };
+    profiles.get(caller);
+  };
+
+  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
+    profiles.get(user);
+  };
+
+  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
+    profiles.add(caller, profile);
+  };
+
+  // Tool Listing Management
+  public shared ({ caller }) func addToolListing(title : Text, category : ToolCategory, description : Text, condition : ToolCondition, dailyPrice : Nat, securityDeposit : ?Nat, location : Text, photos : [Text]) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Must be logged in to add a tool");
+    };
+
+    let listing : ToolListing = {
+      id = nextToolId;
+      owner = caller;
+      title;
+      category;
+      description;
+      condition;
+      dailyPrice;
+      securityDeposit;
+      location;
+      available = true;
+      photos;
+      created = Time.now();
+    };
+
+    tools.add(nextToolId, listing);
+    let toolId = nextToolId;
+    nextToolId += 1;
+
+    toolId;
+  };
+
+  public shared ({ caller }) func editToolListing(toolId : Nat, title : Text, category : ToolCategory, description : Text, condition : ToolCondition, dailyPrice : Nat, securityDeposit : ?Nat, location : Text, available : Bool, photos : [Text]) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Must be logged in to edit listing");
+    };
+
+    let existing = switch (tools.get(toolId)) {
+      case (null) { Runtime.trap("Tool not found") };
+      case (?tool) { tool };
+    };
+
+    if (existing.owner != caller) {
+      Runtime.trap("Only the tool owner can edit this listing");
+    };
+
+    let updated : ToolListing = {
+      id = toolId;
+      owner = caller;
+      title;
+      category;
+      description;
+      condition;
+      dailyPrice;
+      securityDeposit;
+      location;
+      available;
+      photos;
+      created = existing.created;
+    };
+
+    tools.add(toolId, updated);
+  };
+
+  public query ({ caller }) func getTool(toolId : Nat) : async ?ToolListing {
+    tools.get(toolId);
+  };
+
+  public query ({ caller }) func getToolsByOwner(owner : Principal) : async [ToolListing] {
+    let iter = tools.values().filter(func(t) { t.owner == owner });
+    iter.toArray();
+  };
+
+  public query ({ caller }) func searchTools(searchText : ?Text, category : ?ToolCategory, minPrice : ?Nat, maxPrice : ?Nat, availableOnly : Bool, sortBy : Text) : async [ToolListing] {
+    let filtered = tools.values().filter(
+      func(t) {
+        let matchesText = switch (searchText) {
+          case (null) { true };
+          case (?search) {
+            t.title.toLower().contains(#text(search.toLower())) or t.description.toLower().contains(#text(search.toLower()));
+          };
+        };
+
+        let matchesCategory = switch (category) {
+          case (null) { true };
+          case (?cat) { t.category == cat };
+        };
+
+        let matchesMinPrice = switch (minPrice) {
+          case (null) { true };
+          case (?min) { t.dailyPrice >= min };
+        };
+
+        let matchesMaxPrice = switch (maxPrice) {
+          case (null) { true };
+          case (?max) { t.dailyPrice <= max };
+        };
+
+        let matchesAvailability = if (availableOnly) { t.available } else { true };
+
+        matchesText and matchesCategory and matchesMinPrice and matchesMaxPrice and matchesAvailability
+      }
+    );
+
+    let filteredArray = filtered.toArray();
+
+    if (filteredArray.size() == 0) {
+      return [];
+    };
+
+    switch (sortBy) {
+      case ("newest") {
+        filteredArray.sort(ToolListing.compareByCreatedDesc);
+      };
+      case ("priceAsc") {
+        filteredArray.sort(ToolListing.compareByPriceAsc);
+      };
+      case ("priceDesc") {
+        filteredArray.sort(ToolListing.compareByPriceDesc);
+      };
+      case (_) { filteredArray };
+    };
+  };
+
+  // Rental/Booking Management
+  public shared ({ caller }) func requestRental(toolId : Nat, startDate : Time.Time, endDate : Time.Time) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Must be logged in to request rental");
+    };
+
+    let tool = switch (tools.get(toolId)) {
+      case (null) { Runtime.trap("Tool not found") };
+      case (?tool) { tool };
+    };
+
+    if (tool.owner == caller) {
+      Runtime.trap("Cannot rent your own tool");
+    };
+
+    if (not tool.available) {
+      Runtime.trap("Tool is currently not available");
+    };
+
+    let rentalRequest : RentalRequest = {
+      id = nextRentalId;
+      toolId;
+      renter = caller;
+      owner = tool.owner;
+      startDate;
+      endDate;
+      status = #requested;
+      created = Time.now();
+      lastUpdated = Time.now();
+    };
+
+    rentals.add(nextRentalId, rentalRequest);
+    let rentalId = nextRentalId;
+    nextRentalId += 1;
+
+    rentalId;
+  };
+
+  public shared ({ caller }) func updateRentalStatus(rentalId : Nat, newStatus : RentalStatus, _comments : ?Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Must be logged in to update rental status");
+    };
+
+    let rental = switch (rentals.get(rentalId)) {
+      case (null) { Runtime.trap("Rental request not found") };
+      case (?rental) { rental };
+    };
+
+    // Permission and valid transition check
+    let isOwner = rental.owner == caller;
+    let isRenter = rental.renter == caller;
+
+    switch (rental.status, newStatus) {
+      case (#requested, #approved) {
+        if (not isOwner) { Runtime.trap("Only the tool owner can approve requests") };
+      };
+      case (#requested, #declined) {
+        if (not isOwner) { Runtime.trap("Only the tool owner can decline requests") };
+      };
+      case (#requested, #cancelledByRenter) {
+        if (not isRenter) { Runtime.trap("Only the renter can cancel request") };
+      };
+      case (#approved, #cancelledByOwner) {
+        if (not isOwner) { Runtime.trap("Only the owner can cancel approved rentals") };
+      };
+      case (#approved, #completed) {
+        if (not (isOwner or isRenter)) {
+          Runtime.trap("Unauthorized: Only owner or renter can complete rental");
+        };
+      };
+      case (#approved, #cancelledByRenter) {
+        if (not isRenter) { Runtime.trap("Only the renter can cancel rental") };
+      };
+      case (_) { Runtime.trap("Invalid status transition") };
+    };
+
+    let updatedRental : RentalRequest = {
+      id = rental.id;
+      toolId = rental.toolId;
+      renter = rental.renter;
+      owner = rental.owner;
+      startDate = rental.startDate;
+      endDate = rental.endDate;
+      status = newStatus;
+      created = rental.created;
+      lastUpdated = Time.now();
+    };
+
+    rentals.add(rentalId, updatedRental);
+
+    // If approved, block tool availability
+    if (newStatus == #approved) {
+      let tool = switch (tools.get(rental.toolId)) {
+        case (null) { Runtime.trap("Tool not found") };
+        case (?tool) { tool };
+      };
+      let updatedTool : ToolListing = {
+        id = tool.id;
+        owner = tool.owner;
+        title = tool.title;
+        category = tool.category;
+        description = tool.description;
+        condition = tool.condition;
+        dailyPrice = tool.dailyPrice;
+        securityDeposit = tool.securityDeposit;
+        location = tool.location;
+        available = false;
+        photos = tool.photos;
+        created = tool.created;
+      };
+      tools.add(tool.id, updatedTool);
+    };
+  };
+
+  public query ({ caller }) func getRentalsForUser() : async { owned : [RentalRequest]; rented : [RentalRequest] } {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Must be logged in to view rentals");
+    };
+
+    let owned = List.empty<RentalRequest>();
+    let rented = List.empty<RentalRequest>();
+
+    rentals.values().forEach(
+      func(r) {
+        if (r.owner == caller) { owned.add(r) };
+        if (r.renter == caller) { rented.add(r) };
+      }
+    );
+
+    {
+      owned = owned.toArray();
+      rented = rented.toArray();
+    };
+  };
+
+  public query ({ caller }) func getToolAvailability(toolId : Nat) : async Bool {
+    switch (tools.get(toolId)) {
+      case (null) { Runtime.trap("Tool not found") };
+      case (?tool) { tool.available };
+    };
+  };
+};

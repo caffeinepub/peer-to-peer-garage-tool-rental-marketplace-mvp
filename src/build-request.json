@@ -1,0 +1,176 @@
+{
+  "kind": "build_request",
+  "title": "Peer-to-peer garage tool rental marketplace",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-9",
+      "text": "Implement Internet Identity sign-in and a basic user profile flow. Store a minimal profile (display name and optional contact note) tied to the authenticated principal, and expose create/read/update endpoints for the signed-in user.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "A peer‑to‑peer app where people can list and rent unused garage tools."
+        ]
+      },
+      "acceptanceCriteria": [
+        "User can sign in and sign out using Internet Identity",
+        "After sign-in, user can set and later edit a profile display name and optional contact note",
+        "Profile data is stored server-side and is retrievable on subsequent sessions for the same principal"
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "text": "Create backend data models and access control in the single Motoko actor for: UserProfile, ToolListing, and RentalRequest/Booking (including rental status transitions Requested, Approved, Declined, Cancelled, Completed). Ensure only owners can modify their listings and only involved parties can view/manage their requests/bookings.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "A peer‑to‑peer app where people can list and rent unused garage tools."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Unauthorized principals cannot create or update data on behalf of other users",
+        "Tool listing ownership is enforced for edit/delete operations",
+        "Only the tool owner can approve/decline requests for that tool",
+        "Rental status transitions are validated (no invalid jumps)"
+      ]
+    },
+    {
+      "id": "REQ-11",
+      "text": "Implement stable persistence across upgrades for all core records (profiles, listings, rental requests/bookings) in the backend, preserving existing data during canister upgrades under the single-actor architecture.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "A peer‑to‑peer app where people can list and rent unused garage tools."
+        ]
+      },
+      "acceptanceCriteria": [
+        "After simulated upgrade (where supported by the template), previously created profiles, listings, and requests/bookings remain available",
+        "Data structures used for stable storage cover all required fields for the app features"
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "text": "Build the tool listing feature: allow an authenticated owner to add, edit, and remove garage tool listings with fields: title, category, description, condition, daily price, optional security deposit, location (city/area text), availability flag, and photos. Photos must be managed on the frontend; store only image references/URLs/asset paths in the backend.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "A peer‑to‑peer app where people can list and rent unused garage tools."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Owner can create a new listing and see it in their 'My Tools' dashboard",
+        "Owner can edit and delete only their own listings",
+        "Listing detail view displays all listing fields including photo references",
+        "Backend stores photo references, not raw image bytes"
+      ]
+    },
+    {
+      "id": "REQ-13",
+      "text": "Implement marketplace browsing for tool listings with search and filters: keyword search over title/description, category filter, price range filter, and an 'available only' toggle. Provide sorting options (newest, price low-to-high, price high-to-low) and a responsive listings grid.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "A peer‑to‑peer app where people can list and rent unused garage tools."
+        ]
+      },
+      "acceptanceCriteria": [
+        "User can browse a listings grid and open a listing detail page",
+        "Search and filters update results correctly",
+        "Sorting changes the displayed order according to the selected option",
+        "The listings grid is usable on mobile and desktop widths"
+      ]
+    },
+    {
+      "id": "REQ-14",
+      "text": "Add a rental request and booking workflow: renters can request a date range for a tool; owners can approve or decline; approved requests become bookings and block availability for that tool for the approved date range. Support at least the statuses: Requested, Approved, Declined, Cancelled, Completed.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "A peer‑to‑peer app where people can list and rent unused garage tools."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Authenticated renter can submit a rental request with a start and end date for a listing",
+        "Owner can approve or decline incoming requests for their listing",
+        "Approving a request marks it Approved and prevents overlapping approved bookings for that tool/date range",
+        "Renter and owner can view the current status and key details of the request/booking"
+      ]
+    },
+    {
+      "id": "REQ-15",
+      "text": "Create user dashboards: 'My Tools' (owner listings and their statuses), 'Requests' (incoming requests for owners), and 'My Rentals' (requests/bookings for renters). Each item must link to the corresponding tool and rental detail views.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "A peer‑to‑peer app where people can list and rent unused garage tools."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Signed-in owners can see their listings in 'My Tools'",
+        "Signed-in owners can see incoming rental requests in 'Requests'",
+        "Signed-in renters can see their submitted requests/bookings in 'My Rentals'",
+        "Each dashboard item links to the correct listing and request/booking details"
+      ]
+    },
+    {
+      "id": "REQ-16",
+      "text": "Apply a coherent visual theme suitable for a garage/tool marketplace across the app (colors, typography, spacing, and component styling), avoiding a blue/purple primary palette. Use the existing UI component library by composing components rather than editing immutable UI sources. Add generated static brand imagery (logo and hero/landing illustration) under frontend/public/assets/generated and reference them directly from the frontend.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "A peer‑to‑peer app where people can list and rent unused garage tools."
+        ]
+      },
+      "acceptanceCriteria": [
+        "App uses a consistent theme (not blue/purple as the primary palette) across main views (landing, browse, listing detail, dashboards, create/edit listing)",
+        "No edits are made to immutable UI component source paths; components are composed instead",
+        "Logo and hero illustration are present in frontend/public/assets/generated and rendered in the UI"
+      ]
+    }
+  ],
+  "constraints": [
+    "Backend must remain a single Motoko actor with all logic in backend/main.mo.",
+    "Generate backend/migration.mo only if needed to preserve existing stable state on upgrade.",
+    "Do not edit files under frontend immutable paths (frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui); compose them instead.",
+    "Photos for tool listings must be frontend-managed; backend stores only image references/URLs/asset paths.",
+    "Use English for any user-facing text."
+  ],
+  "nonGoals": [
+    "Implementing payments, escrow, or Stripe integration.",
+    "Shipping, delivery, or logistics workflows.",
+    "Third-party authentication providers other than Internet Identity.",
+    "Real-time features (WebSockets, live chat, push notifications).",
+    "External databases or backend services outside the single Motoko canister."
+  ],
+  "imageRequirements": {
+    "required": [
+      "Garage tool marketplace logo, clean vector-style mark with a wrench/gear motif (toolshare-logo.dim_512x512.png)",
+      "Hero/landing illustration showing a friendly garage scene with tools being shared or rented, flat illustration style (toolshare-hero.dim_1600x900.png)"
+    ],
+    "edits": []
+  }
+}
