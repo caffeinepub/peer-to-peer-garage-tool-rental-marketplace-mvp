@@ -10,6 +10,11 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface ChatMessage {
+  'sender' : Principal,
+  'message' : string,
+  'timestamp' : Time,
+}
 export interface RentalRequest {
   'id' : bigint,
   'renter' : Principal,
@@ -55,6 +60,9 @@ export interface UserProfile {
   'id' : Principal,
   'contactInfo' : [] | [string],
   'displayName' : string,
+  'joinedAt' : Time,
+  'profilePicture' : string,
+  'location' : string,
 }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
@@ -75,7 +83,10 @@ export interface _SERVICE {
     bigint
   >,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'createOrUpdateProfile' : ActorMethod<[string, [] | [string]], undefined>,
+  'createOrUpdateProfile' : ActorMethod<
+    [string, [] | [string], string, string],
+    undefined
+  >,
   'editToolListing' : ActorMethod<
     [
       bigint,
@@ -93,6 +104,7 @@ export interface _SERVICE {
   >,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getRentalMessages' : ActorMethod<[bigint], Array<ChatMessage>>,
   'getRentalsForUser' : ActorMethod<
     [],
     { 'rented' : Array<RentalRequest>, 'owned' : Array<RentalRequest> }
@@ -103,7 +115,6 @@ export interface _SERVICE {
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'requestRental' : ActorMethod<[bigint, Time, Time], bigint>,
-  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'searchTools' : ActorMethod<
     [
       [] | [string],
@@ -115,6 +126,7 @@ export interface _SERVICE {
     ],
     Array<ToolListing>
   >,
+  'sendRentalMessage' : ActorMethod<[bigint, string], undefined>,
   'updateRentalStatus' : ActorMethod<
     [bigint, RentalStatus, [] | [string]],
     undefined

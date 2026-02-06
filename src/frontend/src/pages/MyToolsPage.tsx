@@ -1,18 +1,27 @@
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useGetToolsByOwner } from '../hooks/useQueries';
-import { useNavigate } from '@tanstack/react-router';
+import { useGetToolsByOwner, useGetRentalsForUser } from '../hooks/useQueries';
+import { useNavigate, Link } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wrench, Plus, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Wrench, Plus, Loader2, Bell, CheckCircle } from 'lucide-react';
 import RequireAuth from '../components/auth/RequireAuth';
 import ListingsGrid from '../components/listings/ListingsGrid';
 import ProfileSetupDialog from '../components/profile/ProfileSetupDialog';
+import { RentalStatus } from '../backend';
 
 export default function MyToolsPage() {
   const navigate = useNavigate();
   const { identity } = useInternetIdentity();
   const ownerPrincipal = identity?.getPrincipal().toString();
-  const { data: listings = [], isLoading } = useGetToolsByOwner(ownerPrincipal);
+  const { data: listings = [], isLoading: listingsLoading } = useGetToolsByOwner(ownerPrincipal);
+  const { data: rentals, isLoading: rentalsLoading } = useGetRentalsForUser();
+
+  const ownedRentals = rentals?.owned || [];
+  const pendingRequests = ownedRentals.filter((r) => r.status === RentalStatus.requested);
+  const activeRentals = ownedRentals.filter((r) => r.status === RentalStatus.approved);
+
+  const isLoading = listingsLoading || rentalsLoading;
 
   return (
     <RequireAuth>
@@ -28,6 +37,42 @@ export default function MyToolsPage() {
             Add Tool
           </Button>
         </div>
+
+        {!isLoading && (pendingRequests.length > 0 || activeRentals.length > 0) && (
+          <div className="mb-6 grid gap-4 md:grid-cols-2">
+            {pendingRequests.length > 0 && (
+              <Alert className="border-yellow-500/50 bg-yellow-500/10">
+                <Bell className="h-4 w-4 text-yellow-700 dark:text-yellow-400" />
+                <AlertDescription className="ml-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-yellow-700 dark:text-yellow-400">
+                      {pendingRequests.length} pending {pendingRequests.length === 1 ? 'request' : 'requests'}
+                    </span>
+                    <Button asChild variant="link" size="sm" className="h-auto p-0 text-yellow-700 dark:text-yellow-400">
+                      <Link to="/requests">View Requests →</Link>
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {activeRentals.length > 0 && (
+              <Alert className="border-green-500/50 bg-green-500/10">
+                <CheckCircle className="h-4 w-4 text-green-700 dark:text-green-400" />
+                <AlertDescription className="ml-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-green-700 dark:text-green-400">
+                      {activeRentals.length} active {activeRentals.length === 1 ? 'rental' : 'rentals'}
+                    </span>
+                    <Button asChild variant="link" size="sm" className="h-auto p-0 text-green-700 dark:text-green-400">
+                      <Link to="/requests">Manage Rentals →</Link>
+                    </Button>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+        )}
 
         {isLoading ? (
           <div className="flex min-h-[400px] items-center justify-center">

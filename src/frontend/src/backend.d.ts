@@ -33,10 +33,18 @@ export interface RentalRequest {
     toolId: bigint;
     startDate: Time;
 }
+export interface ChatMessage {
+    sender: Principal;
+    message: string;
+    timestamp: Time;
+}
 export interface UserProfile {
     id: Principal;
     contactInfo?: string;
     displayName: string;
+    joinedAt: Time;
+    profilePicture: string;
+    location: string;
 }
 export enum RentalStatus {
     requested = "requested",
@@ -67,10 +75,11 @@ export enum UserRole {
 export interface backendInterface {
     addToolListing(title: string, category: ToolCategory, description: string, condition: ToolCondition, dailyPrice: bigint, securityDeposit: bigint | null, location: string, photos: Array<string>): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createOrUpdateProfile(displayName: string, contactInfo: string | null): Promise<void>;
+    createOrUpdateProfile(displayName: string, contactInfo: string | null, location: string, profilePicture: string): Promise<void>;
     editToolListing(toolId: bigint, title: string, category: ToolCategory, description: string, condition: ToolCondition, dailyPrice: bigint, securityDeposit: bigint | null, location: string, available: boolean, photos: Array<string>): Promise<void>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getRentalMessages(rentalId: bigint): Promise<Array<ChatMessage>>;
     getRentalsForUser(): Promise<{
         rented: Array<RentalRequest>;
         owned: Array<RentalRequest>;
@@ -81,7 +90,7 @@ export interface backendInterface {
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     requestRental(toolId: bigint, startDate: Time, endDate: Time): Promise<bigint>;
-    saveCallerUserProfile(profile: UserProfile): Promise<void>;
     searchTools(searchText: string | null, category: ToolCategory | null, minPrice: bigint | null, maxPrice: bigint | null, availableOnly: boolean, sortBy: string): Promise<Array<ToolListing>>;
+    sendRentalMessage(rentalId: bigint, message: string): Promise<void>;
     updateRentalStatus(rentalId: bigint, newStatus: RentalStatus, _comments: string | null): Promise<void>;
 }

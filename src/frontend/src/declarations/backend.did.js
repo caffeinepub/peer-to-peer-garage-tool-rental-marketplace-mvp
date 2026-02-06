@@ -26,10 +26,19 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const Time = IDL.Int;
 export const UserProfile = IDL.Record({
   'id' : IDL.Principal,
   'contactInfo' : IDL.Opt(IDL.Text),
   'displayName' : IDL.Text,
+  'joinedAt' : Time,
+  'profilePicture' : IDL.Text,
+  'location' : IDL.Text,
+});
+export const ChatMessage = IDL.Record({
+  'sender' : IDL.Principal,
+  'message' : IDL.Text,
+  'timestamp' : Time,
 });
 export const RentalStatus = IDL.Variant({
   'requested' : IDL.Null,
@@ -39,7 +48,6 @@ export const RentalStatus = IDL.Variant({
   'cancelledByRenter' : IDL.Null,
   'cancelledByOwner' : IDL.Null,
 });
-export const Time = IDL.Int;
 export const RentalRequest = IDL.Record({
   'id' : IDL.Nat,
   'renter' : IDL.Principal,
@@ -83,7 +91,11 @@ export const idlService = IDL.Service({
       [],
     ),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'createOrUpdateProfile' : IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [], []),
+  'createOrUpdateProfile' : IDL.Func(
+      [IDL.Text, IDL.Opt(IDL.Text), IDL.Text, IDL.Text],
+      [],
+      [],
+    ),
   'editToolListing' : IDL.Func(
       [
         IDL.Nat,
@@ -102,6 +114,7 @@ export const idlService = IDL.Service({
     ),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getRentalMessages' : IDL.Func([IDL.Nat], [IDL.Vec(ChatMessage)], ['query']),
   'getRentalsForUser' : IDL.Func(
       [],
       [
@@ -126,7 +139,6 @@ export const idlService = IDL.Service({
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'requestRental' : IDL.Func([IDL.Nat, Time, Time], [IDL.Nat], []),
-  'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'searchTools' : IDL.Func(
       [
         IDL.Opt(IDL.Text),
@@ -139,6 +151,7 @@ export const idlService = IDL.Service({
       [IDL.Vec(ToolListing)],
       ['query'],
     ),
+  'sendRentalMessage' : IDL.Func([IDL.Nat, IDL.Text], [], []),
   'updateRentalStatus' : IDL.Func(
       [IDL.Nat, RentalStatus, IDL.Opt(IDL.Text)],
       [],
@@ -167,10 +180,19 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const Time = IDL.Int;
   const UserProfile = IDL.Record({
     'id' : IDL.Principal,
     'contactInfo' : IDL.Opt(IDL.Text),
     'displayName' : IDL.Text,
+    'joinedAt' : Time,
+    'profilePicture' : IDL.Text,
+    'location' : IDL.Text,
+  });
+  const ChatMessage = IDL.Record({
+    'sender' : IDL.Principal,
+    'message' : IDL.Text,
+    'timestamp' : Time,
   });
   const RentalStatus = IDL.Variant({
     'requested' : IDL.Null,
@@ -180,7 +202,6 @@ export const idlFactory = ({ IDL }) => {
     'cancelledByRenter' : IDL.Null,
     'cancelledByOwner' : IDL.Null,
   });
-  const Time = IDL.Int;
   const RentalRequest = IDL.Record({
     'id' : IDL.Nat,
     'renter' : IDL.Principal,
@@ -224,7 +245,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'createOrUpdateProfile' : IDL.Func([IDL.Text, IDL.Opt(IDL.Text)], [], []),
+    'createOrUpdateProfile' : IDL.Func(
+        [IDL.Text, IDL.Opt(IDL.Text), IDL.Text, IDL.Text],
+        [],
+        [],
+      ),
     'editToolListing' : IDL.Func(
         [
           IDL.Nat,
@@ -243,6 +268,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getRentalMessages' : IDL.Func(
+        [IDL.Nat],
+        [IDL.Vec(ChatMessage)],
+        ['query'],
+      ),
     'getRentalsForUser' : IDL.Func(
         [],
         [
@@ -267,7 +297,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'requestRental' : IDL.Func([IDL.Nat, Time, Time], [IDL.Nat], []),
-    'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'searchTools' : IDL.Func(
         [
           IDL.Opt(IDL.Text),
@@ -280,6 +309,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(ToolListing)],
         ['query'],
       ),
+    'sendRentalMessage' : IDL.Func([IDL.Nat, IDL.Text], [], []),
     'updateRentalStatus' : IDL.Func(
         [IDL.Nat, RentalStatus, IDL.Opt(IDL.Text)],
         [],

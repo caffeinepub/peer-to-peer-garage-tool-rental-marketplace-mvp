@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { UserProfile, ToolListing, RentalRequest, ToolCategory, ToolCondition, RentalStatus } from '../backend';
+import type { UserProfile, ToolListing, RentalRequest, ToolCategory, ToolCondition, RentalStatus, ChatMessage } from '../backend';
 
 // User Profile Queries
 export function useGetCallerUserProfile() {
@@ -23,18 +23,23 @@ export function useGetCallerUserProfile() {
   };
 }
 
-export function useSaveCallerUserProfile() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
+export function useGetUserProfile(userPrincipal: string | undefined) {
+  const { actor, isFetching } = useActor();
 
-  return useMutation({
-    mutationFn: async (profile: UserProfile) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.saveCallerUserProfile(profile);
+  return useQuery<UserProfile | null>({
+    queryKey: ['userProfile', userPrincipal],
+    queryFn: async () => {
+      if (!actor || !userPrincipal) return null;
+      const { Principal } = await import('@dfinity/principal');
+      try {
+        return await actor.getUserProfile(Principal.fromText(userPrincipal));
+      } catch (error) {
+        console.error('Failed to fetch user profile:', error);
+        return null;
+      }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
-    },
+    enabled: !!actor && !isFetching && !!userPrincipal,
+    retry: false,
   });
 }
 
@@ -43,9 +48,24 @@ export function useCreateOrUpdateProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ displayName, contactInfo }: { displayName: string; contactInfo?: string }) => {
+    mutationFn: async ({ 
+      displayName, 
+      contactInfo, 
+      location, 
+      profilePicture 
+    }: { 
+      displayName: string; 
+      contactInfo?: string; 
+      location?: string; 
+      profilePicture?: string;
+    }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.createOrUpdateProfile(displayName, contactInfo || null);
+      return actor.createOrUpdateProfile(
+        displayName, 
+        contactInfo || null,
+        location || '',
+        profilePicture || ''
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
@@ -242,5 +262,35 @@ export function useGetRentalsForUser() {
       return actor.getRentalsForUser();
     },
     enabled: !!actor && !isFetching,
+  });
+}
+
+// Rental Chat Queries
+export function useGetRentalMessages(rentalId: bigint | undefined) {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ChatMessage[]>({
+    queryKey: ['rentalMessages', rentalId?.toString()],
+    queryFn: async () => {
+      if (!actor || !rentalId) return [];
+      return actor.getRentalMessages(rentalId);
+    },
+    enabled: !!actor && !isFetching && !!rentalId,
+    refetchInterval: 5000, // Poll every 5 seconds
+  });
+}
+
+export function useSendRentalMessage() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: { rentalId: bigint; message: string }) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.sendRentalMessage(data.rentalId, data.message);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['rentalMessages', variables.rentalId.toString()] });
+    },
   });
 }

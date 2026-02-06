@@ -22,6 +22,7 @@ export default function ProfileSetupDialog() {
 
   const [displayName, setDisplayName] = useState('');
   const [contactInfo, setContactInfo] = useState('');
+  const [location, setLocation] = useState('');
 
   const isAuthenticated = !!identity;
   const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
@@ -30,6 +31,7 @@ export default function ProfileSetupDialog() {
     if (userProfile) {
       setDisplayName(userProfile.displayName);
       setContactInfo(userProfile.contactInfo || '');
+      setLocation(userProfile.location || '');
     }
   }, [userProfile]);
 
@@ -44,6 +46,8 @@ export default function ProfileSetupDialog() {
       await createOrUpdateProfile.mutateAsync({
         displayName: displayName.trim(),
         contactInfo: contactInfo.trim() || undefined,
+        location: location.trim() || 'Not specified',
+        profilePicture: '',
       });
       toast.success('Profile saved successfully!');
     } catch (error) {
@@ -79,6 +83,15 @@ export default function ProfileSetupDialog() {
                 onChange={(e) => setContactInfo(e.target.value)}
                 placeholder="Email, phone, or preferred contact method"
                 rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location">Location (optional)</Label>
+              <Input
+                id="location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="City, State"
               />
             </div>
           </div>

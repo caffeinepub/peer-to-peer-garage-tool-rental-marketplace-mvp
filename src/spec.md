@@ -1,16 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Build a peer-to-peer garage tool rental marketplace with Internet Identity authentication, user profiles, tool listings, browsing/search, and a rental request/booking workflow.
+**Goal:** Unify “View Profile” and “Edit Profile” into a single /profile page flow, removing the modal-based edit experience from the profile dropdown.
 
 **Planned changes:**
-- Add Internet Identity sign-in/out and a minimal user profile flow (display name + optional contact note) with create/read/update for the signed-in principal.
-- Implement backend data models and access control (single Motoko actor) for user profiles, tool listings, and rental requests/bookings with validated status transitions (Requested, Approved, Declined, Cancelled, Completed).
-- Add stable persistence across backend upgrades for profiles, listings, and requests/bookings.
-- Build tool listing CRUD for authenticated owners, including listing fields and photo references (frontend-managed photos; backend stores only references/URLs/asset paths).
-- Implement marketplace browsing UI with listings grid, listing detail view, keyword search, filters (category, price range, available-only), and sorting (newest, price low-to-high, price high-to-low).
-- Add rental request/booking workflow: renters request a date range; owners approve/decline; approved bookings block overlapping approved date ranges for the tool.
-- Create dashboards: “My Tools”, “Requests” (incoming for owners), and “My Rentals” (for renters), each linking to listing and request/booking details.
-- Apply a coherent garage/tool marketplace visual theme (avoiding blue/purple primary) by composing existing UI components, and include generated static brand imagery (logo + hero) referenced from `frontend/public/assets/generated`.
+- Update the ProfileMenu dropdown to remove separate “View Profile” vs “Edit Profile” actions and replace them with a single English-labeled item (e.g., “My Profile” / “Profile”) that navigates to `/profile`.
+- Remove any profile editing dialog/modal behavior triggered from ProfileMenu so no `Dialog` is rendered from the dropdown after this change.
+- Enhance `/profile` to support initializing in either view mode or in-page edit mode based on a URL indicator (e.g., `?edit=1`), while keeping the existing default behavior (view mode when no indicator is present).
+- Ensure saving or cancelling edits on `/profile` returns the user to view mode on the same page and reflects updated profile data.
 
-**User-visible outcome:** Users can sign in with Internet Identity, set a profile, create and manage tool listings with photos, browse and filter listings, request rentals for date ranges, approve/decline requests as an owner, and track activity through dedicated dashboards with persistent data across upgrades.
+**User-visible outcome:** The profile dropdown takes users to a single Profile page where they can view their profile and switch into in-page editing (including opening directly in edit mode via a URL indicator), without any separate edit modal flow.

@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, DollarSign } from 'lucide-react';
+import { MapPin, DollarSign, Image as ImageIcon } from 'lucide-react';
 import type { ToolListing } from '../../backend';
 import { ToolCategory, ToolCondition } from '../../backend';
 
@@ -49,14 +49,26 @@ export default function ListingsGrid({ listings }: ListingsGridProps) {
             <CardHeader className="p-0">
               <div className="relative aspect-video overflow-hidden rounded-t-lg bg-muted">
                 {listing.photos.length > 0 ? (
-                  <img
-                    src={listing.photos[0]}
-                    alt={listing.title}
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                  />
+                  <>
+                    <img
+                      src={listing.photos[0]}
+                      alt={listing.title}
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (fallback) {
+                          fallback.classList.remove('hidden');
+                        }
+                      }}
+                    />
+                    <div className="hidden h-full items-center justify-center">
+                      <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                  </>
                 ) : (
                   <div className="flex h-full items-center justify-center">
-                    <span className="text-muted-foreground">No image</span>
+                    <ImageIcon className="h-8 w-8 text-muted-foreground" />
                   </div>
                 )}
                 {!listing.available && (

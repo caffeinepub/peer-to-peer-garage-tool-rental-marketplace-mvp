@@ -1,14 +1,18 @@
 import Map "mo:core/Map";
+import Nat "mo:core/Nat";
 import Time "mo:core/Time";
 import List "mo:core/List";
 import Array "mo:core/Array";
 import Text "mo:core/Text";
+import Iter "mo:core/Iter";
 import Order "mo:core/Order";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
-import Iter "mo:core/Iter";
+
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
+
+
 
 actor {
   // Types
@@ -40,6 +44,9 @@ actor {
     id : Principal;
     displayName : Text;
     contactInfo : ?Text;
+    location : Text;
+    profilePicture : Text;
+    joinedAt : Time.Time;
   };
 
   public type ToolListing = {
@@ -69,6 +76,12 @@ actor {
     lastUpdated : Time.Time;
   };
 
+  public type ChatMessage = {
+    sender : Principal;
+    message : Text;
+    timestamp : Time.Time;
+  };
+
   module ToolListing {
     public func compareByPriceAsc(a : ToolListing, b : ToolListing) : Order.Order {
       if (a.dailyPrice < b.dailyPrice) { #less } else if (a.dailyPrice > b.dailyPrice) {
@@ -96,20 +109,31 @@ actor {
   let profiles = Map.empty<Principal, UserProfile>();
   let tools = Map.empty<Nat, ToolListing>();
   let rentals = Map.empty<Nat, RentalRequest>();
+  let rentalChats = Map.empty<Nat, List.List<ChatMessage>>();
 
   var nextToolId = 1;
   var nextRentalId = 1;
 
   // User Profile Management
-  public shared ({ caller }) func createOrUpdateProfile(displayName : Text, contactInfo : ?Text) : async () {
+  public shared ({ caller }) func createOrUpdateProfile(displayName : Text, contactInfo : ?Text, location : Text, profilePicture : Text) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Must be logged in to create/update profile");
     };
+
+    let existingProfile = profiles.get(caller);
+
     let profile : UserProfile = {
       id = caller;
       displayName;
       contactInfo;
+      location;
+      profilePicture;
+      joinedAt = switch (existingProfile) {
+        case (null) { Time.now() };
+        case (?existing) { existing.joinedAt };
+      };
     };
+
     profiles.add(caller, profile);
   };
 
@@ -125,13 +149,6 @@ actor {
       Runtime.trap("Unauthorized: Can only view your own profile");
     };
     profiles.get(user);
-  };
-
-  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
-    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can save profiles");
-    };
-    profiles.add(caller, profile);
   };
 
   // Tool Listing Management
@@ -394,5 +411,56 @@ actor {
       case (null) { Runtime.trap("Tool not found") };
       case (?tool) { tool.available };
     };
+  };
+
+  // Rental Chat Functionality
+  public shared ({ caller }) func sendRentalMessage(rentalId : Nat, message : Text) : async () {
+    let rental = switch (rentals.get(rentalId)) {
+      case (null) { Runtime.trap("Rental not found") };
+      case (?rental) { rental };
+    };
+
+    // Allow the rental's renter/owner (or admin) to send messages
+    if ((rental.owner != caller and rental.renter != caller) and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only send chat messages for your own rentals");
+    };
+
+    let newMessage : ChatMessage = {
+      sender = caller;
+      message;
+      timestamp = Time.now();
+    };
+
+    // Get the existing messages for the rental or create a new empty list
+    let chatMessages : List.List<ChatMessage> = switch (rentalChats.get(rentalId)) {
+      case (null) { List.empty<ChatMessage>() };
+      case (?list) { list };
+    };
+
+    chatMessages.add(newMessage);
+
+    rentalChats.add(rentalId, chatMessages);
+  };
+
+  public query ({ caller }) func getRentalMessages(rentalId : Nat) : async [ChatMessage] {
+    let rental = switch (rentals.get(rentalId)) {
+      case (null) { Runtime.trap("Rental not found") };
+      case (?rental) { rental };
+    };
+
+    // Only allow access to rental's renter/owner (or admin)
+    if ((rental.owner != caller and rental.renter != caller) and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view chat messages for your own rentals");
+    };
+
+    // Find the messages for the rental, default to empty list if none exists
+    let messages = switch (rentalChats.get(rentalId)) {
+      case (null) { List.empty<ChatMessage>() };
+      case (?list) { list };
+    };
+
+    // Convert messages to array and reverse them to show most recent first
+    let messagesArray = messages.toArray();
+    messagesArray.reverse();
   };
 };

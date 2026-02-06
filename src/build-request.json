@@ -1,176 +1,75 @@
 {
   "kind": "build_request",
-  "title": "Peer-to-peer garage tool rental marketplace",
+  "title": "Condense View Profile and Edit Profile into a single unified Profile page flow",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-9",
-      "text": "Implement Internet Identity sign-in and a basic user profile flow. Store a minimal profile (display name and optional contact note) tied to the authenticated principal, and expose create/read/update endpoints for the signed-in user.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "A peer‑to‑peer app where people can list and rent unused garage tools."
-        ]
-      },
-      "acceptanceCriteria": [
-        "User can sign in and sign out using Internet Identity",
-        "After sign-in, user can set and later edit a profile display name and optional contact note",
-        "Profile data is stored server-side and is retrievable on subsequent sessions for the same principal"
-      ]
-    },
-    {
-      "id": "REQ-10",
-      "text": "Create backend data models and access control in the single Motoko actor for: UserProfile, ToolListing, and RentalRequest/Booking (including rental status transitions Requested, Approved, Declined, Cancelled, Completed). Ensure only owners can modify their listings and only involved parties can view/manage their requests/bookings.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "A peer‑to‑peer app where people can list and rent unused garage tools."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Unauthorized principals cannot create or update data on behalf of other users",
-        "Tool listing ownership is enforced for edit/delete operations",
-        "Only the tool owner can approve/decline requests for that tool",
-        "Rental status transitions are validated (no invalid jumps)"
-      ]
-    },
-    {
-      "id": "REQ-11",
-      "text": "Implement stable persistence across upgrades for all core records (profiles, listings, rental requests/bookings) in the backend, preserving existing data during canister upgrades under the single-actor architecture.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "A peer‑to‑peer app where people can list and rent unused garage tools."
-        ]
-      },
-      "acceptanceCriteria": [
-        "After simulated upgrade (where supported by the template), previously created profiles, listings, and requests/bookings remain available",
-        "Data structures used for stable storage cover all required fields for the app features"
-      ]
-    },
-    {
-      "id": "REQ-12",
-      "text": "Build the tool listing feature: allow an authenticated owner to add, edit, and remove garage tool listings with fields: title, category, description, condition, daily price, optional security deposit, location (city/area text), availability flag, and photos. Photos must be managed on the frontend; store only image references/URLs/asset paths in the backend.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "A peer‑to‑peer app where people can list and rent unused garage tools."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Owner can create a new listing and see it in their 'My Tools' dashboard",
-        "Owner can edit and delete only their own listings",
-        "Listing detail view displays all listing fields including photo references",
-        "Backend stores photo references, not raw image bytes"
-      ]
-    },
-    {
-      "id": "REQ-13",
-      "text": "Implement marketplace browsing for tool listings with search and filters: keyword search over title/description, category filter, price range filter, and an 'available only' toggle. Provide sorting options (newest, price low-to-high, price high-to-low) and a responsive listings grid.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "A peer‑to‑peer app where people can list and rent unused garage tools."
-        ]
-      },
-      "acceptanceCriteria": [
-        "User can browse a listings grid and open a listing detail page",
-        "Search and filters update results correctly",
-        "Sorting changes the displayed order according to the selected option",
-        "The listings grid is usable on mobile and desktop widths"
-      ]
-    },
-    {
-      "id": "REQ-14",
-      "text": "Add a rental request and booking workflow: renters can request a date range for a tool; owners can approve or decline; approved requests become bookings and block availability for that tool for the approved date range. Support at least the statuses: Requested, Approved, Declined, Cancelled, Completed.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "A peer‑to‑peer app where people can list and rent unused garage tools."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Authenticated renter can submit a rental request with a start and end date for a listing",
-        "Owner can approve or decline incoming requests for their listing",
-        "Approving a request marks it Approved and prevents overlapping approved bookings for that tool/date range",
-        "Renter and owner can view the current status and key details of the request/booking"
-      ]
-    },
-    {
-      "id": "REQ-15",
-      "text": "Create user dashboards: 'My Tools' (owner listings and their statuses), 'Requests' (incoming requests for owners), and 'My Rentals' (requests/bookings for renters). Each item must link to the corresponding tool and rental detail views.",
+      "id": "REQ-1",
+      "text": "Update the profile dropdown menu to remove the separate modal-based \"Edit Profile\" flow and instead route all profile actions through the single /profile page.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-8"
         ],
         "quotes": [
-          "A peer‑to‑peer app where people can list and rent unused garage tools."
+          "now condense the view profile and edit profile into one"
         ]
       },
       "acceptanceCriteria": [
-        "Signed-in owners can see their listings in 'My Tools'",
-        "Signed-in owners can see incoming rental requests in 'Requests'",
-        "Signed-in renters can see their submitted requests/bookings in 'My Rentals'",
-        "Each dashboard item links to the correct listing and request/booking details"
+        "The ProfileMenu dropdown no longer shows separate \"View Profile\" and \"Edit Profile\" actions that lead to different experiences (page vs modal).",
+        "Clicking the profile menu entry navigates to /profile and does not open an edit dialog modal.",
+        "No profile editing dialog (Dialog) is rendered from ProfileMenu after this change."
       ]
     },
     {
-      "id": "REQ-16",
-      "text": "Apply a coherent visual theme suitable for a garage/tool marketplace across the app (colors, typography, spacing, and component styling), avoiding a blue/purple primary palette. Use the existing UI component library by composing components rather than editing immutable UI sources. Add generated static brand imagery (logo and hero/landing illustration) under frontend/public/assets/generated and reference them directly from the frontend.",
+      "id": "REQ-2",
+      "text": "Ensure the /profile page supports both viewing and editing within the same page, including an option to land directly in edit mode when navigated from the profile dropdown (e.g., via a URL query parameter like ?edit=1).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-8"
         ],
         "quotes": [
-          "A peer‑to‑peer app where people can list and rent unused garage tools."
+          "now condense the view profile and edit profile into one"
         ]
       },
       "acceptanceCriteria": [
-        "App uses a consistent theme (not blue/purple as the primary palette) across main views (landing, browse, listing detail, dashboards, create/edit listing)",
-        "No edits are made to immutable UI component source paths; components are composed instead",
-        "Logo and hero illustration are present in frontend/public/assets/generated and rendered in the UI"
+        "/profile continues to show a read-only view mode and an in-page edit mode (no separate edit screen/modal required).",
+        "When /profile is opened with an explicit edit indicator (for example, ?edit=1), the page initializes in edit mode.",
+        "When /profile is opened without the edit indicator, the page initializes in view mode (current behavior).",
+        "After saving or cancelling edits on /profile, the user returns to view mode on the same page and profile data is updated/reflected correctly."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Align user-facing labels in the profile dropdown to reflect the unified experience (e.g., rename the action to \"My Profile\" or \"Profile\") and keep all user-facing text in English.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-8"
+        ],
+        "quotes": [
+          "Use English for any user-facing text in the build request."
+        ]
+      },
+      "acceptanceCriteria": [
+        "The profile dropdown presents a single, clear navigation item for profile (label is in English).",
+        "There are no remaining English UI strings implying a separate \"View Profile\" vs \"Edit Profile\" split from the dropdown."
       ]
     }
   ],
   "constraints": [
-    "Backend must remain a single Motoko actor with all logic in backend/main.mo.",
-    "Generate backend/migration.mo only if needed to preserve existing stable state on upgrade.",
-    "Do not edit files under frontend immutable paths (frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui); compose them instead.",
-    "Photos for tool listings must be frontend-managed; backend stores only image references/URLs/asset paths.",
-    "Use English for any user-facing text."
+    "Do not modify files under frontend/src/components/ui (shadcn components); compose them only.",
+    "Do not edit immutable hook entrypoints listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx).",
+    "Keep backend architecture unchanged (single Motoko actor); no backend changes are required for this UI consolidation."
   ],
   "nonGoals": [
-    "Implementing payments, escrow, or Stripe integration.",
-    "Shipping, delivery, or logistics workflows.",
-    "Third-party authentication providers other than Internet Identity.",
-    "Real-time features (WebSockets, live chat, push notifications).",
-    "External databases or backend services outside the single Motoko canister."
+    "Redesigning the profile data model or backend profile CRUD APIs.",
+    "Adding new profile fields beyond what already exists (displayName, contactInfo, location, profilePicture, joinedAt).",
+    "Changing authentication (Internet Identity) behavior."
   ],
   "imageRequirements": {
-    "required": [
-      "Garage tool marketplace logo, clean vector-style mark with a wrench/gear motif (toolshare-logo.dim_512x512.png)",
-      "Hero/landing illustration showing a friendly garage scene with tools being shared or rented, flat illustration style (toolshare-hero.dim_1600x900.png)"
-    ],
+    "required": [],
     "edits": []
   }
 }

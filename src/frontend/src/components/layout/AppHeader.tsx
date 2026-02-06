@@ -1,5 +1,5 @@
 import { Link, useNavigate } from '@tanstack/react-router';
-import { Wrench, Menu, X } from 'lucide-react';
+import { Wrench, Menu, X, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import LoginButton from '../auth/LoginButton';
@@ -47,6 +47,12 @@ export default function AppHeader() {
                   className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
                   My Rentals
+                </Link>
+                <Link
+                  to="/messages"
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Messages
                 </Link>
               </>
             )}
@@ -112,6 +118,14 @@ export default function AppHeader() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   My Rentals
+                </Link>
+                <Link
+                  to="/messages"
+                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Messages
                 </Link>
                 <Button
                   onClick={() => {

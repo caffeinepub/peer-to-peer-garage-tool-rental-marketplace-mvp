@@ -1,4 +1,5 @@
 import { useGetRentalsForUser, useGetTool } from '../hooks/useQueries';
+import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +8,7 @@ import { Loader2, Calendar, ExternalLink } from 'lucide-react';
 import RequireAuth from '../components/auth/RequireAuth';
 import { RentalStatus } from '../backend';
 import ProfileSetupDialog from '../components/profile/ProfileSetupDialog';
+import RentalStatusActions from '../components/rentals/RentalStatusActions';
 
 const statusColors: Record<RentalStatus, string> = {
   [RentalStatus.requested]: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
@@ -28,10 +30,13 @@ const statusLabels: Record<RentalStatus, string> = {
 
 function RentalCard({ rental }: { rental: any }) {
   const { data: tool } = useGetTool(rental.toolId);
+  const { identity } = useInternetIdentity();
 
   const formatDate = (timestamp: bigint) => {
     return new Date(Number(timestamp) / 1_000_000).toLocaleDateString();
   };
+
+  const isRenter = !!(identity && rental.renter.toString() === identity.getPrincipal().toString());
 
   return (
     <Card>
@@ -49,7 +54,7 @@ function RentalCard({ rental }: { rental: any }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button asChild variant="outline" size="sm">
             <Link to="/rental/$rentalId" params={{ rentalId: rental.id.toString() }}>
               <ExternalLink className="mr-2 h-4 w-4" />
@@ -63,6 +68,7 @@ function RentalCard({ rental }: { rental: any }) {
               </Link>
             </Button>
           )}
+          <RentalStatusActions rental={rental} isOwner={false} isRenter={isRenter} inline />
         </div>
       </CardContent>
     </Card>

@@ -10,6 +10,8 @@ import MyToolsPage from './pages/MyToolsPage';
 import RequestsPage from './pages/RequestsPage';
 import MyRentalsPage from './pages/MyRentalsPage';
 import RentalDetailPage from './pages/RentalDetailPage';
+import MessagingPage from './pages/MessagingPage';
+import ProfilePage from './pages/ProfilePage';
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -73,6 +75,18 @@ const rentalDetailRoute = createRoute({
   component: RentalDetailPage,
 });
 
+const messagesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/messages',
+  component: MessagingPage,
+});
+
+const profileRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/profile',
+  component: ProfilePage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   browseRoute,
@@ -83,6 +97,8 @@ const routeTree = rootRoute.addChildren([
   requestsRoute,
   myRentalsRoute,
   rentalDetailRoute,
+  messagesRoute,
+  profileRoute,
 ]);
 
 const router = createRouter({ routeTree });

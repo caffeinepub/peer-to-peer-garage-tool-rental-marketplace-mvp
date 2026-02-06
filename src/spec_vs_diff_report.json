@@ -1,77 +1,33 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-05T03:09:24.931Z",
-  "summary": "Diff adds a new Motoko backend actor with profile/listing/rental types and several frontend pages/components for auth, listings, rentals, routing, and a warm (non-blue/purple) theme. However, stable persistence/upgrade handling is not evidenced in the backend snippet, and a few implemented behaviors appear beyond the stated requirements (e.g., admin secret initialization and extra rental status variants).",
+  "generatedAt": "2026-02-06T02:59:31.956Z",
+  "summary": "Profile dropdown was simplified to a single \"My Profile\" navigation item and logout, removing any modal-based edit flow. ProfilePage was updated to support initializing edit mode from an `edit=1` URL parameter and to clear that parameter on save/cancel. However, the dropdown does not provide a way to navigate into edit mode (e.g., `/profile?edit=1`), so the \"option to land directly in edit mode when navigated from the profile dropdown\" is not evidenced as implemented. Additional URL/session parameter utility functionality appears added beyond the stated requirements.",
   "missing_requirements": [
     {
-      "id": "REQ-11",
-      "requirement": "Implement stable persistence across upgrades for all core records (profiles, listings, rental requests/bookings) in the backend, preserving existing data during canister upgrades.",
-      "reason": "The added backend uses in-memory `Map.empty` for `profiles`, `tools`, and `rentals` and the shown portion does not include any `stable var` storage or `system` `preupgrade`/`postupgrade` hooks (or a migration module) to persist/restore state across upgrades.",
+      "id": "REQ-2",
+      "requirement": "Provide an option to land directly in edit mode when navigated from the profile dropdown (e.g., via a URL query parameter like ?edit=1).",
+      "reason": "ProfileMenu navigates only to `/profile` with no edit indicator, so there is no evidenced path from the dropdown that initializes ProfilePage in edit mode via URL parameter.",
       "evidence": [
-        "backend/main.mo"
+        "frontend/src/components/profile/ProfileMenu.tsx"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Additional rental status variants `cancelledByOwner` and `cancelledByRenter` instead of a single `Cancelled` status.",
-      "reason": "Requirements specify statuses: Requested, Approved, Declined, Cancelled, Completed. The backend introduces two cancellation variants which were not requested and may diverge from the specified status set.",
+      "description": "Added sessionStorage-based persistence utilities for URL parameters (store/get/clear persisted URL parameters).",
+      "reason": "BuildRequest only asked for using a URL edit indicator for /profile; it did not request adding generalized persisted URL/session parameter helpers.",
       "evidence": [
-        "backend/main.mo"
-      ]
-    },
-    {
-      "description": "Admin/secret-based access-control initialization from a URL parameter (`caffeineAdminToken`) and calling `_initializeAccessControlWithSecret`.",
-      "reason": "BuildRequest requires Internet Identity auth and basic access control for owners/involved parties, but does not request a secret token URL parameter mechanism or admin bootstrap behavior.",
-      "evidence": [
-        "frontend/src/hooks/useActor.ts"
-      ]
-    },
-    {
-      "description": "Footer attribution link to caffeine.ai.",
-      "reason": "Not requested by any REQ; adds user-facing content beyond marketplace requirements.",
-      "evidence": [
-        "frontend/src/components/layout/AppFooter.tsx"
+        "frontend/src/utils/urlParams.ts"
       ]
     }
   ],
   "confidence": 0.72,
   "changed_files": [
-    "all_files_summary.json",
-    "backend/main.mo",
     "frontend-file-summaries.txt",
-    "frontend/index.css",
-    "frontend/index.html",
-    "frontend/src/App.tsx",
-    "frontend/src/components/auth/LoginButton.tsx",
-    "frontend/src/components/auth/RequireAuth.tsx",
-    "frontend/src/components/layout/AppFooter.tsx",
-    "frontend/src/components/layout/AppHeader.tsx",
-    "frontend/src/components/layout/AppLayout.tsx",
-    "frontend/src/components/listings/BrowseFiltersBar.tsx",
-    "frontend/src/components/listings/ListingsGrid.tsx",
-    "frontend/src/components/listings/OwnerActions.tsx",
-    "frontend/src/components/listings/PhotoReferencesField.tsx",
     "frontend/src/components/profile/ProfileMenu.tsx",
-    "frontend/src/components/profile/ProfileSetupDialog.tsx",
-    "frontend/src/components/rentals/RentalRequestForm.tsx",
-    "frontend/src/components/rentals/RentalStatusActions.tsx",
-    "frontend/src/hooks/useActor.ts",
-    "frontend/src/hooks/useInternetIdentity.ts",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/index.css",
-    "frontend/src/main.tsx",
-    "frontend/src/pages/BrowseListingsPage.tsx",
-    "frontend/src/pages/LandingPage.tsx",
-    "frontend/src/pages/ListingDetailPage.tsx",
-    "frontend/src/pages/ListingFormPage.tsx",
-    "frontend/src/pages/MyRentalsPage.tsx",
-    "frontend/src/pages/MyToolsPage.tsx",
-    "frontend/src/pages/RentalDetailPage.tsx",
-    "frontend/src/pages/RequestsPage.tsx",
+    "frontend/src/pages/ProfilePage.tsx",
     "frontend/src/utils/urlParams.ts",
-    "frontend/tailwind.config.js",
     "project_state.json"
   ]
 }

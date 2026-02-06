@@ -115,10 +115,18 @@ export interface RentalRequest {
     toolId: bigint;
     startDate: Time;
 }
+export interface ChatMessage {
+    sender: Principal;
+    message: string;
+    timestamp: Time;
+}
 export interface UserProfile {
     id: Principal;
     contactInfo?: string;
     displayName: string;
+    joinedAt: Time;
+    profilePicture: string;
+    location: string;
 }
 export enum RentalStatus {
     requested = "requested",
@@ -150,10 +158,11 @@ export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     addToolListing(title: string, category: ToolCategory, description: string, condition: ToolCondition, dailyPrice: bigint, securityDeposit: bigint | null, location: string, photos: Array<string>): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createOrUpdateProfile(displayName: string, contactInfo: string | null): Promise<void>;
+    createOrUpdateProfile(displayName: string, contactInfo: string | null, location: string, profilePicture: string): Promise<void>;
     editToolListing(toolId: bigint, title: string, category: ToolCategory, description: string, condition: ToolCondition, dailyPrice: bigint, securityDeposit: bigint | null, location: string, available: boolean, photos: Array<string>): Promise<void>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getRentalMessages(rentalId: bigint): Promise<Array<ChatMessage>>;
     getRentalsForUser(): Promise<{
         rented: Array<RentalRequest>;
         owned: Array<RentalRequest>;
@@ -164,8 +173,8 @@ export interface backendInterface {
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     requestRental(toolId: bigint, startDate: Time, endDate: Time): Promise<bigint>;
-    saveCallerUserProfile(profile: UserProfile): Promise<void>;
     searchTools(searchText: string | null, category: ToolCategory | null, minPrice: bigint | null, maxPrice: bigint | null, availableOnly: boolean, sortBy: string): Promise<Array<ToolListing>>;
+    sendRentalMessage(rentalId: bigint, message: string): Promise<void>;
     updateRentalStatus(rentalId: bigint, newStatus: RentalStatus, _comments: string | null): Promise<void>;
 }
 import type { RentalRequest as _RentalRequest, RentalStatus as _RentalStatus, Time as _Time, ToolCategory as _ToolCategory, ToolCondition as _ToolCondition, ToolListing as _ToolListing, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
@@ -213,17 +222,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async createOrUpdateProfile(arg0: string, arg1: string | null): Promise<void> {
+    async createOrUpdateProfile(arg0: string, arg1: string | null, arg2: string, arg3: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.createOrUpdateProfile(arg0, to_candid_opt_n8(this._uploadFile, this._downloadFile, arg1));
+                const result = await this.actor.createOrUpdateProfile(arg0, to_candid_opt_n8(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.createOrUpdateProfile(arg0, to_candid_opt_n8(this._uploadFile, this._downloadFile, arg1));
+            const result = await this.actor.createOrUpdateProfile(arg0, to_candid_opt_n8(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
             return result;
         }
     }
@@ -267,6 +276,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getCallerUserRole();
             return from_candid_UserRole_n13(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getRentalMessages(arg0: bigint): Promise<Array<ChatMessage>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getRentalMessages(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getRentalMessages(arg0);
+            return result;
         }
     }
     async getRentalsForUser(): Promise<{
@@ -370,45 +393,45 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n30(this._uploadFile, this._downloadFile, arg0));
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n30(this._uploadFile, this._downloadFile, arg0));
-            return result;
-        }
-    }
     async searchTools(arg0: string | null, arg1: ToolCategory | null, arg2: bigint | null, arg3: bigint | null, arg4: boolean, arg5: string): Promise<Array<ToolListing>> {
         if (this.processError) {
             try {
-                const result = await this.actor.searchTools(to_candid_opt_n8(this._uploadFile, this._downloadFile, arg0), to_candid_opt_n32(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg3), arg4, arg5);
+                const result = await this.actor.searchTools(to_candid_opt_n8(this._uploadFile, this._downloadFile, arg0), to_candid_opt_n30(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg3), arg4, arg5);
                 return from_candid_vec_n29(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.searchTools(to_candid_opt_n8(this._uploadFile, this._downloadFile, arg0), to_candid_opt_n32(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg3), arg4, arg5);
+            const result = await this.actor.searchTools(to_candid_opt_n8(this._uploadFile, this._downloadFile, arg0), to_candid_opt_n30(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg3), arg4, arg5);
             return from_candid_vec_n29(this._uploadFile, this._downloadFile, result);
         }
     }
-    async updateRentalStatus(arg0: bigint, arg1: RentalStatus, arg2: string | null): Promise<void> {
+    async sendRentalMessage(arg0: bigint, arg1: string): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateRentalStatus(arg0, to_candid_RentalStatus_n33(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg2));
+                const result = await this.actor.sendRentalMessage(arg0, arg1);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateRentalStatus(arg0, to_candid_RentalStatus_n33(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg2));
+            const result = await this.actor.sendRentalMessage(arg0, arg1);
+            return result;
+        }
+    }
+    async updateRentalStatus(arg0: bigint, arg1: RentalStatus, arg2: string | null): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateRentalStatus(arg0, to_candid_RentalStatus_n31(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg2));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateRentalStatus(arg0, to_candid_RentalStatus_n31(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg2));
             return result;
         }
     }
@@ -450,15 +473,24 @@ function from_candid_record_n11(_uploadFile: (file: ExternalBlob) => Promise<Uin
     id: Principal;
     contactInfo: [] | [string];
     displayName: string;
+    joinedAt: _Time;
+    profilePicture: string;
+    location: string;
 }): {
     id: Principal;
     contactInfo?: string;
     displayName: string;
+    joinedAt: Time;
+    profilePicture: string;
+    location: string;
 } {
     return {
         id: value.id,
         contactInfo: record_opt_to_undefined(from_candid_opt_n12(_uploadFile, _downloadFile, value.contactInfo)),
-        displayName: value.displayName
+        displayName: value.displayName,
+        joinedAt: value.joinedAt,
+        profilePicture: value.profilePicture,
+        location: value.location
     };
 }
 function from_candid_record_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -602,8 +634,8 @@ function from_candid_vec_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
 function from_candid_vec_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ToolListing>): Array<ToolListing> {
     return value.map((x)=>from_candid_ToolListing_n22(_uploadFile, _downloadFile, x));
 }
-function to_candid_RentalStatus_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: RentalStatus): _RentalStatus {
-    return to_candid_variant_n34(_uploadFile, _downloadFile, value);
+function to_candid_RentalStatus_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: RentalStatus): _RentalStatus {
+    return to_candid_variant_n32(_uploadFile, _downloadFile, value);
 }
 function to_candid_ToolCategory_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ToolCategory): _ToolCategory {
     return to_candid_variant_n2(_uploadFile, _downloadFile, value);
@@ -611,13 +643,10 @@ function to_candid_ToolCategory_n1(_uploadFile: (file: ExternalBlob) => Promise<
 function to_candid_ToolCondition_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ToolCondition): _ToolCondition {
     return to_candid_variant_n4(_uploadFile, _downloadFile, value);
 }
-function to_candid_UserProfile_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): _UserProfile {
-    return to_candid_record_n31(_uploadFile, _downloadFile, value);
-}
 function to_candid_UserRole_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n7(_uploadFile, _downloadFile, value);
 }
-function to_candid_opt_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ToolCategory | null): [] | [_ToolCategory] {
+function to_candid_opt_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ToolCategory | null): [] | [_ToolCategory] {
     return value === null ? candid_none() : candid_some(to_candid_ToolCategory_n1(_uploadFile, _downloadFile, value));
 }
 function to_candid_opt_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: bigint | null): [] | [bigint] {
@@ -625,21 +654,6 @@ function to_candid_opt_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Arra
 }
 function to_candid_opt_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
     return value === null ? candid_none() : candid_some(value);
-}
-function to_candid_record_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    id: Principal;
-    contactInfo?: string;
-    displayName: string;
-}): {
-    id: Principal;
-    contactInfo: [] | [string];
-    displayName: string;
-} {
-    return {
-        id: value.id,
-        contactInfo: value.contactInfo ? candid_some(value.contactInfo) : candid_none(),
-        displayName: value.displayName
-    };
 }
 function to_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ToolCategory): {
     automotive: null;
@@ -664,7 +678,7 @@ function to_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         handTools: null
     } : value;
 }
-function to_candid_variant_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: RentalStatus): {
+function to_candid_variant_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: RentalStatus): {
     requested: null;
 } | {
     completed: null;

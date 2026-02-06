@@ -9,6 +9,7 @@ import { Loader2, ArrowLeft, Calendar, MapPin, DollarSign } from 'lucide-react';
 import RequireAuth from '../components/auth/RequireAuth';
 import { RentalStatus } from '../backend';
 import RentalStatusActions from '../components/rentals/RentalStatusActions';
+import RentalChatPanel from '../components/rentals/RentalChatPanel';
 import ProfileSetupDialog from '../components/profile/ProfileSetupDialog';
 
 const statusColors: Record<RentalStatus, string> = {
@@ -96,7 +97,7 @@ export default function RentalDetailPage() {
         </Button>
 
         <div className="grid gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-8">
             <Card>
               <CardHeader>
                 <div className="flex items-start justify-between">
@@ -177,6 +178,8 @@ export default function RentalDetailPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {(isOwner || isRenter) && <RentalChatPanel rentalId={rental.id} />}
           </div>
 
           <div className="space-y-6">

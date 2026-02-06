@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { MapPin, DollarSign, Shield, Calendar, Loader2, ArrowLeft } from 'lucide-react';
+import { MapPin, DollarSign, Shield, Calendar, Loader2, ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import { ToolCategory, ToolCondition } from '../backend';
 import RentalRequestForm from '../components/rentals/RentalRequestForm';
 import OwnerActions from '../components/listings/OwnerActions';
@@ -93,7 +93,21 @@ export default function ListingDetailPage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                     {listing.photos.map((photo, index) => (
                       <div key={index} className="aspect-video overflow-hidden rounded-lg bg-muted">
-                        <img src={photo} alt={`${listing.title} ${index + 1}`} className="h-full w-full object-cover" />
+                        <img
+                          src={photo}
+                          alt={`${listing.title} ${index + 1}`}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (fallback) {
+                              fallback.classList.remove('hidden');
+                            }
+                          }}
+                        />
+                        <div className="hidden h-full items-center justify-center">
+                          <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                        </div>
                       </div>
                     ))}
                   </div>
