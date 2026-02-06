@@ -1,61 +1,95 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T02:59:31.959Z",
+  "generatedAt": "2026-02-06T03:13:21.274Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Update the profile dropdown menu to remove the separate modal-based \"Edit Profile\" flow and instead route all profile actions through the single /profile page.",
+        "summary": "Redesign the homepage (frontend/src/pages/LandingPage.tsx) to feel like an immersive journey “traveling through a tool shed,” using a more life-filled, graphics-heavy layout while preserving the existing primary actions (Browse Tools, Get Started / List a Tool) and authentication-dependent behavior.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/profile/ProfileMenu.tsx"
+          "frontend/src/pages/LandingPage.tsx",
+          "frontend/src/components/landing/ToolshedJourneySection.tsx",
+          "frontend/src/pages/LandingPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/profile/ProfileMenu.tsx"
+          "frontend/src/pages/LandingPage.tsx",
+          "frontend/src/components/landing/ToolshedJourneySection.tsx",
+          "frontend/src/pages/LandingPage.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Ensure the /profile page supports both viewing and editing within the same page, including an option to land directly in edit mode when navigated from the profile dropdown (e.g., via a URL query parameter like ?edit=1).",
+        "summary": "Implement a cohesive visual theme for the new homepage that reinforces the tool-shed travel vibe (e.g., warm workshop lighting, wood/metal textures, signage/labels), and apply it consistently across the homepage sections without changing the global app layout (header/footer) behavior.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/ProfilePage.tsx",
-          "frontend/src/utils/urlParams.ts"
+          "frontend/src/pages/LandingPage.tsx",
+          "frontend/tailwind.config.js"
         ],
         "matchedFiles": [
-          "frontend/src/pages/ProfilePage.tsx",
-          "frontend/src/utils/urlParams.ts"
+          "frontend/src/pages/LandingPage.tsx",
+          "frontend/tailwind.config.js"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Align user-facing labels in the profile dropdown to reflect the unified experience (e.g., rename the action to \"My Profile\" or \"Profile\") and keep all user-facing text in English.",
+        "summary": "Add lightweight, performant visual motion to support the “travel” feeling on the homepage (e.g., parallax-like section transitions, subtle animated floating dust motes/light beams, or animated sign/indicator elements) using CSS/Tailwind-friendly techniques and respecting reduced-motion preferences.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/profile/ProfileMenu.tsx"
+          "frontend/tailwind.config.js",
+          "frontend/src/pages/LandingPage.tsx",
+          "frontend/src/components/landing/ToolshedJourneySection.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/profile/ProfileMenu.tsx"
+          "frontend/tailwind.config.js",
+          "frontend/src/pages/LandingPage.tsx",
+          "frontend/src/components/landing/ToolshedJourneySection.tsx"
+        ]
+      },
+      {
+        "id": "REQ-4",
+        "summary": "Integrate newly generated static image assets for the homepage into the app by placing them under frontend/public/assets/generated and referencing them from the homepage implementation.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/public/assets/generated/toolshed-journey-hero.dim_1600x900.png",
+          "frontend/public/assets/generated/toolshed-ui-stickers.dim_1400x900.png",
+          "frontend/public/assets/generated/toolshed-wood-texture.dim_1024x1024.png",
+          "frontend/public/assets/generated/workbench-banner.dim_1600x600.png",
+          "frontend/public/assets/generated/toolshare-hero-toolshed.dim_1600x900.png",
+          "frontend/src/pages/LandingPage.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/public/assets/generated/toolshed-journey-hero.dim_1600x900.png",
+          "frontend/public/assets/generated/toolshed-ui-stickers.dim_1400x900.png",
+          "frontend/public/assets/generated/toolshed-wood-texture.dim_1024x1024.png",
+          "frontend/public/assets/generated/workbench-banner.dim_1600x600.png",
+          "frontend/public/assets/generated/toolshare-hero-toolshed.dim_1600x900.png",
+          "frontend/src/pages/LandingPage.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
     "build-request.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/profile/ProfileMenu.tsx",
-    "frontend/src/pages/ProfilePage.tsx",
+    "frontend/public/assets/generated/toolshare-hero-toolshed.dim_1600x900.png",
+    "frontend/public/assets/generated/toolshed-journey-hero.dim_1600x900.png",
+    "frontend/public/assets/generated/toolshed-ui-stickers.dim_1400x900.png",
+    "frontend/public/assets/generated/toolshed-wood-texture.dim_1024x1024.png",
+    "frontend/public/assets/generated/workbench-banner.dim_1600x600.png",
+    "frontend/src/components/landing/ToolshedJourneySection.tsx",
+    "frontend/src/pages/LandingPage.tsx",
     "frontend/src/utils/urlParams.ts",
+    "frontend/tailwind.config.js",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

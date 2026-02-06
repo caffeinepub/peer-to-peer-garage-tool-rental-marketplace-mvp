@@ -1,58 +1,119 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Unify profile view/edit into single /profile page flow",
+  "title": "Immersive toolshed-journey homepage redesign (frontend-only)",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Remove the modal-based edit flow from ProfileMenu and route all profile actions through /profile.",
+      "summary": "Redesign LandingPage into an immersive, section-by-section “traveling through a tool shed” journey while preserving existing primary CTA behaviors and auth-dependent actions.",
       "acceptanceCriteria": [
-        "The ProfileMenu dropdown no longer shows separate \"View Profile\" and \"Edit Profile\" actions that lead to different experiences (page vs modal).",
-        "Clicking the profile menu entry navigates to /profile and does not open an edit dialog modal.",
-        "No profile editing dialog (Dialog) is rendered from ProfileMenu after this change."
+        "Homepage content is clearly themed as an immersive tool-shed journey (e.g., a sequence of sections that feels like moving through a shed/workshop)",
+        "Existing CTA behaviors remain intact: unauthenticated users see Get Started/Sign Up actions calling login; authenticated users see List a Tool navigating to /add-listing; Browse Tools navigates to /browse",
+        "Uses substantially more visuals than the current homepage (multiple graphics/illustrations/background elements beyond a single hero image)",
+        "Layout is responsive from mobile to desktop and does not overflow or clip key content"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/profile/ProfileMenu.tsx",
+          "path": "frontend/src/pages/LandingPage.tsx",
           "operation": "modify",
-          "description": "Remove local edit-dialog state and the Dialog UI; replace the separate view/edit handlers with navigation-only actions to the unified /profile page (including an edit-mode navigation option via URL query, e.g., navigate to /profile?edit=1)."
+          "description": "Rebuild the page structure into a multi-section “journey through the shed” narrative (entrance/aisle/workbench/signage/exit CTA), keep the existing Browse Tools navigation, and preserve auth-dependent CTAs by continuing to use useInternetIdentity().login for unauthenticated actions and navigation to /add-listing for authenticated users. Continue using shadcn-ui Button/Card where appropriate for consistent CTAs and content blocks; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/components/landing/ToolshedJourneySection.tsx",
+          "operation": "create",
+          "description": "Create a small presentational component to standardize each journey ‘stop’ (section layout, heading/label styling, optional image slots, and consistent padding/containers) to keep LandingPage maintainable while implementing the immersive sequence. Use shadcn-ui Card (and/or existing typography styles) as needed for section callouts; verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/LandingPage.tsx",
+          "operation": "modify",
+          "description": "Wire the new ToolshedJourneySection component into the LandingPage so it is not orphaned, and ensure responsive behavior (mobile stacking, safe image sizing, and no overflow) across all journey sections."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Make /profile support in-page view and edit modes, with optional initialization into edit mode via a URL indicator (e.g., ?edit=1).",
+      "summary": "Implement and apply a cohesive toolshed-travel visual theme on the homepage only, without changing global app layout (header/footer) behavior or editing immutable paths.",
       "acceptanceCriteria": [
-        "/profile continues to show a read-only view mode and an in-page edit mode (no separate edit screen/modal required).",
-        "When /profile is opened with an explicit edit indicator (for example, ?edit=1), the page initializes in edit mode.",
-        "When /profile is opened without the edit indicator, the page initializes in view mode (current behavior).",
-        "After saving or cancelling edits on /profile, the user returns to view mode on the same page and profile data is updated/reflected correctly."
+        "Homepage styling reads as a unified theme (colors, typography accents, section backgrounds, and visual motifs align)",
+        "Does not require edits to immutable paths (e.g., frontend/src/main.tsx, frontend/src/hooks/*, frontend/src/components/ui/*)",
+        "Header and footer remain functional and readable on top of any new homepage backgrounds (no contrast/accessibility regressions)"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/ProfilePage.tsx",
+          "path": "frontend/src/pages/LandingPage.tsx",
           "operation": "modify",
-          "description": "Read an edit indicator from the URL (e.g., using existing utilities in frontend/src/utils/urlParams.ts and/or TanStack Router navigation/search) and initialize isEditing accordingly; ensure save/cancel transitions back to view mode and clears the edit indicator from the URL to avoid re-entering edit mode on refresh."
+          "description": "Apply a consistent ‘warm workshop’ theme within the homepage via Tailwind classes (wood/metal tones, signage/labels, textured section backdrops, sticker overlays) while keeping header/footer untouched. Ensure the top hero/backdrops do not reduce header readability (maintain sufficient contrast under the sticky translucent header). Use shadcn-ui Button styling variants for CTAs to remain consistent with the rest of the app; verify the component's usage instructions before implementing."
         },
         {
-          "path": "frontend/src/utils/urlParams.ts",
+          "path": "frontend/tailwind.config.js",
           "operation": "modify",
-          "description": "Add a small, non-breaking utility for removing a query parameter from the current URL (supporting both regular query strings and hash-based routing) so /profile can clear the edit indicator after save/cancel."
+          "description": "Extend Tailwind theme with homepage-safe utilities needed for the toolshed theme (e.g., additional keyframes/animations, optional extra shadows/filters) without changing global layout behavior. Ensure any additions support mobile responsiveness and do not require edits to immutable paths."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Update profile dropdown labels to reflect a single unified profile experience and keep all user-facing text in English.",
+      "summary": "Add subtle, performant motion effects to reinforce the feeling of traveling through the shed, respecting prefers-reduced-motion and avoiding scroll jank.",
       "acceptanceCriteria": [
-        "The profile dropdown presents a single, clear navigation item for profile (label is in English).",
-        "There are no remaining English UI strings implying a separate \"View Profile\" vs \"Edit Profile\" split from the dropdown."
+        "Animations are subtle and do not block interaction or navigation",
+        "If the user has prefers-reduced-motion enabled, animations are reduced/disabled appropriately",
+        "No noticeable jank during scroll on modern desktop/mobile browsers (avoid heavy runtime effects)"
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/profile/ProfileMenu.tsx",
+          "path": "frontend/tailwind.config.js",
           "operation": "modify",
-          "description": "Update dropdown item labeling to a single, unified profile entry such as \"My Profile\" (English only) and remove any remaining menu text that implies separate view vs edit flows (e.g., remove \"View Profile\"/\"Edit Profile\")."
+          "description": "Add lightweight keyframes/animation utilities for homepage-only use (e.g., slow drifting dust motes, gentle light-beam shimmer, small signage sway) that can be gated behind Tailwind’s motion-safe/motion-reduce variants to respect reduced-motion preferences."
+        },
+        {
+          "path": "frontend/src/pages/LandingPage.tsx",
+          "operation": "modify",
+          "description": "Apply the new motion utilities to non-interactive decorative layers (e.g., dust mote overlays, subtle sticker float, gentle gradient movement) using motion-safe / motion-reduce variants so animations are disabled/reduced when the user prefers reduced motion, and ensure motion layers never block clicks/taps on CTAs."
+        },
+        {
+          "path": "frontend/src/components/landing/ToolshedJourneySection.tsx",
+          "operation": "modify",
+          "description": "Support optional decorative motion hooks (e.g., animated corner stickers or section ‘sign’ accents) at the section component level using motion-safe/motion-reduce classes so the travel vibe is consistent across sections. Verify any shadcn-ui component usage instructions before implementing."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Add and reference the newly generated static homepage image assets under frontend/public/assets/generated, and ensure the LandingPage renders them without broken links.",
+      "acceptanceCriteria": [
+        "All new images are stored as static assets under frontend/public/assets/generated",
+        "LandingPage renders the new images and they load correctly in the browser (no broken links)"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/public/assets/generated/toolshed-journey-hero.dim_1600x900.png",
+          "operation": "create",
+          "description": "Add the generated static hero scene image to be used by the redesigned LandingPage."
+        },
+        {
+          "path": "frontend/public/assets/generated/toolshed-ui-stickers.dim_1400x900.png",
+          "operation": "create",
+          "description": "Add the generated transparent sticker sheet image to be used as decorative overlays within the redesigned LandingPage."
+        },
+        {
+          "path": "frontend/public/assets/generated/toolshed-wood-texture.dim_1024x1024.png",
+          "operation": "create",
+          "description": "Add the generated tileable wood texture image to be used as a subtle background texture on homepage sections."
+        },
+        {
+          "path": "frontend/public/assets/generated/workbench-banner.dim_1600x600.png",
+          "operation": "create",
+          "description": "Add the generated workbench banner image for a mid-journey section on the redesigned LandingPage."
+        },
+        {
+          "path": "frontend/public/assets/generated/toolshare-hero-toolshed.dim_1600x900.png",
+          "operation": "create",
+          "description": "Add the edited/shifted hero image (toolshed vibe variant) for use as the primary hero visual in the redesigned LandingPage."
+        },
+        {
+          "path": "frontend/src/pages/LandingPage.tsx",
+          "operation": "modify",
+          "description": "Update the homepage to reference and render the new static assets from: frontend/public/assets/generated/toolshed-journey-hero.dim_1600x900.png, frontend/public/assets/generated/toolshed-ui-stickers.dim_1400x900.png, frontend/public/assets/generated/toolshed-wood-texture.dim_1024x1024.png, frontend/public/assets/generated/workbench-banner.dim_1600x600.png, and frontend/public/assets/generated/toolshare-hero-toolshed.dim_1600x900.png. Ensure image sizing is responsive and does not cause overflow/clipping."
         }
       ]
     }

@@ -1,32 +1,41 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "New project",
+  "summary": "Build a more lively, graphics-heavy homepage with an immersive 'traveling through a tool shed' theme.",
   "architectural_notes": [],
   "known_issues": [],
   "isFixRequest": false,
+  "imageRequirements": "## Required Images\n- Tool shed interior corridor/aisle scene with warm workshop lighting, inviting perspective (toolshed-journey-hero.dim_1600x900.png)\n- Set of workshop/tool-shed themed decorative UI stickers (e.g., labels, tags, caution stripes, bolts) on transparent background (toolshed-ui-stickers.dim_1400x900.png)\n- Wood plank texture background, subtle and tileable (toolshed-wood-texture.dim_1024x1024.png)\n- Workbench scene flat-lay banner with tools and materials (workbench-banner.dim_1600x600.png)\n\n## Edit Images\n- Shift the existing hero image to match a more immersive tool shed travel vibe (toolshare-hero.dim_1600x900.png > toolshare-hero-toolshed.dim_1600x900.png)",
   "existing_features": [
     {
-      "id": "feature-update-the-profile-dropdown-menu-to-remove-the-separate-modal-based-edit-profile-flow-and-instead-route-all-profile-actions-through-the-single-profile-page",
-      "title": "Update the profile dropdown menu to remove the separate modal-based \"Edit Profile\" flow and instead route all profile actions through the single /profile page.",
+      "id": "feature-redesign-the-homepage-frontend-src-pages-landingpage-tsx-to-feel-like-an-immersive-journey-traveling-through-a-tool-shed-using-a-more-life-filled-graphics-heavy-layout-while-preserving-the-existing-primary-actions-browse-tools-get-started-list-a-tool-and-authentication-dependent-behavior",
+      "title": "Redesign the homepage (frontend/src/pages/LandingPage.tsx) to feel like an immersive journey “traveling through a tool shed,” using a more life-filled, graphics-heavy layout while preserving the existing primary actions (Browse Tools, Get Started / List a Tool) and authentication-dependent behavior.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-ensure-the-profile-page-supports-both-viewing-and-editing-within-the-same-page-including-an-option-to-land-directly-in-edit-mode-when-navigated-from-the-profile-dropdown-e-g-via-a-url-query-parameter-like-edit-1",
-      "title": "Ensure the /profile page supports both viewing and editing within the same page, including an option to land directly in edit mode when navigated from the profile dropdown (e.g., via a URL query parameter like ?edit=1).",
+      "id": "feature-implement-a-cohesive-visual-theme-for-the-new-homepage-that-reinforces-the-tool-shed-travel-vibe-e-g-warm-workshop-lighting-wood-metal-textures-signage-labels-and-apply-it-consistently-across-the-homepage-sections-without-changing-the-global-app-layout-header-footer-behavior",
+      "title": "Implement a cohesive visual theme for the new homepage that reinforces the tool-shed travel vibe (e.g., warm workshop lighting, wood/metal textures, signage/labels), and apply it consistently across the homepage sections without changing the global app layout (header/footer) behavior.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-align-user-facing-labels-in-the-profile-dropdown-to-reflect-the-unified-experience-e-g-rename-the-action-to-my-profile-or-profile-and-keep-all-user-facing-text-in-english",
-      "title": "Align user-facing labels in the profile dropdown to reflect the unified experience (e.g., rename the action to \"My Profile\" or \"Profile\") and keep all user-facing text in English.",
+      "id": "feature-add-lightweight-performant-visual-motion-to-support-the-travel-feeling-on-the-homepage-e-g-parallax-like-section-transitions-subtle-animated-floating-dust-motes-light-beams-or-animated-sign-indicator-elements-using-css-tailwind-friendly-techniques-and-respecting-reduced-motion-preferences",
+      "title": "Add lightweight, performant visual motion to support the “travel” feeling on the homepage (e.g., parallax-like section transitions, subtle animated floating dust motes/light beams, or animated sign/indicator elements) using CSS/Tailwind-friendly techniques and respecting reduced-motion preferences.",
       "reqIds": [
         "REQ-3"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-integrate-newly-generated-static-image-assets-for-the-homepage-into-the-app-by-placing-them-under-frontend-public-assets-generated-and-referencing-them-from-the-homepage-implementation",
+      "title": "Integrate newly generated static image assets for the homepage into the app by placing them under frontend/public/assets/generated and referencing them from the homepage implementation.",
+      "reqIds": [
+        "REQ-4"
       ],
       "version": 1
     }
@@ -34,12 +43,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Condense/merge the View Profile and Edit Profile screens into a single unified profile page",
+      "summary": "Design and implement a more life-filled homepage with additional graphics/visuals and an immersive 'traveling through a tool shed' experience.",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Condense View Profile and Edit Profile into a single unified Profile page flow",
+  "projectName": "Redesign homepage with immersive, graphics-heavy 'traveling through a tool shed' experience",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

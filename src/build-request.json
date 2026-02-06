@@ -1,75 +1,111 @@
 {
   "kind": "build_request",
-  "title": "Condense View Profile and Edit Profile into a single unified Profile page flow",
+  "title": "Redesign homepage with immersive, graphics-heavy 'traveling through a tool shed' experience",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Update the profile dropdown menu to remove the separate modal-based \"Edit Profile\" flow and instead route all profile actions through the single /profile page.",
+      "text": "Redesign the homepage (frontend/src/pages/LandingPage.tsx) to feel like an immersive journey “traveling through a tool shed,” using a more life-filled, graphics-heavy layout while preserving the existing primary actions (Browse Tools, Get Started / List a Tool) and authentication-dependent behavior.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-8"
+          "recent-messages-4"
         ],
         "quotes": [
-          "now condense the view profile and edit profile into one"
+          "now create a more life filled homepage including more graphics and visuals. Make it such that you feel like you're traveling through a tool shed"
         ]
       },
       "acceptanceCriteria": [
-        "The ProfileMenu dropdown no longer shows separate \"View Profile\" and \"Edit Profile\" actions that lead to different experiences (page vs modal).",
-        "Clicking the profile menu entry navigates to /profile and does not open an edit dialog modal.",
-        "No profile editing dialog (Dialog) is rendered from ProfileMenu after this change."
+        "Homepage content is clearly themed as an immersive tool-shed journey (e.g., a sequence of sections that feels like moving through a shed/workshop)",
+        "Existing CTA behaviors remain intact: unauthenticated users see Get Started/Sign Up actions calling login; authenticated users see List a Tool navigating to /add-listing; Browse Tools navigates to /browse",
+        "Uses substantially more visuals than the current homepage (multiple graphics/illustrations/background elements beyond a single hero image)",
+        "Layout is responsive from mobile to desktop and does not overflow or clip key content"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Ensure the /profile page supports both viewing and editing within the same page, including an option to land directly in edit mode when navigated from the profile dropdown (e.g., via a URL query parameter like ?edit=1).",
+      "text": "Implement a cohesive visual theme for the new homepage that reinforces the tool-shed travel vibe (e.g., warm workshop lighting, wood/metal textures, signage/labels), and apply it consistently across the homepage sections without changing the global app layout (header/footer) behavior.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-8"
+          "recent-messages-4"
         ],
         "quotes": [
-          "now condense the view profile and edit profile into one"
+          "create a more life filled homepage including more graphics and visuals",
+          "feel like you're traveling through a tool shed"
         ]
       },
       "acceptanceCriteria": [
-        "/profile continues to show a read-only view mode and an in-page edit mode (no separate edit screen/modal required).",
-        "When /profile is opened with an explicit edit indicator (for example, ?edit=1), the page initializes in edit mode.",
-        "When /profile is opened without the edit indicator, the page initializes in view mode (current behavior).",
-        "After saving or cancelling edits on /profile, the user returns to view mode on the same page and profile data is updated/reflected correctly."
+        "Homepage styling reads as a unified theme (colors, typography accents, section backgrounds, and visual motifs align)",
+        "Does not require edits to immutable paths (e.g., frontend/src/main.tsx, frontend/src/hooks/*, frontend/src/components/ui/*)",
+        "Header and footer remain functional and readable on top of any new homepage backgrounds (no contrast/accessibility regressions)"
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Align user-facing labels in the profile dropdown to reflect the unified experience (e.g., rename the action to \"My Profile\" or \"Profile\") and keep all user-facing text in English.",
+      "text": "Add lightweight, performant visual motion to support the “travel” feeling on the homepage (e.g., parallax-like section transitions, subtle animated floating dust motes/light beams, or animated sign/indicator elements) using CSS/Tailwind-friendly techniques and respecting reduced-motion preferences.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-8"
+          "recent-messages-4"
         ],
         "quotes": [
-          "Use English for any user-facing text in the build request."
+          "feel like you're traveling through a tool shed"
         ]
       },
       "acceptanceCriteria": [
-        "The profile dropdown presents a single, clear navigation item for profile (label is in English).",
-        "There are no remaining English UI strings implying a separate \"View Profile\" vs \"Edit Profile\" split from the dropdown."
+        "Animations are subtle and do not block interaction or navigation",
+        "If the user has prefers-reduced-motion enabled, animations are reduced/disabled appropriately",
+        "No noticeable jank during scroll on modern desktop/mobile browsers (avoid heavy runtime effects)"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Integrate newly generated static image assets for the homepage into the app by placing them under frontend/public/assets/generated and referencing them from the homepage implementation.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "recent-messages-4"
+        ],
+        "quotes": [
+          "including more graphics and visuals"
+        ]
+      },
+      "acceptanceCriteria": [
+        "All new images are stored as static assets under frontend/public/assets/generated",
+        "LandingPage renders the new images and they load correctly in the browser (no broken links)"
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/components/ui (shadcn components); compose them only.",
-    "Do not edit immutable hook entrypoints listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx).",
-    "Keep backend architecture unchanged (single Motoko actor); no backend changes are required for this UI consolidation."
+    "Frontend immutable paths must not be edited: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui",
+    "Do not introduce new backend services or external databases; this request should be achievable with frontend-only changes",
+    "Keep all user-facing text in English"
   ],
   "nonGoals": [
-    "Redesigning the profile data model or backend profile CRUD APIs.",
-    "Adding new profile fields beyond what already exists (displayName, contactInfo, location, profilePicture, joinedAt).",
-    "Changing authentication (Internet Identity) behavior."
+    "Changing backend data models or adding new backend endpoints",
+    "Reworking non-homepage pages (browse, listings, profile, messaging) beyond what is necessary to keep navigation consistent",
+    "Adding Three.js/R3F scenes unless strictly necessary (prefer lightweight CSS/DOM effects)"
   ],
   "imageRequirements": {
-    "required": [],
-    "edits": []
+    "required": [
+      "Tool shed interior corridor/aisle scene with warm workshop lighting, inviting perspective (toolshed-journey-hero.dim_1600x900.png)",
+      "Set of workshop/tool-shed themed decorative UI stickers (e.g., labels, tags, caution stripes, bolts) on transparent background (toolshed-ui-stickers.dim_1400x900.png)",
+      "Wood plank texture background, subtle and tileable (toolshed-wood-texture.dim_1024x1024.png)",
+      "Workbench scene flat-lay banner with tools and materials (workbench-banner.dim_1600x600.png)"
+    ],
+    "edits": [
+      "Shift the existing hero image to match a more immersive tool shed travel vibe (toolshare-hero.dim_1600x900.png > toolshare-hero-toolshed.dim_1600x900.png)"
+    ]
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

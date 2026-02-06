@@ -2,10 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-profile-dropdown-menu-to-remove-the-separate-modal-based-edit-profile-flow-and-instead-route-all-profile-actions-through-the-single-profile-page",
-      "featureTitle": "Update the profile dropdown menu to remove the separate modal-based \"Edit Profile\" flow and instead route all profile actions through the single /profile page.",
+      "featureId": "feature-redesign-the-homepage-frontend-src-pages-landingpage-tsx-to-feel-like-an-immersive-journey-traveling-through-a-tool-shed-using-a-more-life-filled-graphics-heavy-layout-while-preserving-the-existing-primary-actions-browse-tools-get-started-list-a-tool-and-authentication-dependent-behavior",
+      "featureTitle": "Redesign the homepage (frontend/src/pages/LandingPage.tsx) to feel like an immersive journey “traveling through a tool shed,” using a more life-filled, graphics-heavy layout while preserving the existing primary actions (Browse Tools, Get Started / List a Tool) and authentication-dependent behavior.",
       "files": [
-        "frontend/src/components/profile/ProfileMenu.tsx"
+        "frontend/src/components/landing/ToolshedJourneySection.tsx",
+        "frontend/src/pages/LandingPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -22,11 +23,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-the-profile-page-supports-both-viewing-and-editing-within-the-same-page-including-an-option-to-land-directly-in-edit-mode-when-navigated-from-the-profile-dropdown-e-g-via-a-url-query-parameter-like-edit-1",
-      "featureTitle": "Ensure the /profile page supports both viewing and editing within the same page, including an option to land directly in edit mode when navigated from the profile dropdown (e.g., via a URL query parameter like ?edit=1).",
+      "featureId": "feature-implement-a-cohesive-visual-theme-for-the-new-homepage-that-reinforces-the-tool-shed-travel-vibe-e-g-warm-workshop-lighting-wood-metal-textures-signage-labels-and-apply-it-consistently-across-the-homepage-sections-without-changing-the-global-app-layout-header-footer-behavior",
+      "featureTitle": "Implement a cohesive visual theme for the new homepage that reinforces the tool-shed travel vibe (e.g., warm workshop lighting, wood/metal textures, signage/labels), and apply it consistently across the homepage sections without changing the global app layout (header/footer) behavior.",
       "files": [
-        "frontend/src/pages/ProfilePage.tsx",
-        "frontend/src/utils/urlParams.ts"
+        "frontend/src/pages/LandingPage.tsx",
+        "frontend/tailwind.config.js"
       ],
       "components": [
         "authorization@4.0.0",
@@ -43,10 +44,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-align-user-facing-labels-in-the-profile-dropdown-to-reflect-the-unified-experience-e-g-rename-the-action-to-my-profile-or-profile-and-keep-all-user-facing-text-in-english",
-      "featureTitle": "Align user-facing labels in the profile dropdown to reflect the unified experience (e.g., rename the action to \"My Profile\" or \"Profile\") and keep all user-facing text in English.",
+      "featureId": "feature-add-lightweight-performant-visual-motion-to-support-the-travel-feeling-on-the-homepage-e-g-parallax-like-section-transitions-subtle-animated-floating-dust-motes-light-beams-or-animated-sign-indicator-elements-using-css-tailwind-friendly-techniques-and-respecting-reduced-motion-preferences",
+      "featureTitle": "Add lightweight, performant visual motion to support the “travel” feeling on the homepage (e.g., parallax-like section transitions, subtle animated floating dust motes/light beams, or animated sign/indicator elements) using CSS/Tailwind-friendly techniques and respecting reduced-motion preferences.",
       "files": [
-        "frontend/src/components/profile/ProfileMenu.tsx"
+        "frontend/src/components/landing/ToolshedJourneySection.tsx",
+        "frontend/src/pages/LandingPage.tsx",
+        "frontend/tailwind.config.js"
       ],
       "components": [
         "authorization@4.0.0",
@@ -59,6 +62,26 @@
       ],
       "testIds": [
         "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-integrate-newly-generated-static-image-assets-for-the-homepage-into-the-app-by-placing-them-under-frontend-public-assets-generated-and-referencing-them-from-the-homepage-implementation",
+      "featureTitle": "Integrate newly generated static image assets for the homepage into the app by placing them under frontend/public/assets/generated and referencing them from the homepage implementation.",
+      "files": [
+        "frontend/src/pages/LandingPage.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
       ],
       "confidence": "high"
     }
