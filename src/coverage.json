@@ -1,77 +1,134 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T03:13:21.274Z",
+  "generatedAt": "2026-02-06T05:11:38.136Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 4,
+    "total": 5,
+    "implemented": 5,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Redesign the homepage (frontend/src/pages/LandingPage.tsx) to feel like an immersive journey “traveling through a tool shed,” using a more life-filled, graphics-heavy layout while preserving the existing primary actions (Browse Tools, Get Started / List a Tool) and authentication-dependent behavior.",
+        "summary": "Polish UI/UX across all existing pages so they feel consistent and seamless: align typography scale, spacing, page headings, section layout, and empty/loading/error states across Landing, Browse, Listing Detail, Listing Form, My Tools, Requests, My Rentals, Rental Detail, Messaging, Profile, and Community Map pages.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/components/layout/PageShell.tsx",
+          "frontend/src/components/layout/PageHeader.tsx",
+          "frontend/src/components/states/LoadingState.tsx",
+          "frontend/src/components/states/EmptyStateCard.tsx",
+          "frontend/src/components/states/ErrorStateCard.tsx",
+          "frontend/src/pages/BrowseListingsPage.tsx",
+          "frontend/src/pages/MyToolsPage.tsx",
+          "frontend/src/pages/RequestsPage.tsx",
+          "frontend/src/pages/MyRentalsPage.tsx",
+          "frontend/src/pages/RentalDetailPage.tsx",
+          "frontend/src/pages/CommunityMapPage.tsx",
+          "frontend/src/components/rentals/RentalChatPanel.tsx",
           "frontend/src/pages/LandingPage.tsx",
-          "frontend/src/components/landing/ToolshedJourneySection.tsx",
-          "frontend/src/pages/LandingPage.tsx"
+          "frontend/src/pages/ListingDetailPage.tsx",
+          "frontend/src/pages/ListingFormPage.tsx",
+          "frontend/src/pages/MessagingPage.tsx",
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/index.css"
         ],
         "matchedFiles": [
-          "frontend/src/pages/LandingPage.tsx",
-          "frontend/src/components/landing/ToolshedJourneySection.tsx",
-          "frontend/src/pages/LandingPage.tsx"
+          "frontend/src/components/layout/PageShell.tsx",
+          "frontend/src/components/layout/PageHeader.tsx",
+          "frontend/src/components/states/LoadingState.tsx",
+          "frontend/src/components/states/EmptyStateCard.tsx",
+          "frontend/src/components/states/ErrorStateCard.tsx",
+          "frontend/src/pages/BrowseListingsPage.tsx",
+          "frontend/src/pages/MyToolsPage.tsx",
+          "frontend/src/pages/RequestsPage.tsx",
+          "frontend/src/pages/MyRentalsPage.tsx",
+          "frontend/src/pages/RentalDetailPage.tsx",
+          "frontend/src/pages/CommunityMapPage.tsx",
+          "frontend/src/components/rentals/RentalChatPanel.tsx",
+          "frontend/src/pages/ListingDetailPage.tsx",
+          "frontend/src/pages/MessagingPage.tsx",
+          "frontend/src/pages/ProfilePage.tsx",
+          "frontend/src/index.css"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Implement a cohesive visual theme for the new homepage that reinforces the tool-shed travel vibe (e.g., warm workshop lighting, wood/metal textures, signage/labels), and apply it consistently across the homepage sections without changing the global app layout (header/footer) behavior.",
+        "summary": "Introduce shared frontend utilities/components to eliminate duplicated logic and mappings currently repeated across pages/components (e.g., rental status label/color mapping and date formatting). Replace page-local implementations with shared imports.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/pages/LandingPage.tsx",
-          "frontend/tailwind.config.js"
+          "frontend/src/utils/rentals/rentalStatusPresentation.ts",
+          "frontend/src/utils/rentals/rentalDateFormat.ts",
+          "frontend/src/pages/MyRentalsPage.tsx",
+          "frontend/src/pages/RequestsPage.tsx",
+          "frontend/src/pages/RentalDetailPage.tsx",
+          "frontend/src/components/messaging/ConversationsList.tsx",
+          "frontend/src/components/messaging/ActiveConversationPanel.tsx",
+          "frontend/src/components/rentals/RentalChatPanel.tsx",
+          "frontend/src/components/rentals/RentalStatusActions.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/pages/LandingPage.tsx",
-          "frontend/tailwind.config.js"
+          "frontend/src/utils/rentals/rentalStatusPresentation.ts",
+          "frontend/src/utils/rentals/rentalDateFormat.ts",
+          "frontend/src/pages/MyRentalsPage.tsx",
+          "frontend/src/pages/RequestsPage.tsx",
+          "frontend/src/pages/RentalDetailPage.tsx",
+          "frontend/src/components/messaging/ConversationsList.tsx",
+          "frontend/src/components/messaging/ActiveConversationPanel.tsx",
+          "frontend/src/components/rentals/RentalChatPanel.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Add lightweight, performant visual motion to support the “travel” feeling on the homepage (e.g., parallax-like section transitions, subtle animated floating dust motes/light beams, or animated sign/indicator elements) using CSS/Tailwind-friendly techniques and respecting reduced-motion preferences.",
+        "summary": "Remove dead/duplicate frontend code and placeholders, and ensure the codebase has no unused exports/imports related to removed files. In particular, address the empty placeholder hook file frontend/src/hooks/useMapZoom.ts by either removing it or implementing it and consolidating map zoom behavior into a single, clearly-named hook without duplication.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/tailwind.config.js",
-          "frontend/src/pages/LandingPage.tsx",
-          "frontend/src/components/landing/ToolshedJourneySection.tsx"
+          "frontend/src/hooks/useMapTransform.ts",
+          "frontend/src/hooks/useMapZoom.ts",
+          "frontend/src/components/community/CommunityMapPanel.tsx"
         ],
         "matchedFiles": [
-          "frontend/tailwind.config.js",
-          "frontend/src/pages/LandingPage.tsx",
-          "frontend/src/components/landing/ToolshedJourneySection.tsx"
+          "frontend/src/hooks/useMapZoom.ts",
+          "frontend/src/components/community/CommunityMapPanel.tsx"
         ]
       },
       {
         "id": "REQ-4",
-        "summary": "Integrate newly generated static image assets for the homepage into the app by placing them under frontend/public/assets/generated and referencing them from the homepage implementation.",
+        "summary": "Make cross-page interactions feel seamless by standardizing navigation and action patterns: consistent primary/secondary CTAs, consistent link styling, and predictable placement of key actions (e.g., “Add Tool”, “View Details”, “Manage Rentals/Requests”) across relevant pages.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/public/assets/generated/toolshed-journey-hero.dim_1600x900.png",
-          "frontend/public/assets/generated/toolshed-ui-stickers.dim_1400x900.png",
-          "frontend/public/assets/generated/toolshed-wood-texture.dim_1024x1024.png",
-          "frontend/public/assets/generated/workbench-banner.dim_1600x600.png",
-          "frontend/public/assets/generated/toolshare-hero-toolshed.dim_1600x900.png",
-          "frontend/src/pages/LandingPage.tsx"
+          "frontend/src/components/navigation/AppNavLink.tsx",
+          "frontend/src/components/layout/AppHeader.tsx",
+          "frontend/src/pages/MyToolsPage.tsx",
+          "frontend/src/pages/MyRentalsPage.tsx",
+          "frontend/src/pages/RequestsPage.tsx",
+          "frontend/src/pages/RentalDetailPage.tsx",
+          "frontend/src/pages/ListingDetailPage.tsx",
+          "frontend/src/pages/MessagingPage.tsx"
         ],
         "matchedFiles": [
-          "frontend/public/assets/generated/toolshed-journey-hero.dim_1600x900.png",
-          "frontend/public/assets/generated/toolshed-ui-stickers.dim_1400x900.png",
-          "frontend/public/assets/generated/toolshed-wood-texture.dim_1024x1024.png",
-          "frontend/public/assets/generated/workbench-banner.dim_1600x600.png",
-          "frontend/public/assets/generated/toolshare-hero-toolshed.dim_1600x900.png",
-          "frontend/src/pages/LandingPage.tsx"
+          "frontend/src/components/navigation/AppNavLink.tsx",
+          "frontend/src/components/layout/AppHeader.tsx",
+          "frontend/src/pages/MyToolsPage.tsx",
+          "frontend/src/pages/MyRentalsPage.tsx",
+          "frontend/src/pages/RequestsPage.tsx",
+          "frontend/src/pages/RentalDetailPage.tsx",
+          "frontend/src/pages/ListingDetailPage.tsx",
+          "frontend/src/pages/MessagingPage.tsx"
+        ]
+      },
+      {
+        "id": "REQ-5",
+        "summary": "Apply a single coherent visual theme across the app (colors, typography, surface styles, radii, shadows) and enforce it consistently using existing Tailwind + shadcn primitives; keep the theme neutral and modern (avoid a blue/purple-dominant palette).",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/index.css",
+          "frontend/tailwind.config.js",
+          "frontend/src/components/layout/AppLayout.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/index.css"
         ]
       }
     ]
@@ -81,15 +138,30 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/public/assets/generated/toolshare-hero-toolshed.dim_1600x900.png",
-    "frontend/public/assets/generated/toolshed-journey-hero.dim_1600x900.png",
-    "frontend/public/assets/generated/toolshed-ui-stickers.dim_1400x900.png",
-    "frontend/public/assets/generated/toolshed-wood-texture.dim_1024x1024.png",
-    "frontend/public/assets/generated/workbench-banner.dim_1600x600.png",
-    "frontend/src/components/landing/ToolshedJourneySection.tsx",
-    "frontend/src/pages/LandingPage.tsx",
-    "frontend/src/utils/urlParams.ts",
-    "frontend/tailwind.config.js",
+    "frontend/src/components/community/CommunityMapPanel.tsx",
+    "frontend/src/components/layout/AppHeader.tsx",
+    "frontend/src/components/layout/PageHeader.tsx",
+    "frontend/src/components/layout/PageShell.tsx",
+    "frontend/src/components/messaging/ActiveConversationPanel.tsx",
+    "frontend/src/components/messaging/ConversationsList.tsx",
+    "frontend/src/components/navigation/AppNavLink.tsx",
+    "frontend/src/components/rentals/RentalChatPanel.tsx",
+    "frontend/src/components/states/EmptyStateCard.tsx",
+    "frontend/src/components/states/ErrorStateCard.tsx",
+    "frontend/src/components/states/LoadingState.tsx",
+    "frontend/src/hooks/useMapZoom.ts",
+    "frontend/src/index.css",
+    "frontend/src/pages/BrowseListingsPage.tsx",
+    "frontend/src/pages/CommunityMapPage.tsx",
+    "frontend/src/pages/ListingDetailPage.tsx",
+    "frontend/src/pages/MessagingPage.tsx",
+    "frontend/src/pages/MyRentalsPage.tsx",
+    "frontend/src/pages/MyToolsPage.tsx",
+    "frontend/src/pages/ProfilePage.tsx",
+    "frontend/src/pages/RentalDetailPage.tsx",
+    "frontend/src/pages/RequestsPage.tsx",
+    "frontend/src/utils/rentals/rentalDateFormat.ts",
+    "frontend/src/utils/rentals/rentalStatusPresentation.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

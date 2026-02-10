@@ -5,30 +5,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, ArrowLeft, Calendar, MapPin, DollarSign } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, DollarSign } from 'lucide-react';
 import RequireAuth from '../components/auth/RequireAuth';
-import { RentalStatus } from '../backend';
 import RentalStatusActions from '../components/rentals/RentalStatusActions';
 import RentalChatPanel from '../components/rentals/RentalChatPanel';
 import ProfileSetupDialog from '../components/profile/ProfileSetupDialog';
-
-const statusColors: Record<RentalStatus, string> = {
-  [RentalStatus.requested]: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
-  [RentalStatus.approved]: 'bg-green-500/10 text-green-700 dark:text-green-400',
-  [RentalStatus.declined]: 'bg-red-500/10 text-red-700 dark:text-red-400',
-  [RentalStatus.cancelledByOwner]: 'bg-gray-500/10 text-gray-700 dark:text-gray-400',
-  [RentalStatus.cancelledByRenter]: 'bg-gray-500/10 text-gray-700 dark:text-gray-400',
-  [RentalStatus.completed]: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
-};
-
-const statusLabels: Record<RentalStatus, string> = {
-  [RentalStatus.requested]: 'Requested',
-  [RentalStatus.approved]: 'Approved',
-  [RentalStatus.declined]: 'Declined',
-  [RentalStatus.cancelledByOwner]: 'Cancelled by Owner',
-  [RentalStatus.cancelledByRenter]: 'Cancelled by Renter',
-  [RentalStatus.completed]: 'Completed',
-};
+import PageShell from '../components/layout/PageShell';
+import LoadingState from '../components/states/LoadingState';
+import EmptyStateCard from '../components/states/EmptyStateCard';
+import { getStatusColor, getStatusLabel } from '../utils/rentals/rentalStatusPresentation';
+import { formatLongDate, calculateRentalDays } from '../utils/rentals/rentalDateFormat';
+import { RentalStatus } from '../backend';
 
 export default function RentalDetailPage() {
   const { rentalId } = useParams({ from: '/rental/$rentalId' });
@@ -45,52 +32,41 @@ export default function RentalDetailPage() {
   const isOwner = !!(identity && rental && rental.owner.toString() === identity.getPrincipal().toString());
   const isRenter = !!(identity && rental && rental.renter.toString() === identity.getPrincipal().toString());
 
-  const formatDate = (timestamp: bigint) => {
-    return new Date(Number(timestamp) / 1_000_000).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  };
-
   if (rentalsLoading || toolLoading) {
     return (
-      <div className="container flex min-h-[calc(100vh-8rem)] items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <PageShell>
+        <LoadingState />
+      </PageShell>
     );
   }
 
   if (!rental || !tool) {
     return (
       <RequireAuth>
-        <div className="container py-12">
-          <Card>
-            <CardHeader>
-              <CardTitle>Rental Not Found</CardTitle>
-              <CardDescription>The rental you're looking for doesn't exist.</CardDescription>
-            </CardHeader>
-            <CardContent>
+        <PageShell>
+          <EmptyStateCard
+            icon={Calendar}
+            title="Rental Not Found"
+            description="The rental you're looking for doesn't exist."
+            action={
               <Button onClick={() => navigate({ to: '/my-rentals' })}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to My Rentals
               </Button>
-            </CardContent>
-          </Card>
-        </div>
+            }
+          />
+        </PageShell>
       </RequireAuth>
     );
   }
 
-  const totalDays = Math.ceil(
-    (Number(rental.endDate) - Number(rental.startDate)) / (1_000_000 * 1000 * 60 * 60 * 24)
-  );
+  const totalDays = calculateRentalDays(rental.startDate, rental.endDate);
   const totalCost = Number(tool.dailyPrice) * totalDays;
 
   return (
     <RequireAuth>
       <ProfileSetupDialog />
-      <div className="container py-8">
+      <PageShell>
         <Button variant="ghost" onClick={() => navigate({ to: isOwner ? '/requests' : '/my-rentals' })} className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
@@ -105,8 +81,8 @@ export default function RentalDetailPage() {
                     <CardTitle className="text-3xl">Rental Request</CardTitle>
                     <CardDescription>Request ID: {rental.id.toString()}</CardDescription>
                   </div>
-                  <Badge className={statusColors[rental.status as RentalStatus]}>
-                    {statusLabels[rental.status as RentalStatus]}
+                  <Badge className={getStatusColor(rental.status as RentalStatus)}>
+                    {getStatusLabel(rental.status as RentalStatus)}
                   </Badge>
                 </div>
               </CardHeader>
@@ -145,14 +121,14 @@ export default function RentalDetailPage() {
                       <Calendar className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="text-sm font-medium">Start Date</p>
-                        <p className="text-sm text-muted-foreground">{formatDate(rental.startDate)}</p>
+                        <p className="text-sm text-muted-foreground">{formatLongDate(rental.startDate)}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-5 w-5 text-muted-foreground" />
                       <div>
                         <p className="text-sm font-medium">End Date</p>
-                        <p className="text-sm text-muted-foreground">{formatDate(rental.endDate)}</p>
+                        <p className="text-sm text-muted-foreground">{formatLongDate(rental.endDate)}</p>
                       </div>
                     </div>
                   </div>
@@ -168,11 +144,11 @@ export default function RentalDetailPage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Requested</span>
-                      <span>{formatDate(rental.created)}</span>
+                      <span>{formatLongDate(rental.created)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Last Updated</span>
-                      <span>{formatDate(rental.lastUpdated)}</span>
+                      <span>{formatLongDate(rental.lastUpdated)}</span>
                     </div>
                   </div>
                 </div>
@@ -219,7 +195,7 @@ export default function RentalDetailPage() {
             <RentalStatusActions rental={rental} isOwner={isOwner} isRenter={isRenter} />
           </div>
         </div>
-      </div>
+      </PageShell>
     </RequireAuth>
   );
 }

@@ -5,11 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { MapPin, DollarSign, Shield, Calendar, Loader2, ArrowLeft, Image as ImageIcon } from 'lucide-react';
+import { MapPin, DollarSign, Shield, Calendar, ArrowLeft, Image as ImageIcon } from 'lucide-react';
 import { ToolCategory, ToolCondition } from '../backend';
 import RentalRequestForm from '../components/rentals/RentalRequestForm';
 import OwnerActions from '../components/listings/OwnerActions';
 import ProfileSetupDialog from '../components/profile/ProfileSetupDialog';
+import PageShell from '../components/layout/PageShell';
+import LoadingState from '../components/states/LoadingState';
+import EmptyStateCard from '../components/states/EmptyStateCard';
 
 const categoryLabels: Record<ToolCategory, string> = {
   [ToolCategory.powerTools]: 'Power Tools',
@@ -35,28 +38,27 @@ export default function ListingDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="container flex min-h-[calc(100vh-8rem)] items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <PageShell>
+        <LoadingState />
+      </PageShell>
     );
   }
 
   if (!listing) {
     return (
-      <div className="container py-12">
-        <Card>
-          <CardHeader>
-            <CardTitle>Tool Not Found</CardTitle>
-            <CardDescription>The tool you're looking for doesn't exist or has been removed.</CardDescription>
-          </CardHeader>
-          <CardContent>
+      <PageShell>
+        <EmptyStateCard
+          icon={MapPin}
+          title="Tool Not Found"
+          description="The tool you're looking for doesn't exist or has been removed."
+          action={
             <Button onClick={() => navigate({ to: '/browse' })}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Browse
             </Button>
-          </CardContent>
-        </Card>
-      </div>
+          }
+        />
+      </PageShell>
     );
   }
 
@@ -66,7 +68,7 @@ export default function ListingDetailPage() {
   return (
     <>
       <ProfileSetupDialog />
-      <div className="container py-8">
+      <PageShell>
         <Button variant="ghost" onClick={() => navigate({ to: '/browse' })} className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Browse
@@ -186,7 +188,7 @@ export default function ListingDetailPage() {
             )}
           </div>
         </div>
-      </div>
+      </PageShell>
     </>
   );
 }

@@ -1,12 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Redesign the homepage to feel like an immersive, graphics-heavy journey “traveling through a tool shed,” while keeping existing primary CTAs and auth-dependent behavior unchanged.
+**Goal:** Polish and standardize UI/UX across all existing pages while refactoring the frontend to remove duplicated code and dead/placeholder files.
 
 **Planned changes:**
-- Redesign `frontend/src/pages/LandingPage.tsx` into a sequence of themed sections that reads like moving through a tool shed/workshop, using substantially more visuals than the current layout.
-- Apply a cohesive “tool shed travel” visual theme (e.g., warm lighting, wood/metal textures, signage/labels) across the homepage without changing global header/footer behavior.
-- Add lightweight, scroll-friendly motion (CSS/Tailwind-friendly) to enhance the “travel” feeling, while respecting `prefers-reduced-motion`.
-- Add and reference new static image assets under `frontend/public/assets/generated` so the homepage loads all visuals reliably.
+- Standardize page structure across all routes (consistent header pattern, typography scale, spacing, section layout, and top/bottom padding).
+- Unify loading, empty, and error states across data-driven pages using a consistent shared UI pattern.
+- Normalize common UI primitives usage (cards, badges, buttons, alerts) for consistent appearance in light and dark mode.
+- Refactor duplicated frontend logic into shared utilities/components (e.g., rental status label/color mapping and shared rental date formatting).
+- Remove dead/duplicate code and clean up unused imports/exports; resolve the placeholder `frontend/src/hooks/useMapZoom.ts` by removing it or implementing a single consolidated map zoom/pan hook.
 
-**User-visible outcome:** Visitors see a new immersive, visual homepage with a tool-shed journey vibe; Browse Tools and Get Started/List a Tool actions behave exactly as before (including auth-dependent behavior), with responsive layout and subtle motion effects.
+**User-visible outcome:** All existing pages feel more cohesive and seamless, with consistent navigation/actions and states (loading/empty/error), and the app behaves the same but looks and reads more uniformly across routes.

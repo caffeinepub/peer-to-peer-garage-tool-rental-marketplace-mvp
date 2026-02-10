@@ -26,14 +26,30 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
+export const GeoCoordinates = IDL.Record({
+  'latitude' : IDL.Float64,
+  'longitude' : IDL.Float64,
+});
 export const Time = IDL.Int;
 export const UserProfile = IDL.Record({
   'id' : IDL.Principal,
   'contactInfo' : IDL.Opt(IDL.Text),
   'displayName' : IDL.Text,
   'joinedAt' : Time,
+  'publicCoordinates' : IDL.Opt(GeoCoordinates),
   'profilePicture' : IDL.Text,
   'location' : IDL.Text,
+  'streetAddress' : IDL.Opt(IDL.Text),
+  'coordinates' : IDL.Opt(GeoCoordinates),
+});
+export const CommunityMapProfile = IDL.Record({
+  'id' : IDL.Principal,
+  'contactInfo' : IDL.Opt(IDL.Text),
+  'displayName' : IDL.Text,
+  'joinedAt' : Time,
+  'profilePicture' : IDL.Text,
+  'location' : IDL.Text,
+  'coordinates' : IDL.Opt(GeoCoordinates),
 });
 export const ChatMessage = IDL.Record({
   'sender' : IDL.Principal,
@@ -92,7 +108,14 @@ export const idlService = IDL.Service({
     ),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'createOrUpdateProfile' : IDL.Func(
-      [IDL.Text, IDL.Opt(IDL.Text), IDL.Text, IDL.Text],
+      [
+        IDL.Text,
+        IDL.Opt(IDL.Text),
+        IDL.Text,
+        IDL.Text,
+        IDL.Opt(GeoCoordinates),
+        IDL.Opt(IDL.Text),
+      ],
       [],
       [],
     ),
@@ -114,6 +137,11 @@ export const idlService = IDL.Service({
     ),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getCommunityMapProfiles' : IDL.Func(
+      [],
+      [IDL.Vec(CommunityMapProfile)],
+      ['query'],
+    ),
   'getRentalMessages' : IDL.Func([IDL.Nat], [IDL.Vec(ChatMessage)], ['query']),
   'getRentalsForUser' : IDL.Func(
       [],
@@ -139,6 +167,7 @@ export const idlService = IDL.Service({
     ),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'requestRental' : IDL.Func([IDL.Nat, Time, Time], [IDL.Nat], []),
+  'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'searchTools' : IDL.Func(
       [
         IDL.Opt(IDL.Text),
@@ -180,14 +209,30 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
+  const GeoCoordinates = IDL.Record({
+    'latitude' : IDL.Float64,
+    'longitude' : IDL.Float64,
+  });
   const Time = IDL.Int;
   const UserProfile = IDL.Record({
     'id' : IDL.Principal,
     'contactInfo' : IDL.Opt(IDL.Text),
     'displayName' : IDL.Text,
     'joinedAt' : Time,
+    'publicCoordinates' : IDL.Opt(GeoCoordinates),
     'profilePicture' : IDL.Text,
     'location' : IDL.Text,
+    'streetAddress' : IDL.Opt(IDL.Text),
+    'coordinates' : IDL.Opt(GeoCoordinates),
+  });
+  const CommunityMapProfile = IDL.Record({
+    'id' : IDL.Principal,
+    'contactInfo' : IDL.Opt(IDL.Text),
+    'displayName' : IDL.Text,
+    'joinedAt' : Time,
+    'profilePicture' : IDL.Text,
+    'location' : IDL.Text,
+    'coordinates' : IDL.Opt(GeoCoordinates),
   });
   const ChatMessage = IDL.Record({
     'sender' : IDL.Principal,
@@ -246,7 +291,14 @@ export const idlFactory = ({ IDL }) => {
       ),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'createOrUpdateProfile' : IDL.Func(
-        [IDL.Text, IDL.Opt(IDL.Text), IDL.Text, IDL.Text],
+        [
+          IDL.Text,
+          IDL.Opt(IDL.Text),
+          IDL.Text,
+          IDL.Text,
+          IDL.Opt(GeoCoordinates),
+          IDL.Opt(IDL.Text),
+        ],
         [],
         [],
       ),
@@ -268,6 +320,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getCommunityMapProfiles' : IDL.Func(
+        [],
+        [IDL.Vec(CommunityMapProfile)],
+        ['query'],
+      ),
     'getRentalMessages' : IDL.Func(
         [IDL.Nat],
         [IDL.Vec(ChatMessage)],
@@ -297,6 +354,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'requestRental' : IDL.Func([IDL.Nat, Time, Time], [IDL.Nat], []),
+    'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'searchTools' : IDL.Func(
         [
           IDL.Opt(IDL.Text),

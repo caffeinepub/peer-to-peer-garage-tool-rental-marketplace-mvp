@@ -1,11 +1,13 @@
 import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Time "mo:core/Time";
+import Text "mo:core/Text";
 import List "mo:core/List";
 import Array "mo:core/Array";
-import Text "mo:core/Text";
 import Iter "mo:core/Iter";
 import Order "mo:core/Order";
+import Float "mo:core/Float";
+import Int "mo:core/Int";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
 
@@ -40,13 +42,31 @@ actor {
     #completed;
   };
 
+  public type GeoCoordinates = {
+    latitude : Float;
+    longitude : Float;
+  };
+
+  public type CommunityMapProfile = {
+    id : Principal;
+    displayName : Text;
+    contactInfo : ?Text;
+    location : Text;
+    profilePicture : Text;
+    coordinates : ?GeoCoordinates;
+    joinedAt : Time.Time;
+  };
+
   public type UserProfile = {
     id : Principal;
     displayName : Text;
     contactInfo : ?Text;
     location : Text;
     profilePicture : Text;
+    coordinates : ?GeoCoordinates;
     joinedAt : Time.Time;
+    streetAddress : ?Text;
+    publicCoordinates : ?GeoCoordinates;
   };
 
   public type ToolListing = {
@@ -115,9 +135,22 @@ actor {
   var nextRentalId = 1;
 
   // User Profile Management
-  public shared ({ caller }) func createOrUpdateProfile(displayName : Text, contactInfo : ?Text, location : Text, profilePicture : Text) : async () {
+  public shared ({ caller }) func createOrUpdateProfile(
+    displayName : Text,
+    contactInfo : ?Text,
+    location : Text,
+    profilePicture : Text,
+    coordinates : ?GeoCoordinates,
+    streetAddress : ?Text,
+  ) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Must be logged in to create/update profile");
+    };
+
+    // Generate public coordinates with obfuscated location
+    let publicCoordinates = switch (coordinates) {
+      case (?coords) { ?generateObfuscatedCoordinates(coords) };
+      case (null) { null };
     };
 
     let existingProfile = profiles.get(caller);
@@ -128,15 +161,40 @@ actor {
       contactInfo;
       location;
       profilePicture;
+      coordinates;
       joinedAt = switch (existingProfile) {
         case (null) { Time.now() };
         case (?existing) { existing.joinedAt };
       };
+      streetAddress;
+      publicCoordinates;
     };
 
     profiles.add(caller, profile);
   };
 
+  // Generate Obfuscated Coordinates
+  func generateObfuscatedCoordinates(coords : GeoCoordinates) : GeoCoordinates {
+    let latIntValue = coords.latitude.toInt();
+    let lonIntValue = coords.longitude.toInt();
+
+    let latOffset = (Int.abs(latIntValue % 10) % 4 + 2).toInt() * (if (coords.latitude > 0) { 1 } else { -1 });
+    let lonOffset = (Int.abs(lonIntValue % 10) % 4 + 2).toInt() * (if (coords.longitude > 0) { 1 } else { -1 });
+
+    let floatLatOffset = latOffset.toFloat();
+    let floatLonOffset = lonOffset.toFloat();
+
+    // Random(ish) offset distance
+    let obfuscatedLatitude = coords.latitude + (0.005 * floatLatOffset);
+    let obfuscatedLongitude = coords.longitude + (0.004 * floatLonOffset);
+
+    {
+      latitude = obfuscatedLatitude;
+      longitude = obfuscatedLongitude;
+    };
+  };
+
+  // Get callers full private profile (never public)
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Only users can view profiles");
@@ -144,11 +202,67 @@ actor {
     profiles.get(caller);
   };
 
+  // Get another user's profile - admin can view full profile, regular users cannot view private fields
   public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
-    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: Can only view your own profile");
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can view profiles");
     };
+
+    // Only the profile owner or admin can view the full profile including private fields
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own full profile");
+    };
+
     profiles.get(user);
+  };
+
+  // Save caller's profile - wrapper for createOrUpdateProfile for frontend compatibility
+  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
+
+    await createOrUpdateProfile(
+      profile.displayName,
+      profile.contactInfo,
+      profile.location,
+      profile.profilePicture,
+      profile.coordinates,
+      profile.streetAddress,
+    );
+  };
+
+  // Query public location compatible coordinates for community map
+  public query ({ caller }) func getCommunityMapProfiles() : async [CommunityMapProfile] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Must be logged in to view map");
+    };
+
+    let filtered = profiles.values().toArray().filter(
+      func(profile) {
+        switch (profile.publicCoordinates) {
+          case (null) { false };
+          case (_) { true };
+        };
+      }
+    );
+
+    // Map to public profiles and return public coordinates only
+    let mapped = filtered.map(
+      func(profile) {
+        {
+          id = profile.id;
+          displayName = profile.displayName;
+          contactInfo = profile.contactInfo;
+          location = profile.location;
+          profilePicture = profile.profilePicture;
+          coordinates = profile.publicCoordinates;
+          joinedAt = profile.joinedAt;
+        };
+      }
+    );
+
+    mapped;
   };
 
   // Tool Listing Management
@@ -189,13 +303,13 @@ actor {
       case (?tool) { tool };
     };
 
-    if (existing.owner != caller) {
-      Runtime.trap("Only the tool owner can edit this listing");
+    if (existing.owner != caller and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Only the tool owner can edit this listing");
     };
 
     let updated : ToolListing = {
       id = toolId;
-      owner = caller;
+      owner = existing.owner;
       title;
       category;
       description;
@@ -322,27 +436,28 @@ actor {
     // Permission and valid transition check
     let isOwner = rental.owner == caller;
     let isRenter = rental.renter == caller;
+    let isAdmin = AccessControl.isAdmin(accessControlState, caller);
 
     switch (rental.status, newStatus) {
       case (#requested, #approved) {
-        if (not isOwner) { Runtime.trap("Only the tool owner can approve requests") };
+        if (not (isOwner or isAdmin)) { Runtime.trap("Unauthorized: Only the tool owner can approve requests") };
       };
       case (#requested, #declined) {
-        if (not isOwner) { Runtime.trap("Only the tool owner can decline requests") };
+        if (not (isOwner or isAdmin)) { Runtime.trap("Unauthorized: Only the tool owner can decline requests") };
       };
       case (#requested, #cancelledByRenter) {
-        if (not isRenter) { Runtime.trap("Only the renter can cancel request") };
+        if (not (isRenter or isAdmin)) { Runtime.trap("Unauthorized: Only the renter can cancel request") };
       };
       case (#approved, #cancelledByOwner) {
-        if (not isOwner) { Runtime.trap("Only the owner can cancel approved rentals") };
+        if (not (isOwner or isAdmin)) { Runtime.trap("Unauthorized: Only the owner can cancel approved rentals") };
       };
       case (#approved, #completed) {
-        if (not (isOwner or isRenter)) {
+        if (not (isOwner or isRenter or isAdmin)) {
           Runtime.trap("Unauthorized: Only owner or renter can complete rental");
         };
       };
       case (#approved, #cancelledByRenter) {
-        if (not isRenter) { Runtime.trap("Only the renter can cancel rental") };
+        if (not (isRenter or isAdmin)) { Runtime.trap("Unauthorized: Only the renter can cancel rental") };
       };
       case (_) { Runtime.trap("Invalid status transition") };
     };
@@ -415,6 +530,10 @@ actor {
 
   // Rental Chat Functionality
   public shared ({ caller }) func sendRentalMessage(rentalId : Nat, message : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Must be logged in to send messages");
+    };
+
     let rental = switch (rentals.get(rentalId)) {
       case (null) { Runtime.trap("Rental not found") };
       case (?rental) { rental };
@@ -443,6 +562,10 @@ actor {
   };
 
   public query ({ caller }) func getRentalMessages(rentalId : Nat) : async [ChatMessage] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Must be logged in to view messages");
+    };
+
     let rental = switch (rentals.get(rentalId)) {
       case (null) { Runtime.trap("Rental not found") };
       case (?rental) { rental };
@@ -464,3 +587,4 @@ actor {
     messagesArray.reverse();
   };
 };
+

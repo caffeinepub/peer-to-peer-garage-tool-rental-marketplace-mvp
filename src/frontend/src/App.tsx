@@ -12,6 +12,7 @@ import MyRentalsPage from './pages/MyRentalsPage';
 import RentalDetailPage from './pages/RentalDetailPage';
 import MessagingPage from './pages/MessagingPage';
 import ProfilePage from './pages/ProfilePage';
+import CommunityMapPage from './pages/CommunityMapPage';
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -87,6 +88,12 @@ const profileRoute = createRoute({
   component: ProfilePage,
 });
 
+const communityMapRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/community-map',
+  component: CommunityMapPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   browseRoute,
@@ -99,6 +106,7 @@ const routeTree = rootRoute.addChildren([
   rentalDetailRoute,
   messagesRoute,
   profileRoute,
+  communityMapRoute,
 ]);
 
 const router = createRouter({ routeTree });

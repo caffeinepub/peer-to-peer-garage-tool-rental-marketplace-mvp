@@ -15,6 +15,16 @@ export interface ChatMessage {
   'message' : string,
   'timestamp' : Time,
 }
+export interface CommunityMapProfile {
+  'id' : Principal,
+  'contactInfo' : [] | [string],
+  'displayName' : string,
+  'joinedAt' : Time,
+  'profilePicture' : string,
+  'location' : string,
+  'coordinates' : [] | [GeoCoordinates],
+}
+export interface GeoCoordinates { 'latitude' : number, 'longitude' : number }
 export interface RentalRequest {
   'id' : bigint,
   'renter' : Principal,
@@ -61,8 +71,11 @@ export interface UserProfile {
   'contactInfo' : [] | [string],
   'displayName' : string,
   'joinedAt' : Time,
+  'publicCoordinates' : [] | [GeoCoordinates],
   'profilePicture' : string,
   'location' : string,
+  'streetAddress' : [] | [string],
+  'coordinates' : [] | [GeoCoordinates],
 }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
@@ -84,7 +97,14 @@ export interface _SERVICE {
   >,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createOrUpdateProfile' : ActorMethod<
-    [string, [] | [string], string, string],
+    [
+      string,
+      [] | [string],
+      string,
+      string,
+      [] | [GeoCoordinates],
+      [] | [string],
+    ],
     undefined
   >,
   'editToolListing' : ActorMethod<
@@ -104,6 +124,7 @@ export interface _SERVICE {
   >,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getCommunityMapProfiles' : ActorMethod<[], Array<CommunityMapProfile>>,
   'getRentalMessages' : ActorMethod<[bigint], Array<ChatMessage>>,
   'getRentalsForUser' : ActorMethod<
     [],
@@ -115,6 +136,7 @@ export interface _SERVICE {
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'requestRental' : ActorMethod<[bigint, Time, Time], bigint>,
+  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'searchTools' : ActorMethod<
     [
       [] | [string],

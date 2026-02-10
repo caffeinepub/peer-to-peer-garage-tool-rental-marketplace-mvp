@@ -152,39 +152,6 @@ function clearParamFromHash(paramName: string): void {
 }
 
 /**
- * Removes a URL parameter from both regular query string and hash-based routing
- * without reloading the page. Works with both routing styles.
- *
- * @param paramName - The parameter to remove
- *
- * @example
- * // URL: https://app.com/#/profile?edit=1
- * // After removeUrlParameter('edit')
- * // URL: https://app.com/#/profile
- */
-export function removeUrlParameter(paramName: string): void {
-    if (!window.history.replaceState) {
-        return;
-    }
-
-    // Handle hash-based routing
-    const hash = window.location.hash;
-    if (hash && hash.includes('?')) {
-        clearParamFromHash(paramName);
-        return;
-    }
-
-    // Handle regular query string
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.has(paramName)) {
-        urlParams.delete(paramName);
-        const newQueryString = urlParams.toString();
-        const newUrl = window.location.pathname + (newQueryString ? '?' + newQueryString : '') + window.location.hash;
-        window.history.replaceState(null, '', newUrl);
-    }
-}
-
-/**
  * Gets a secret from the URL hash fragment only (more secure than query params)
  * Hash fragments aren't sent to servers or logged in access logs
  * The hash is immediately cleared from the URL after extraction to prevent history leakage

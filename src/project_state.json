@@ -1,41 +1,50 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Build a more lively, graphics-heavy homepage with an immersive 'traveling through a tool shed' theme.",
-  "architectural_notes": [],
+  "summary": "Website-wide polish and refactor effort to improve page UX consistency, remove duplicate functions, and make interactions more seamless.",
+  "architectural_notes": [
+    "Refactor and deduplicate shared functions into centralized utilities/components to improve maintainability and consistency across pages."
+  ],
   "known_issues": [],
   "isFixRequest": false,
-  "imageRequirements": "## Required Images\n- Tool shed interior corridor/aisle scene with warm workshop lighting, inviting perspective (toolshed-journey-hero.dim_1600x900.png)\n- Set of workshop/tool-shed themed decorative UI stickers (e.g., labels, tags, caution stripes, bolts) on transparent background (toolshed-ui-stickers.dim_1400x900.png)\n- Wood plank texture background, subtle and tileable (toolshed-wood-texture.dim_1024x1024.png)\n- Workbench scene flat-lay banner with tools and materials (workbench-banner.dim_1600x600.png)\n\n## Edit Images\n- Shift the existing hero image to match a more immersive tool shed travel vibe (toolshare-hero.dim_1600x900.png > toolshare-hero-toolshed.dim_1600x900.png)",
   "existing_features": [
     {
-      "id": "feature-redesign-the-homepage-frontend-src-pages-landingpage-tsx-to-feel-like-an-immersive-journey-traveling-through-a-tool-shed-using-a-more-life-filled-graphics-heavy-layout-while-preserving-the-existing-primary-actions-browse-tools-get-started-list-a-tool-and-authentication-dependent-behavior",
-      "title": "Redesign the homepage (frontend/src/pages/LandingPage.tsx) to feel like an immersive journey “traveling through a tool shed,” using a more life-filled, graphics-heavy layout while preserving the existing primary actions (Browse Tools, Get Started / List a Tool) and authentication-dependent behavior.",
+      "id": "feature-polish-ui-ux-across-all-existing-pages-so-they-feel-consistent-and-seamless-align-typography-scale-spacing-page-headings-section-layout-and-empty-loading-error-states-across-landing-browse-listing-detail-listing-form-my-tools-requests-my-rentals-rental-detail-messaging-profile-and-community-map-pages",
+      "title": "Polish UI/UX across all existing pages so they feel consistent and seamless: align typography scale, spacing, page headings, section layout, and empty/loading/error states across Landing, Browse, Listing Detail, Listing Form, My Tools, Requests, My Rentals, Rental Detail, Messaging, Profile, and Community Map pages.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-implement-a-cohesive-visual-theme-for-the-new-homepage-that-reinforces-the-tool-shed-travel-vibe-e-g-warm-workshop-lighting-wood-metal-textures-signage-labels-and-apply-it-consistently-across-the-homepage-sections-without-changing-the-global-app-layout-header-footer-behavior",
-      "title": "Implement a cohesive visual theme for the new homepage that reinforces the tool-shed travel vibe (e.g., warm workshop lighting, wood/metal textures, signage/labels), and apply it consistently across the homepage sections without changing the global app layout (header/footer) behavior.",
+      "id": "feature-introduce-shared-frontend-utilities-components-to-eliminate-duplicated-logic-and-mappings-currently-repeated-across-pages-components-e-g-rental-status-label-color-mapping-and-date-formatting-replace-page-local-implementations-with-shared-imports",
+      "title": "Introduce shared frontend utilities/components to eliminate duplicated logic and mappings currently repeated across pages/components (e.g., rental status label/color mapping and date formatting). Replace page-local implementations with shared imports.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-add-lightweight-performant-visual-motion-to-support-the-travel-feeling-on-the-homepage-e-g-parallax-like-section-transitions-subtle-animated-floating-dust-motes-light-beams-or-animated-sign-indicator-elements-using-css-tailwind-friendly-techniques-and-respecting-reduced-motion-preferences",
-      "title": "Add lightweight, performant visual motion to support the “travel” feeling on the homepage (e.g., parallax-like section transitions, subtle animated floating dust motes/light beams, or animated sign/indicator elements) using CSS/Tailwind-friendly techniques and respecting reduced-motion preferences.",
+      "id": "feature-remove-dead-duplicate-frontend-code-and-placeholders-and-ensure-the-codebase-has-no-unused-exports-imports-related-to-removed-files-in-particular-address-the-empty-placeholder-hook-file-frontend-src-hooks-usemapzoom-ts-by-either-removing-it-or-implementing-it-and-consolidating-map-zoom-behavior-into-a-single-clearly-named-hook-without-duplication",
+      "title": "Remove dead/duplicate frontend code and placeholders, and ensure the codebase has no unused exports/imports related to removed files. In particular, address the empty placeholder hook file frontend/src/hooks/useMapZoom.ts by either removing it or implementing it and consolidating map zoom behavior into a single, clearly-named hook without duplication.",
       "reqIds": [
         "REQ-3"
       ],
       "version": 1
     },
     {
-      "id": "feature-integrate-newly-generated-static-image-assets-for-the-homepage-into-the-app-by-placing-them-under-frontend-public-assets-generated-and-referencing-them-from-the-homepage-implementation",
-      "title": "Integrate newly generated static image assets for the homepage into the app by placing them under frontend/public/assets/generated and referencing them from the homepage implementation.",
+      "id": "feature-make-cross-page-interactions-feel-seamless-by-standardizing-navigation-and-action-patterns-consistent-primary-secondary-ctas-consistent-link-styling-and-predictable-placement-of-key-actions-e-g-add-tool-view-details-manage-rentals-requests-across-relevant-pages",
+      "title": "Make cross-page interactions feel seamless by standardizing navigation and action patterns: consistent primary/secondary CTAs, consistent link styling, and predictable placement of key actions (e.g., “Add Tool”, “View Details”, “Manage Rentals/Requests”) across relevant pages.",
       "reqIds": [
         "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-a-single-coherent-visual-theme-across-the-app-colors-typography-surface-styles-radii-shadows-and-enforce-it-consistently-using-existing-tailwind-shadcn-primitives-keep-the-theme-neutral-and-modern-avoid-a-blue-purple-dominant-palette",
+      "title": "Apply a single coherent visual theme across the app (colors, typography, surface styles, radii, shadows) and enforce it consistently using existing Tailwind + shadcn primitives; keep the theme neutral and modern (avoid a blue/purple-dominant palette).",
+      "reqIds": [
+        "REQ-5"
       ],
       "version": 1
     }
@@ -43,12 +52,12 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Design and implement a more life-filled homepage with additional graphics/visuals and an immersive 'traveling through a tool shed' experience.",
+      "summary": "Polish all website pages for more seamless UX and refactor to remove duplicate functions/code",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Redesign homepage with immersive, graphics-heavy 'traveling through a tool shed' experience",
+  "projectName": "Website-wide polish pass and refactor to remove duplicate code",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

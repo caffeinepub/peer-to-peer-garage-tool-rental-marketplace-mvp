@@ -1,50 +1,92 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T03:13:21.271Z",
-  "summary": "Diff implements a new, themed LandingPage structure with a reusable ToolshedJourneySection component and adds Tailwind animation keyframes/classes for subtle motion. However, the diff does not show the required new static image assets being added under frontend/public/assets/generated (beyond referencing the wood texture), and it includes substantial unrelated changes across many non-homepage pages/components (and a URL params utility), which were not requested and conflict with the non-goals.",
+  "generatedAt": "2026-02-06T05:11:38.132Z",
+  "summary": "Diff implements several UI consistency primitives (PageShell/PageHeader, LoadingState, EmptyStateCard/ErrorStateCard), refactors rental status/date presentation into shared utilities, updates multiple pages/components to use these patterns, and adjusts global theme variables. However, some requirements appear only partially met: not all pages/routes are evidenced as updated, map zoom logic appears duplicated (useMapZoom introduced while CommunityMap uses useMapTransform), and several changes introduce new photo/camera functionality that is not part of the requested polish/refactor scope.",
   "missing_requirements": [
     {
-      "id": "REQ-4",
-      "requirement": "Integrate newly generated static image assets for the homepage by placing them under frontend/public/assets/generated and referencing them from the homepage implementation.",
-      "reason": "The diff shows references to /assets/generated/toolshed-wood-texture.dim_1024x1024.png, but does not show any new image files being added under frontend/public/assets/generated, nor references to the other required generated images (toolshed-journey-hero, toolshed-ui-stickers, workbench-banner, toolshare-hero-toolshed).",
+      "id": "REQ-1",
+      "requirement": "Ensure every route defined in frontend/src/App.tsx uses a consistent page header pattern (title + optional subtitle) and consistent top/bottom padding.",
+      "reason": "Diff shows PageShell/PageHeader adoption in several pages (Browse, Messaging, MyRentals, MyTools, Requests, Profile, CommunityMap), but the diff summary does not provide evidence that all routes/pages (e.g., Landing page) were updated to use the same pattern.",
       "evidence": [
-        "frontend/src/pages/LandingPage.tsx",
-        "frontend/src/components/landing/ToolshedJourneySection.tsx"
+        "frontend/src/components/layout/PageShell.tsx",
+        "frontend/src/components/layout/PageHeader.tsx",
+        "frontend/src/pages/BrowseListingsPage.tsx",
+        "frontend/src/pages/MessagingPage.tsx",
+        "frontend/src/pages/MyRentalsPage.tsx",
+        "frontend/src/pages/MyToolsPage.tsx",
+        "frontend/src/pages/RequestsPage.tsx",
+        "frontend/src/pages/ProfilePage.tsx",
+        "frontend/src/pages/CommunityMapPage.tsx",
+        "frontend/src/App.tsx (mentioned in frontend-file-summaries.txt, but page-by-page coverage not shown)"
       ]
     },
     {
       "id": "REQ-1",
-      "requirement": "Redesign the homepage to use substantially more visuals than the current homepage (multiple graphics/illustrations/background elements beyond a single hero image) while preserving CTA/auth behavior.",
-      "reason": "From the truncated LandingPage diff, only the wood texture overlay and a few small 'dust mote' divs are evidenced; the required additional static visuals (hero corridor image, sticker set, workbench banner, edited hero image) are not evidenced as rendered.",
+      "requirement": "All pages that load data show a consistent loading UI and a consistent empty state (card/panel styling, aligned CTA button styles).",
+      "reason": "Some loading/empty states are standardized via LoadingState/EmptyStateCard, but at least one empty-state-like UI remains custom (CommunityMapPage's \"No Members Yet\" block uses bespoke markup rather than EmptyStateCard). Also RentalChatPanel still uses inline loading/error/empty markup rather than the shared state components.",
       "evidence": [
-        "frontend/src/pages/LandingPage.tsx (truncated)"
+        "frontend/src/pages/CommunityMapPage.tsx (custom \"No Members Yet\" empty block)",
+        "frontend/src/components/rentals/RentalChatPanel.tsx (inline loading/error/empty rendering)",
+        "frontend/src/components/states/LoadingState.tsx",
+        "frontend/src/components/states/EmptyStateCard.tsx"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "requirement": "Consolidate map zoom/pan interaction logic into one hook (no overlapping/duplicated implementations across hooks).",
+      "reason": "useMapZoom.ts is implemented, but CommunityMapPanel uses a different hook (useMapTransform). Based on the diff, both hooks appear to coexist, which suggests zoom-related logic is not consolidated into a single hook as required.",
+      "evidence": [
+        "frontend/src/hooks/useMapZoom.ts",
+        "frontend/src/components/community/CommunityMapPanel.tsx (imports/uses useMapTransform)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Broad refactors and feature changes to multiple non-homepage pages and components (rentals, requests, tools, messaging, listing forms/details, header/app routing), despite the request being limited to homepage redesign and minimal navigation consistency changes.",
-      "reason": "BuildRequest explicitly lists as non-goals reworking non-homepage pages beyond what is necessary to keep navigation consistent; the diff summary indicates many modified pages/components unrelated to the homepage theme work.",
+      "description": "Introduced camera capture/photo reference management functionality for listing forms (camera UI, data URL conversion, photo management field).",
+      "reason": "BuildRequest explicitly scoped to UI polish/refactor and avoiding new product features; camera capture for photos appears to add new end-user functionality rather than just polish/refactor.",
       "evidence": [
-        "frontend-file-summaries.txt (shows changes to ListingFormPage.tsx, RentalDetailPage.tsx, RentalStatusActions.tsx, MyRentalsPage.tsx, RequestsPage.tsx, MyToolsPage.tsx, useQueries.ts, RentalChatPanel.tsx, MessagingPage.tsx, ConversationsList.tsx, ActiveConversationPanel.tsx, AppHeader.tsx, App.tsx, CameraCapturePanel.tsx, PhotoReferencesField.tsx, ListingsGrid.tsx, ListingDetailPage.tsx, etc.)"
+        "frontend/src/components/listings/CameraCapturePanel.tsx (mentioned in frontend-file-summaries.txt)",
+        "frontend/src/components/listings/PhotoReferencesField.tsx (mentioned in frontend-file-summaries.txt)",
+        "frontend/src/utils/fileToDataUrl.ts (mentioned in frontend-file-summaries.txt)"
       ]
     },
     {
-      "description": "URL parameter/sessionStorage utilities expansion not requested by the homepage redesign.",
-      "reason": "No requirements mention URL parameter parsing or session persistence; this appears unrelated to the homepage/tool-shed journey scope.",
+      "description": "Added/mentioned a new /community-map route in App.tsx.",
+      "reason": "Non-goals/constraints state not to add new routes beyond those already present in frontend/src/App.tsx. The diff summary claims routing includes a new /community-map route; if it was not previously present, this would violate scope. (Cannot confirm previous state from diff alone, but the change is explicitly described as new.)",
       "evidence": [
-        "frontend/src/utils/urlParams.ts"
+        "frontend/src/App.tsx (\"including new /community-map route\" in frontend-file-summaries.txt)"
       ]
     }
   ],
-  "confidence": 0.72,
+  "confidence": 0.62,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/landing/ToolshedJourneySection.tsx",
-    "frontend/src/pages/LandingPage.tsx",
-    "frontend/src/utils/urlParams.ts",
-    "frontend/tailwind.config.js",
+    "frontend/src/components/community/CommunityMapPanel.tsx",
+    "frontend/src/components/layout/AppHeader.tsx",
+    "frontend/src/components/layout/PageHeader.tsx",
+    "frontend/src/components/layout/PageShell.tsx",
+    "frontend/src/components/messaging/ActiveConversationPanel.tsx",
+    "frontend/src/components/messaging/ConversationsList.tsx",
+    "frontend/src/components/navigation/AppNavLink.tsx",
+    "frontend/src/components/rentals/RentalChatPanel.tsx",
+    "frontend/src/components/states/EmptyStateCard.tsx",
+    "frontend/src/components/states/ErrorStateCard.tsx",
+    "frontend/src/components/states/LoadingState.tsx",
+    "frontend/src/hooks/useMapZoom.ts",
+    "frontend/src/index.css",
+    "frontend/src/pages/BrowseListingsPage.tsx",
+    "frontend/src/pages/CommunityMapPage.tsx",
+    "frontend/src/pages/ListingDetailPage.tsx",
+    "frontend/src/pages/MessagingPage.tsx",
+    "frontend/src/pages/MyRentalsPage.tsx",
+    "frontend/src/pages/MyToolsPage.tsx",
+    "frontend/src/pages/ProfilePage.tsx",
+    "frontend/src/pages/RentalDetailPage.tsx",
+    "frontend/src/pages/RequestsPage.tsx",
+    "frontend/src/utils/rentals/rentalDateFormat.ts",
+    "frontend/src/utils/rentals/rentalStatusPresentation.ts",
     "project_state.json"
   ]
 }

@@ -5,6 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageSquare } from 'lucide-react';
 import type { RentalRequest } from '../../backend';
 import { RentalStatus } from '../../backend';
+import { getStatusColor, getStatusLabel } from '../../utils/rentals/rentalStatusPresentation';
 
 interface ConversationsListProps {
   rentals: RentalRequest[];
@@ -12,24 +13,6 @@ interface ConversationsListProps {
   onSelectRental: (rental: RentalRequest) => void;
   currentUserPrincipal: string;
 }
-
-const statusColors: Record<RentalStatus, string> = {
-  [RentalStatus.requested]: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
-  [RentalStatus.approved]: 'bg-green-500/10 text-green-700 dark:text-green-400',
-  [RentalStatus.declined]: 'bg-red-500/10 text-red-700 dark:text-red-400',
-  [RentalStatus.cancelledByOwner]: 'bg-gray-500/10 text-gray-700 dark:text-gray-400',
-  [RentalStatus.cancelledByRenter]: 'bg-gray-500/10 text-gray-700 dark:text-gray-400',
-  [RentalStatus.completed]: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
-};
-
-const statusLabels: Record<RentalStatus, string> = {
-  [RentalStatus.requested]: 'Requested',
-  [RentalStatus.approved]: 'Approved',
-  [RentalStatus.declined]: 'Declined',
-  [RentalStatus.cancelledByOwner]: 'Cancelled',
-  [RentalStatus.cancelledByRenter]: 'Cancelled',
-  [RentalStatus.completed]: 'Completed',
-};
 
 function ConversationItem({
   rental,
@@ -59,8 +42,8 @@ function ConversationItem({
     >
       <div className="mb-2 flex items-start justify-between gap-2">
         <h3 className="font-semibold leading-tight line-clamp-1">{tool?.title || 'Loading...'}</h3>
-        <Badge className={`shrink-0 text-xs ${statusColors[rental.status as RentalStatus]}`}>
-          {statusLabels[rental.status as RentalStatus]}
+        <Badge className={`shrink-0 text-xs ${getStatusColor(rental.status as RentalStatus)}`}>
+          {getStatusLabel(rental.status as RentalStatus)}
         </Badge>
       </div>
       <p className="text-sm text-muted-foreground">

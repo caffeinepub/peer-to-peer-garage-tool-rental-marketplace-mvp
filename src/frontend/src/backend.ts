@@ -115,18 +115,34 @@ export interface RentalRequest {
     toolId: bigint;
     startDate: Time;
 }
+export interface GeoCoordinates {
+    latitude: number;
+    longitude: number;
+}
 export interface ChatMessage {
     sender: Principal;
     message: string;
     timestamp: Time;
 }
-export interface UserProfile {
+export interface CommunityMapProfile {
     id: Principal;
     contactInfo?: string;
     displayName: string;
     joinedAt: Time;
     profilePicture: string;
     location: string;
+    coordinates?: GeoCoordinates;
+}
+export interface UserProfile {
+    id: Principal;
+    contactInfo?: string;
+    displayName: string;
+    joinedAt: Time;
+    publicCoordinates?: GeoCoordinates;
+    profilePicture: string;
+    location: string;
+    streetAddress?: string;
+    coordinates?: GeoCoordinates;
 }
 export enum RentalStatus {
     requested = "requested",
@@ -158,10 +174,11 @@ export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     addToolListing(title: string, category: ToolCategory, description: string, condition: ToolCondition, dailyPrice: bigint, securityDeposit: bigint | null, location: string, photos: Array<string>): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createOrUpdateProfile(displayName: string, contactInfo: string | null, location: string, profilePicture: string): Promise<void>;
+    createOrUpdateProfile(displayName: string, contactInfo: string | null, location: string, profilePicture: string, coordinates: GeoCoordinates | null, streetAddress: string | null): Promise<void>;
     editToolListing(toolId: bigint, title: string, category: ToolCategory, description: string, condition: ToolCondition, dailyPrice: bigint, securityDeposit: bigint | null, location: string, available: boolean, photos: Array<string>): Promise<void>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getCommunityMapProfiles(): Promise<Array<CommunityMapProfile>>;
     getRentalMessages(rentalId: bigint): Promise<Array<ChatMessage>>;
     getRentalsForUser(): Promise<{
         rented: Array<RentalRequest>;
@@ -173,11 +190,12 @@ export interface backendInterface {
     getUserProfile(user: Principal): Promise<UserProfile | null>;
     isCallerAdmin(): Promise<boolean>;
     requestRental(toolId: bigint, startDate: Time, endDate: Time): Promise<bigint>;
+    saveCallerUserProfile(profile: UserProfile): Promise<void>;
     searchTools(searchText: string | null, category: ToolCategory | null, minPrice: bigint | null, maxPrice: bigint | null, availableOnly: boolean, sortBy: string): Promise<Array<ToolListing>>;
     sendRentalMessage(rentalId: bigint, message: string): Promise<void>;
     updateRentalStatus(rentalId: bigint, newStatus: RentalStatus, _comments: string | null): Promise<void>;
 }
-import type { RentalRequest as _RentalRequest, RentalStatus as _RentalStatus, Time as _Time, ToolCategory as _ToolCategory, ToolCondition as _ToolCondition, ToolListing as _ToolListing, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
+import type { CommunityMapProfile as _CommunityMapProfile, GeoCoordinates as _GeoCoordinates, RentalRequest as _RentalRequest, RentalStatus as _RentalStatus, Time as _Time, ToolCategory as _ToolCategory, ToolCondition as _ToolCondition, ToolListing as _ToolListing, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
     async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
@@ -222,17 +240,17 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async createOrUpdateProfile(arg0: string, arg1: string | null, arg2: string, arg3: string): Promise<void> {
+    async createOrUpdateProfile(arg0: string, arg1: string | null, arg2: string, arg3: string, arg4: GeoCoordinates | null, arg5: string | null): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.createOrUpdateProfile(arg0, to_candid_opt_n8(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
+                const result = await this.actor.createOrUpdateProfile(arg0, to_candid_opt_n8(this._uploadFile, this._downloadFile, arg1), arg2, arg3, to_candid_opt_n9(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg5));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.createOrUpdateProfile(arg0, to_candid_opt_n8(this._uploadFile, this._downloadFile, arg1), arg2, arg3);
+            const result = await this.actor.createOrUpdateProfile(arg0, to_candid_opt_n8(this._uploadFile, this._downloadFile, arg1), arg2, arg3, to_candid_opt_n9(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg5));
             return result;
         }
     }
@@ -254,28 +272,42 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserProfile();
-                return from_candid_opt_n9(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserProfile();
-            return from_candid_opt_n9(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
         }
     }
     async getCallerUserRole(): Promise<UserRole> {
         if (this.processError) {
             try {
                 const result = await this.actor.getCallerUserRole();
-                return from_candid_UserRole_n13(this._uploadFile, this._downloadFile, result);
+                return from_candid_UserRole_n15(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getCallerUserRole();
-            return from_candid_UserRole_n13(this._uploadFile, this._downloadFile, result);
+            return from_candid_UserRole_n15(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getCommunityMapProfiles(): Promise<Array<CommunityMapProfile>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCommunityMapProfiles();
+                return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCommunityMapProfiles();
+            return from_candid_vec_n17(this._uploadFile, this._downloadFile, result);
         }
     }
     async getRentalMessages(arg0: bigint): Promise<Array<ChatMessage>> {
@@ -299,28 +331,28 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getRentalsForUser();
-                return from_candid_record_n15(this._uploadFile, this._downloadFile, result);
+                return from_candid_record_n20(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getRentalsForUser();
-            return from_candid_record_n15(this._uploadFile, this._downloadFile, result);
+            return from_candid_record_n20(this._uploadFile, this._downloadFile, result);
         }
     }
     async getTool(arg0: bigint): Promise<ToolListing | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getTool(arg0);
-                return from_candid_opt_n21(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getTool(arg0);
-            return from_candid_opt_n21(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n26(this._uploadFile, this._downloadFile, result);
         }
     }
     async getToolAvailability(arg0: bigint): Promise<boolean> {
@@ -341,28 +373,28 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getToolsByOwner(arg0);
-                return from_candid_vec_n29(this._uploadFile, this._downloadFile, result);
+                return from_candid_vec_n34(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getToolsByOwner(arg0);
-            return from_candid_vec_n29(this._uploadFile, this._downloadFile, result);
+            return from_candid_vec_n34(this._uploadFile, this._downloadFile, result);
         }
     }
     async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getUserProfile(arg0);
-                return from_candid_opt_n9(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getUserProfile(arg0);
-            return from_candid_opt_n9(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n10(this._uploadFile, this._downloadFile, result);
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -393,18 +425,32 @@ export class Backend implements backendInterface {
             return result;
         }
     }
-    async searchTools(arg0: string | null, arg1: ToolCategory | null, arg2: bigint | null, arg3: bigint | null, arg4: boolean, arg5: string): Promise<Array<ToolListing>> {
+    async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.searchTools(to_candid_opt_n8(this._uploadFile, this._downloadFile, arg0), to_candid_opt_n30(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg3), arg4, arg5);
-                return from_candid_vec_n29(this._uploadFile, this._downloadFile, result);
+                const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n35(this._uploadFile, this._downloadFile, arg0));
+                return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.searchTools(to_candid_opt_n8(this._uploadFile, this._downloadFile, arg0), to_candid_opt_n30(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg3), arg4, arg5);
-            return from_candid_vec_n29(this._uploadFile, this._downloadFile, result);
+            const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n35(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
+    async searchTools(arg0: string | null, arg1: ToolCategory | null, arg2: bigint | null, arg3: bigint | null, arg4: boolean, arg5: string): Promise<Array<ToolListing>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.searchTools(to_candid_opt_n8(this._uploadFile, this._downloadFile, arg0), to_candid_opt_n37(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg3), arg4, arg5);
+                return from_candid_vec_n34(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.searchTools(to_candid_opt_n8(this._uploadFile, this._downloadFile, arg0), to_candid_opt_n37(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg2), to_candid_opt_n5(this._uploadFile, this._downloadFile, arg3), arg4, arg5);
+            return from_candid_vec_n34(this._uploadFile, this._downloadFile, result);
         }
     }
     async sendRentalMessage(arg0: bigint, arg1: string): Promise<void> {
@@ -424,58 +470,98 @@ export class Backend implements backendInterface {
     async updateRentalStatus(arg0: bigint, arg1: RentalStatus, arg2: string | null): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.updateRentalStatus(arg0, to_candid_RentalStatus_n31(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg2));
+                const result = await this.actor.updateRentalStatus(arg0, to_candid_RentalStatus_n38(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg2));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.updateRentalStatus(arg0, to_candid_RentalStatus_n31(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg2));
+            const result = await this.actor.updateRentalStatus(arg0, to_candid_RentalStatus_n38(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n8(this._uploadFile, this._downloadFile, arg2));
             return result;
         }
     }
 }
-function from_candid_RentalRequest_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _RentalRequest): RentalRequest {
-    return from_candid_record_n18(_uploadFile, _downloadFile, value);
+function from_candid_CommunityMapProfile_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CommunityMapProfile): CommunityMapProfile {
+    return from_candid_record_n19(_uploadFile, _downloadFile, value);
 }
-function from_candid_RentalStatus_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _RentalStatus): RentalStatus {
-    return from_candid_variant_n20(_uploadFile, _downloadFile, value);
-}
-function from_candid_ToolCategory_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ToolCategory): ToolCategory {
-    return from_candid_variant_n25(_uploadFile, _downloadFile, value);
-}
-function from_candid_ToolCondition_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ToolCondition): ToolCondition {
-    return from_candid_variant_n28(_uploadFile, _downloadFile, value);
-}
-function from_candid_ToolListing_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ToolListing): ToolListing {
+function from_candid_RentalRequest_n22(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _RentalRequest): RentalRequest {
     return from_candid_record_n23(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserProfile_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserProfile): UserProfile {
-    return from_candid_record_n11(_uploadFile, _downloadFile, value);
+function from_candid_RentalStatus_n24(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _RentalStatus): RentalStatus {
+    return from_candid_variant_n25(_uploadFile, _downloadFile, value);
 }
-function from_candid_UserRole_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
-    return from_candid_variant_n14(_uploadFile, _downloadFile, value);
+function from_candid_ToolCategory_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ToolCategory): ToolCategory {
+    return from_candid_variant_n30(_uploadFile, _downloadFile, value);
 }
-function from_candid_opt_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
+function from_candid_ToolCondition_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ToolCondition): ToolCondition {
+    return from_candid_variant_n33(_uploadFile, _downloadFile, value);
+}
+function from_candid_ToolListing_n27(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ToolListing): ToolListing {
+    return from_candid_record_n28(_uploadFile, _downloadFile, value);
+}
+function from_candid_UserProfile_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserProfile): UserProfile {
+    return from_candid_record_n12(_uploadFile, _downloadFile, value);
+}
+function from_candid_UserRole_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n16(_uploadFile, _downloadFile, value);
+}
+function from_candid_opt_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+    return value.length === 0 ? null : from_candid_UserProfile_n11(_uploadFile, _downloadFile, value[0]);
+}
+function from_candid_opt_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ToolListing]): ToolListing | null {
-    return value.length === 0 ? null : from_candid_ToolListing_n22(_uploadFile, _downloadFile, value[0]);
-}
-function from_candid_opt_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
+function from_candid_opt_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_GeoCoordinates]): GeoCoordinates | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
-    return value.length === 0 ? null : from_candid_UserProfile_n10(_uploadFile, _downloadFile, value[0]);
+function from_candid_opt_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ToolListing]): ToolListing | null {
+    return value.length === 0 ? null : from_candid_ToolListing_n27(_uploadFile, _downloadFile, value[0]);
 }
-function from_candid_record_n11(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_opt_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: Principal;
+    contactInfo: [] | [string];
+    displayName: string;
+    joinedAt: _Time;
+    publicCoordinates: [] | [_GeoCoordinates];
+    profilePicture: string;
+    location: string;
+    streetAddress: [] | [string];
+    coordinates: [] | [_GeoCoordinates];
+}): {
+    id: Principal;
+    contactInfo?: string;
+    displayName: string;
+    joinedAt: Time;
+    publicCoordinates?: GeoCoordinates;
+    profilePicture: string;
+    location: string;
+    streetAddress?: string;
+    coordinates?: GeoCoordinates;
+} {
+    return {
+        id: value.id,
+        contactInfo: record_opt_to_undefined(from_candid_opt_n13(_uploadFile, _downloadFile, value.contactInfo)),
+        displayName: value.displayName,
+        joinedAt: value.joinedAt,
+        publicCoordinates: record_opt_to_undefined(from_candid_opt_n14(_uploadFile, _downloadFile, value.publicCoordinates)),
+        profilePicture: value.profilePicture,
+        location: value.location,
+        streetAddress: record_opt_to_undefined(from_candid_opt_n13(_uploadFile, _downloadFile, value.streetAddress)),
+        coordinates: record_opt_to_undefined(from_candid_opt_n14(_uploadFile, _downloadFile, value.coordinates))
+    };
+}
+function from_candid_record_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: Principal;
     contactInfo: [] | [string];
     displayName: string;
     joinedAt: _Time;
     profilePicture: string;
     location: string;
+    coordinates: [] | [_GeoCoordinates];
 }): {
     id: Principal;
     contactInfo?: string;
@@ -483,17 +569,19 @@ function from_candid_record_n11(_uploadFile: (file: ExternalBlob) => Promise<Uin
     joinedAt: Time;
     profilePicture: string;
     location: string;
+    coordinates?: GeoCoordinates;
 } {
     return {
         id: value.id,
-        contactInfo: record_opt_to_undefined(from_candid_opt_n12(_uploadFile, _downloadFile, value.contactInfo)),
+        contactInfo: record_opt_to_undefined(from_candid_opt_n13(_uploadFile, _downloadFile, value.contactInfo)),
         displayName: value.displayName,
         joinedAt: value.joinedAt,
         profilePicture: value.profilePicture,
-        location: value.location
+        location: value.location,
+        coordinates: record_opt_to_undefined(from_candid_opt_n14(_uploadFile, _downloadFile, value.coordinates))
     };
 }
-function from_candid_record_n15(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     rented: Array<_RentalRequest>;
     owned: Array<_RentalRequest>;
 }): {
@@ -501,11 +589,11 @@ function from_candid_record_n15(_uploadFile: (file: ExternalBlob) => Promise<Uin
     owned: Array<RentalRequest>;
 } {
     return {
-        rented: from_candid_vec_n16(_uploadFile, _downloadFile, value.rented),
-        owned: from_candid_vec_n16(_uploadFile, _downloadFile, value.owned)
+        rented: from_candid_vec_n21(_uploadFile, _downloadFile, value.rented),
+        owned: from_candid_vec_n21(_uploadFile, _downloadFile, value.owned)
     };
 }
-function from_candid_record_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: bigint;
     renter: Principal;
     status: _RentalStatus;
@@ -529,7 +617,7 @@ function from_candid_record_n18(_uploadFile: (file: ExternalBlob) => Promise<Uin
     return {
         id: value.id,
         renter: value.renter,
-        status: from_candid_RentalStatus_n19(_uploadFile, _downloadFile, value.status),
+        status: from_candid_RentalStatus_n24(_uploadFile, _downloadFile, value.status),
         created: value.created,
         endDate: value.endDate,
         owner: value.owner,
@@ -538,7 +626,7 @@ function from_candid_record_n18(_uploadFile: (file: ExternalBlob) => Promise<Uin
         startDate: value.startDate
     };
 }
-function from_candid_record_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     id: bigint;
     title: string;
     created: _Time;
@@ -572,15 +660,15 @@ function from_candid_record_n23(_uploadFile: (file: ExternalBlob) => Promise<Uin
         owner: value.owner,
         description: value.description,
         available: value.available,
-        category: from_candid_ToolCategory_n24(_uploadFile, _downloadFile, value.category),
+        category: from_candid_ToolCategory_n29(_uploadFile, _downloadFile, value.category),
         dailyPrice: value.dailyPrice,
-        securityDeposit: record_opt_to_undefined(from_candid_opt_n26(_uploadFile, _downloadFile, value.securityDeposit)),
+        securityDeposit: record_opt_to_undefined(from_candid_opt_n31(_uploadFile, _downloadFile, value.securityDeposit)),
         location: value.location,
         photos: value.photos,
-        condition: from_candid_ToolCondition_n27(_uploadFile, _downloadFile, value.condition)
+        condition: from_candid_ToolCondition_n32(_uploadFile, _downloadFile, value.condition)
     };
 }
-function from_candid_variant_n14(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     admin: null;
 } | {
     user: null;
@@ -589,7 +677,7 @@ function from_candid_variant_n14(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): UserRole {
     return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
 }
-function from_candid_variant_n20(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     requested: null;
 } | {
     completed: null;
@@ -604,7 +692,7 @@ function from_candid_variant_n20(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): RentalStatus {
     return "requested" in value ? RentalStatus.requested : "completed" in value ? RentalStatus.completed : "approved" in value ? RentalStatus.approved : "declined" in value ? RentalStatus.declined : "cancelledByRenter" in value ? RentalStatus.cancelledByRenter : "cancelledByOwner" in value ? RentalStatus.cancelledByOwner : value;
 }
-function from_candid_variant_n25(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     automotive: null;
 } | {
     gardenTools: null;
@@ -617,7 +705,7 @@ function from_candid_variant_n25(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): ToolCategory {
     return "automotive" in value ? ToolCategory.automotive : "gardenTools" in value ? ToolCategory.gardenTools : "specialty" in value ? ToolCategory.specialty : "powerTools" in value ? ToolCategory.powerTools : "handTools" in value ? ToolCategory.handTools : value;
 }
-function from_candid_variant_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_variant_n33(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     new: null;
 } | {
     gentlyUsed: null;
@@ -628,14 +716,17 @@ function from_candid_variant_n28(_uploadFile: (file: ExternalBlob) => Promise<Ui
 }): ToolCondition {
     return "new" in value ? ToolCondition.new : "gentlyUsed" in value ? ToolCondition.gentlyUsed : "wellUsed" in value ? ToolCondition.wellUsed : "needsRepair" in value ? ToolCondition.needsRepair : value;
 }
-function from_candid_vec_n16(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_RentalRequest>): Array<RentalRequest> {
-    return value.map((x)=>from_candid_RentalRequest_n17(_uploadFile, _downloadFile, x));
+function from_candid_vec_n17(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_CommunityMapProfile>): Array<CommunityMapProfile> {
+    return value.map((x)=>from_candid_CommunityMapProfile_n18(_uploadFile, _downloadFile, x));
 }
-function from_candid_vec_n29(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ToolListing>): Array<ToolListing> {
-    return value.map((x)=>from_candid_ToolListing_n22(_uploadFile, _downloadFile, x));
+function from_candid_vec_n21(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_RentalRequest>): Array<RentalRequest> {
+    return value.map((x)=>from_candid_RentalRequest_n22(_uploadFile, _downloadFile, x));
 }
-function to_candid_RentalStatus_n31(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: RentalStatus): _RentalStatus {
-    return to_candid_variant_n32(_uploadFile, _downloadFile, value);
+function from_candid_vec_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ToolListing>): Array<ToolListing> {
+    return value.map((x)=>from_candid_ToolListing_n27(_uploadFile, _downloadFile, x));
+}
+function to_candid_RentalStatus_n38(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: RentalStatus): _RentalStatus {
+    return to_candid_variant_n39(_uploadFile, _downloadFile, value);
 }
 function to_candid_ToolCategory_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ToolCategory): _ToolCategory {
     return to_candid_variant_n2(_uploadFile, _downloadFile, value);
@@ -643,10 +734,13 @@ function to_candid_ToolCategory_n1(_uploadFile: (file: ExternalBlob) => Promise<
 function to_candid_ToolCondition_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ToolCondition): _ToolCondition {
     return to_candid_variant_n4(_uploadFile, _downloadFile, value);
 }
+function to_candid_UserProfile_n35(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserProfile): _UserProfile {
+    return to_candid_record_n36(_uploadFile, _downloadFile, value);
+}
 function to_candid_UserRole_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n7(_uploadFile, _downloadFile, value);
 }
-function to_candid_opt_n30(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ToolCategory | null): [] | [_ToolCategory] {
+function to_candid_opt_n37(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ToolCategory | null): [] | [_ToolCategory] {
     return value === null ? candid_none() : candid_some(to_candid_ToolCategory_n1(_uploadFile, _downloadFile, value));
 }
 function to_candid_opt_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: bigint | null): [] | [bigint] {
@@ -654,6 +748,42 @@ function to_candid_opt_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Arra
 }
 function to_candid_opt_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
     return value === null ? candid_none() : candid_some(value);
+}
+function to_candid_opt_n9(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: GeoCoordinates | null): [] | [_GeoCoordinates] {
+    return value === null ? candid_none() : candid_some(value);
+}
+function to_candid_record_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    id: Principal;
+    contactInfo?: string;
+    displayName: string;
+    joinedAt: Time;
+    publicCoordinates?: GeoCoordinates;
+    profilePicture: string;
+    location: string;
+    streetAddress?: string;
+    coordinates?: GeoCoordinates;
+}): {
+    id: Principal;
+    contactInfo: [] | [string];
+    displayName: string;
+    joinedAt: _Time;
+    publicCoordinates: [] | [_GeoCoordinates];
+    profilePicture: string;
+    location: string;
+    streetAddress: [] | [string];
+    coordinates: [] | [_GeoCoordinates];
+} {
+    return {
+        id: value.id,
+        contactInfo: value.contactInfo ? candid_some(value.contactInfo) : candid_none(),
+        displayName: value.displayName,
+        joinedAt: value.joinedAt,
+        publicCoordinates: value.publicCoordinates ? candid_some(value.publicCoordinates) : candid_none(),
+        profilePicture: value.profilePicture,
+        location: value.location,
+        streetAddress: value.streetAddress ? candid_some(value.streetAddress) : candid_none(),
+        coordinates: value.coordinates ? candid_some(value.coordinates) : candid_none()
+    };
 }
 function to_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ToolCategory): {
     automotive: null;
@@ -678,7 +808,7 @@ function to_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         handTools: null
     } : value;
 }
-function to_candid_variant_n32(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: RentalStatus): {
+function to_candid_variant_n39(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: RentalStatus): {
     requested: null;
 } | {
     completed: null;

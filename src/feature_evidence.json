@@ -2,11 +2,25 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-redesign-the-homepage-frontend-src-pages-landingpage-tsx-to-feel-like-an-immersive-journey-traveling-through-a-tool-shed-using-a-more-life-filled-graphics-heavy-layout-while-preserving-the-existing-primary-actions-browse-tools-get-started-list-a-tool-and-authentication-dependent-behavior",
-      "featureTitle": "Redesign the homepage (frontend/src/pages/LandingPage.tsx) to feel like an immersive journey “traveling through a tool shed,” using a more life-filled, graphics-heavy layout while preserving the existing primary actions (Browse Tools, Get Started / List a Tool) and authentication-dependent behavior.",
+      "featureId": "feature-polish-ui-ux-across-all-existing-pages-so-they-feel-consistent-and-seamless-align-typography-scale-spacing-page-headings-section-layout-and-empty-loading-error-states-across-landing-browse-listing-detail-listing-form-my-tools-requests-my-rentals-rental-detail-messaging-profile-and-community-map-pages",
+      "featureTitle": "Polish UI/UX across all existing pages so they feel consistent and seamless: align typography scale, spacing, page headings, section layout, and empty/loading/error states across Landing, Browse, Listing Detail, Listing Form, My Tools, Requests, My Rentals, Rental Detail, Messaging, Profile, and Community Map pages.",
       "files": [
-        "frontend/src/components/landing/ToolshedJourneySection.tsx",
-        "frontend/src/pages/LandingPage.tsx"
+        "frontend/src/components/layout/PageHeader.tsx",
+        "frontend/src/components/layout/PageShell.tsx",
+        "frontend/src/components/rentals/RentalChatPanel.tsx",
+        "frontend/src/components/states/EmptyStateCard.tsx",
+        "frontend/src/components/states/ErrorStateCard.tsx",
+        "frontend/src/components/states/LoadingState.tsx",
+        "frontend/src/index.css",
+        "frontend/src/pages/BrowseListingsPage.tsx",
+        "frontend/src/pages/CommunityMapPage.tsx",
+        "frontend/src/pages/ListingDetailPage.tsx",
+        "frontend/src/pages/MessagingPage.tsx",
+        "frontend/src/pages/MyRentalsPage.tsx",
+        "frontend/src/pages/MyToolsPage.tsx",
+        "frontend/src/pages/ProfilePage.tsx",
+        "frontend/src/pages/RentalDetailPage.tsx",
+        "frontend/src/pages/RequestsPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -23,11 +37,17 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-implement-a-cohesive-visual-theme-for-the-new-homepage-that-reinforces-the-tool-shed-travel-vibe-e-g-warm-workshop-lighting-wood-metal-textures-signage-labels-and-apply-it-consistently-across-the-homepage-sections-without-changing-the-global-app-layout-header-footer-behavior",
-      "featureTitle": "Implement a cohesive visual theme for the new homepage that reinforces the tool-shed travel vibe (e.g., warm workshop lighting, wood/metal textures, signage/labels), and apply it consistently across the homepage sections without changing the global app layout (header/footer) behavior.",
+      "featureId": "feature-introduce-shared-frontend-utilities-components-to-eliminate-duplicated-logic-and-mappings-currently-repeated-across-pages-components-e-g-rental-status-label-color-mapping-and-date-formatting-replace-page-local-implementations-with-shared-imports",
+      "featureTitle": "Introduce shared frontend utilities/components to eliminate duplicated logic and mappings currently repeated across pages/components (e.g., rental status label/color mapping and date formatting). Replace page-local implementations with shared imports.",
       "files": [
-        "frontend/src/pages/LandingPage.tsx",
-        "frontend/tailwind.config.js"
+        "frontend/src/components/messaging/ActiveConversationPanel.tsx",
+        "frontend/src/components/messaging/ConversationsList.tsx",
+        "frontend/src/components/rentals/RentalChatPanel.tsx",
+        "frontend/src/pages/MyRentalsPage.tsx",
+        "frontend/src/pages/RentalDetailPage.tsx",
+        "frontend/src/pages/RequestsPage.tsx",
+        "frontend/src/utils/rentals/rentalDateFormat.ts",
+        "frontend/src/utils/rentals/rentalStatusPresentation.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -44,12 +64,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-lightweight-performant-visual-motion-to-support-the-travel-feeling-on-the-homepage-e-g-parallax-like-section-transitions-subtle-animated-floating-dust-motes-light-beams-or-animated-sign-indicator-elements-using-css-tailwind-friendly-techniques-and-respecting-reduced-motion-preferences",
-      "featureTitle": "Add lightweight, performant visual motion to support the “travel” feeling on the homepage (e.g., parallax-like section transitions, subtle animated floating dust motes/light beams, or animated sign/indicator elements) using CSS/Tailwind-friendly techniques and respecting reduced-motion preferences.",
+      "featureId": "feature-remove-dead-duplicate-frontend-code-and-placeholders-and-ensure-the-codebase-has-no-unused-exports-imports-related-to-removed-files-in-particular-address-the-empty-placeholder-hook-file-frontend-src-hooks-usemapzoom-ts-by-either-removing-it-or-implementing-it-and-consolidating-map-zoom-behavior-into-a-single-clearly-named-hook-without-duplication",
+      "featureTitle": "Remove dead/duplicate frontend code and placeholders, and ensure the codebase has no unused exports/imports related to removed files. In particular, address the empty placeholder hook file frontend/src/hooks/useMapZoom.ts by either removing it or implementing it and consolidating map zoom behavior into a single, clearly-named hook without duplication.",
       "files": [
-        "frontend/src/components/landing/ToolshedJourneySection.tsx",
-        "frontend/src/pages/LandingPage.tsx",
-        "frontend/tailwind.config.js"
+        "frontend/src/components/community/CommunityMapPanel.tsx",
+        "frontend/src/hooks/useMapZoom.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -66,10 +85,17 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-integrate-newly-generated-static-image-assets-for-the-homepage-into-the-app-by-placing-them-under-frontend-public-assets-generated-and-referencing-them-from-the-homepage-implementation",
-      "featureTitle": "Integrate newly generated static image assets for the homepage into the app by placing them under frontend/public/assets/generated and referencing them from the homepage implementation.",
+      "featureId": "feature-make-cross-page-interactions-feel-seamless-by-standardizing-navigation-and-action-patterns-consistent-primary-secondary-ctas-consistent-link-styling-and-predictable-placement-of-key-actions-e-g-add-tool-view-details-manage-rentals-requests-across-relevant-pages",
+      "featureTitle": "Make cross-page interactions feel seamless by standardizing navigation and action patterns: consistent primary/secondary CTAs, consistent link styling, and predictable placement of key actions (e.g., “Add Tool”, “View Details”, “Manage Rentals/Requests”) across relevant pages.",
       "files": [
-        "frontend/src/pages/LandingPage.tsx"
+        "frontend/src/components/layout/AppHeader.tsx",
+        "frontend/src/components/navigation/AppNavLink.tsx",
+        "frontend/src/pages/ListingDetailPage.tsx",
+        "frontend/src/pages/MessagingPage.tsx",
+        "frontend/src/pages/MyRentalsPage.tsx",
+        "frontend/src/pages/MyToolsPage.tsx",
+        "frontend/src/pages/RentalDetailPage.tsx",
+        "frontend/src/pages/RequestsPage.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -82,6 +108,26 @@
       ],
       "testIds": [
         "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-apply-a-single-coherent-visual-theme-across-the-app-colors-typography-surface-styles-radii-shadows-and-enforce-it-consistently-using-existing-tailwind-shadcn-primitives-keep-the-theme-neutral-and-modern-avoid-a-blue-purple-dominant-palette",
+      "featureTitle": "Apply a single coherent visual theme across the app (colors, typography, surface styles, radii, shadows) and enforce it consistently using existing Tailwind + shadcn primitives; keep the theme neutral and modern (avoid a blue/purple-dominant palette).",
+      "files": [
+        "frontend/src/index.css"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
       ],
       "confidence": "high"
     }

@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Send, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatChatTimestamp } from '../../utils/rentals/rentalDateFormat';
 
 interface RentalChatPanelProps {
   rentalId: bigint;
@@ -21,7 +22,6 @@ export default function RentalChatPanel({ rentalId, variant = 'default' }: Renta
   const { data: messages = [], isLoading, isError } = useGetRentalMessages(rentalId);
   const sendMessage = useSendRentalMessage();
 
-  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -47,26 +47,6 @@ export default function RentalChatPanel({ rentalId, variant = 'default' }: Renta
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
-    }
-  };
-
-  const formatTimestamp = (timestamp: bigint) => {
-    const date = new Date(Number(timestamp) / 1_000_000);
-    const now = new Date();
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-
-    if (diffInHours < 24) {
-      return date.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-      });
-    } else {
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      });
     }
   };
 
@@ -122,7 +102,7 @@ export default function RentalChatPanel({ rentalId, variant = 'default' }: Renta
                           isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
                         }`}
                       >
-                        {formatTimestamp(msg.timestamp)}
+                        {formatChatTimestamp(msg.timestamp)}
                       </p>
                     </div>
                   </div>

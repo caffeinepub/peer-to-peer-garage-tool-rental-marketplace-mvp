@@ -4,37 +4,21 @@ import { Link } from '@tanstack/react-router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Calendar, ExternalLink } from 'lucide-react';
+import { ExternalLink, Calendar } from 'lucide-react';
 import RequireAuth from '../components/auth/RequireAuth';
-import { RentalStatus } from '../backend';
 import ProfileSetupDialog from '../components/profile/ProfileSetupDialog';
 import RentalStatusActions from '../components/rentals/RentalStatusActions';
-
-const statusColors: Record<RentalStatus, string> = {
-  [RentalStatus.requested]: 'bg-yellow-500/10 text-yellow-700 dark:text-yellow-400',
-  [RentalStatus.approved]: 'bg-green-500/10 text-green-700 dark:text-green-400',
-  [RentalStatus.declined]: 'bg-red-500/10 text-red-700 dark:text-red-400',
-  [RentalStatus.cancelledByOwner]: 'bg-gray-500/10 text-gray-700 dark:text-gray-400',
-  [RentalStatus.cancelledByRenter]: 'bg-gray-500/10 text-gray-700 dark:text-gray-400',
-  [RentalStatus.completed]: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
-};
-
-const statusLabels: Record<RentalStatus, string> = {
-  [RentalStatus.requested]: 'Requested',
-  [RentalStatus.approved]: 'Approved',
-  [RentalStatus.declined]: 'Declined',
-  [RentalStatus.cancelledByOwner]: 'Cancelled by Owner',
-  [RentalStatus.cancelledByRenter]: 'Cancelled by Renter',
-  [RentalStatus.completed]: 'Completed',
-};
+import PageShell from '../components/layout/PageShell';
+import PageHeader from '../components/layout/PageHeader';
+import LoadingState from '../components/states/LoadingState';
+import EmptyStateCard from '../components/states/EmptyStateCard';
+import { getStatusColor, getStatusLabel } from '../utils/rentals/rentalStatusPresentation';
+import { formatDate } from '../utils/rentals/rentalDateFormat';
+import { RentalStatus } from '../backend';
 
 function RentalCard({ rental }: { rental: any }) {
   const { data: tool } = useGetTool(rental.toolId);
   const { identity } = useInternetIdentity();
-
-  const formatDate = (timestamp: bigint) => {
-    return new Date(Number(timestamp) / 1_000_000).toLocaleDateString();
-  };
 
   const isRenter = !!(identity && rental.renter.toString() === identity.getPrincipal().toString());
 
@@ -48,8 +32,8 @@ function RentalCard({ rental }: { rental: any }) {
               {formatDate(rental.startDate)} - {formatDate(rental.endDate)}
             </CardDescription>
           </div>
-          <Badge className={statusColors[rental.status as RentalStatus]}>
-            {statusLabels[rental.status as RentalStatus]}
+          <Badge className={getStatusColor(rental.status as RentalStatus)}>
+            {getStatusLabel(rental.status as RentalStatus)}
           </Badge>
         </div>
       </CardHeader>
@@ -83,31 +67,25 @@ export default function MyRentalsPage() {
   return (
     <RequireAuth>
       <ProfileSetupDialog />
-      <div className="container py-8">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold tracking-tight">My Rentals</h1>
-          <p className="text-muted-foreground">Your rental requests and bookings</p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="My Rentals"
+          subtitle="Your rental requests and bookings"
+        />
 
         {isLoading ? (
-          <div className="flex min-h-[400px] items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <LoadingState />
         ) : myRentals.length === 0 ? (
-          <Card>
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Calendar className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle>No Rentals Yet</CardTitle>
-              <CardDescription>Browse tools and submit rental requests to get started</CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center">
+          <EmptyStateCard
+            icon={Calendar}
+            title="No Rentals Yet"
+            description="Browse tools and submit rental requests to get started"
+            action={
               <Button asChild>
                 <Link to="/browse">Browse Tools</Link>
               </Button>
-            </CardContent>
-          </Card>
+            }
+          />
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {myRentals.map((rental) => (
@@ -115,7 +93,7 @@ export default function MyRentalsPage() {
             ))}
           </div>
         )}
-      </div>
+      </PageShell>
     </RequireAuth>
   );
 }

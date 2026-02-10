@@ -1,111 +1,111 @@
 {
   "kind": "build_request",
-  "title": "Redesign homepage with immersive, graphics-heavy 'traveling through a tool shed' experience",
+  "title": "Website-wide polish pass and refactor to remove duplicate code",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Redesign the homepage (frontend/src/pages/LandingPage.tsx) to feel like an immersive journey “traveling through a tool shed,” using a more life-filled, graphics-heavy layout while preserving the existing primary actions (Browse Tools, Get Started / List a Tool) and authentication-dependent behavior.",
+      "text": "Polish UI/UX across all existing pages so they feel consistent and seamless: align typography scale, spacing, page headings, section layout, and empty/loading/error states across Landing, Browse, Listing Detail, Listing Form, My Tools, Requests, My Rentals, Rental Detail, Messaging, Profile, and Community Map pages.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "recent-messages-4"
         ],
         "quotes": [
-          "now create a more life filled homepage including more graphics and visuals. Make it such that you feel like you're traveling through a tool shed"
+          "please take the whole website now and polish up each page and get rid of duplicate functions and make things more seamless"
         ]
       },
       "acceptanceCriteria": [
-        "Homepage content is clearly themed as an immersive tool-shed journey (e.g., a sequence of sections that feels like moving through a shed/workshop)",
-        "Existing CTA behaviors remain intact: unauthenticated users see Get Started/Sign Up actions calling login; authenticated users see List a Tool navigating to /add-listing; Browse Tools navigates to /browse",
-        "Uses substantially more visuals than the current homepage (multiple graphics/illustrations/background elements beyond a single hero image)",
-        "Layout is responsive from mobile to desktop and does not overflow or clip key content"
+        "Every route defined in frontend/src/App.tsx has a consistent page header pattern (title + optional subtitle) and consistent top/bottom padding.",
+        "All pages that load data show a consistent loading UI (same component/pattern) and a consistent empty state (card/panel styling, aligned CTA button styles).",
+        "Common UI elements (badges, cards, buttons, alerts) look visually consistent across pages in both light and dark mode."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Implement a cohesive visual theme for the new homepage that reinforces the tool-shed travel vibe (e.g., warm workshop lighting, wood/metal textures, signage/labels), and apply it consistently across the homepage sections without changing the global app layout (header/footer) behavior.",
+      "text": "Introduce shared frontend utilities/components to eliminate duplicated logic and mappings currently repeated across pages/components (e.g., rental status label/color mapping and date formatting). Replace page-local implementations with shared imports.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "recent-messages-4"
         ],
         "quotes": [
-          "create a more life filled homepage including more graphics and visuals",
-          "feel like you're traveling through a tool shed"
+          "get rid of duplicate functions"
         ]
       },
       "acceptanceCriteria": [
-        "Homepage styling reads as a unified theme (colors, typography accents, section backgrounds, and visual motifs align)",
-        "Does not require edits to immutable paths (e.g., frontend/src/main.tsx, frontend/src/hooks/*, frontend/src/components/ui/*)",
-        "Header and footer remain functional and readable on top of any new homepage backgrounds (no contrast/accessibility regressions)"
+        "Rental status labels and badge classes are defined in a single shared module and reused wherever RentalStatus is rendered (no duplicated status maps in page files).",
+        "Common date formatting used for rentals is defined in a single shared utility and reused by rental-related pages/components.",
+        "After refactor, pages previously containing inline duplicates (e.g., MyRentalsPage) no longer define their own status label/color maps or ad-hoc date formatting helpers."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Add lightweight, performant visual motion to support the “travel” feeling on the homepage (e.g., parallax-like section transitions, subtle animated floating dust motes/light beams, or animated sign/indicator elements) using CSS/Tailwind-friendly techniques and respecting reduced-motion preferences.",
+      "text": "Remove dead/duplicate frontend code and placeholders, and ensure the codebase has no unused exports/imports related to removed files. In particular, address the empty placeholder hook file frontend/src/hooks/useMapZoom.ts by either removing it or implementing it and consolidating map zoom behavior into a single, clearly-named hook without duplication.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "recent-messages-4"
         ],
         "quotes": [
-          "feel like you're traveling through a tool shed"
+          "get rid of duplicate functions"
         ]
       },
       "acceptanceCriteria": [
-        "Animations are subtle and do not block interaction or navigation",
-        "If the user has prefers-reduced-motion enabled, animations are reduced/disabled appropriately",
-        "No noticeable jank during scroll on modern desktop/mobile browsers (avoid heavy runtime effects)"
+        "frontend/src/hooks/useMapZoom.ts is no longer an empty placeholder; the project builds cleanly with no references to missing/removed symbols.",
+        "Map zoom/pan interaction logic lives in one hook (no overlapping/duplicated implementations across hooks).",
+        "TypeScript build passes without unused import/export warnings introduced by the cleanup."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Integrate newly generated static image assets for the homepage into the app by placing them under frontend/public/assets/generated and referencing them from the homepage implementation.",
+      "text": "Make cross-page interactions feel seamless by standardizing navigation and action patterns: consistent primary/secondary CTAs, consistent link styling, and predictable placement of key actions (e.g., “Add Tool”, “View Details”, “Manage Rentals/Requests”) across relevant pages.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "recent-messages-4"
         ],
         "quotes": [
-          "including more graphics and visuals"
+          "make things more seamless"
         ]
       },
       "acceptanceCriteria": [
-        "All new images are stored as static assets under frontend/public/assets/generated",
-        "LandingPage renders the new images and they load correctly in the browser (no broken links)"
+        "Primary actions use a consistent button variant and placement pattern across pages (e.g., top-right header action on management pages like My Tools).",
+        "Secondary actions (links and outline/ghost buttons) follow a consistent hierarchy and styling across pages.",
+        "No page contains conflicting navigation patterns for similar tasks (e.g., “View Tool”, “View Details”)—labels and components are consistent."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Apply a single coherent visual theme across the app (colors, typography, surface styles, radii, shadows) and enforce it consistently using existing Tailwind + shadcn primitives; keep the theme neutral and modern (avoid a blue/purple-dominant palette).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "recent-messages-4"
+        ],
+        "quotes": [
+          "polish up each page"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A consistent theme is visible across all pages (same surface/background treatment, consistent typography scale, consistent card and input styling).",
+        "Theme works well in both light and dark mode using the existing theme variables setup.",
+        "No new product features are introduced as part of the visual refresh—only styling and consistency improvements."
       ]
     }
   ],
   "constraints": [
-    "Frontend immutable paths must not be edited: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui",
-    "Do not introduce new backend services or external databases; this request should be achievable with frontend-only changes",
-    "Keep all user-facing text in English"
+    "Do not edit files under frontend/src/components/ui (compose these components instead).",
+    "Do not edit any frontend immutablePaths listed in SYSTEM_CONTEXT.",
+    "Backend must remain a single Motoko actor in backend/main.mo; only add backend migration code if state schema must change (avoid schema changes for this polish/refactor request)."
   ],
   "nonGoals": [
-    "Changing backend data models or adding new backend endpoints",
-    "Reworking non-homepage pages (browse, listings, profile, messaging) beyond what is necessary to keep navigation consistent",
-    "Adding Three.js/R3F scenes unless strictly necessary (prefer lightweight CSS/DOM effects)"
+    "Adding new product features or new routes not already present in frontend/src/App.tsx.",
+    "Changing backend data models or introducing new persistent state purely for UI polish.",
+    "Integrating third-party services (analytics, auth providers beyond Internet Identity, etc.)."
   ],
   "imageRequirements": {
-    "required": [
-      "Tool shed interior corridor/aisle scene with warm workshop lighting, inviting perspective (toolshed-journey-hero.dim_1600x900.png)",
-      "Set of workshop/tool-shed themed decorative UI stickers (e.g., labels, tags, caution stripes, bolts) on transparent background (toolshed-ui-stickers.dim_1400x900.png)",
-      "Wood plank texture background, subtle and tileable (toolshed-wood-texture.dim_1024x1024.png)",
-      "Workbench scene flat-lay banner with tools and materials (workbench-banner.dim_1600x600.png)"
-    ],
-    "edits": [
-      "Shift the existing hero image to match a more immersive tool shed travel vibe (toolshare-hero.dim_1600x900.png > toolshare-hero-toolshed.dim_1600x900.png)"
-    ]
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
+    "required": [],
+    "edits": []
   }
 }

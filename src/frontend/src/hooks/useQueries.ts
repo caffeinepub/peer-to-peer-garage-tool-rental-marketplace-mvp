@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import type { UserProfile, ToolListing, RentalRequest, ToolCategory, ToolCondition, RentalStatus, ChatMessage } from '../backend';
+import type { UserProfile, ToolListing, RentalRequest, ToolCategory, ToolCondition, RentalStatus, ChatMessage, GeoCoordinates, CommunityMapProfile } from '../backend';
 
 // User Profile Queries
 export function useGetCallerUserProfile() {
@@ -52,24 +52,44 @@ export function useCreateOrUpdateProfile() {
       displayName, 
       contactInfo, 
       location, 
-      profilePicture 
+      profilePicture,
+      coordinates,
+      streetAddress
     }: { 
       displayName: string; 
       contactInfo?: string; 
       location?: string; 
       profilePicture?: string;
+      coordinates?: GeoCoordinates;
+      streetAddress?: string;
     }) => {
       if (!actor) throw new Error('Actor not available');
       return actor.createOrUpdateProfile(
         displayName, 
         contactInfo || null,
         location || '',
-        profilePicture || ''
+        profilePicture || '',
+        coordinates || null,
+        streetAddress || null
       );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['communityMapProfiles'] });
     },
+  });
+}
+
+export function useGetCommunityMapProfiles() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<CommunityMapProfile[]>({
+    queryKey: ['communityMapProfiles'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getCommunityMapProfiles();
+    },
+    enabled: !!actor && !isFetching,
   });
 }
 

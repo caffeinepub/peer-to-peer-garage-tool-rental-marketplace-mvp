@@ -3,8 +3,10 @@ import { useSearchTools } from '../hooks/useQueries';
 import { ToolCategory } from '../backend';
 import BrowseFiltersBar from '../components/listings/BrowseFiltersBar';
 import ListingsGrid from '../components/listings/ListingsGrid';
-import { Loader2 } from 'lucide-react';
 import ProfileSetupDialog from '../components/profile/ProfileSetupDialog';
+import PageShell from '../components/layout/PageShell';
+import PageHeader from '../components/layout/PageHeader';
+import LoadingState from '../components/states/LoadingState';
 
 export default function BrowseListingsPage() {
   const [searchText, setSearchText] = useState('');
@@ -26,11 +28,11 @@ export default function BrowseListingsPage() {
   return (
     <>
       <ProfileSetupDialog />
-      <div className="container py-8">
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold tracking-tight">Browse Tools</h1>
-          <p className="text-muted-foreground">Find the perfect tool for your next project</p>
-        </div>
+      <PageShell>
+        <PageHeader
+          title="Browse Tools"
+          subtitle="Find the perfect tool for your next project"
+        />
 
         <BrowseFiltersBar
           searchText={searchText}
@@ -48,13 +50,11 @@ export default function BrowseListingsPage() {
         />
 
         {isLoading ? (
-          <div className="flex min-h-[400px] items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-          </div>
+          <LoadingState />
         ) : (
           <ListingsGrid listings={listings} />
         )}
-      </div>
+      </PageShell>
     </>
   );
 }
