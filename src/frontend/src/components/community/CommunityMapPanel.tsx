@@ -1,11 +1,11 @@
-import { useRef, PointerEvent as ReactPointerEvent, WheelEvent as ReactWheelEvent } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ZoomIn, ZoomOut, Maximize2, MapPin, X } from 'lucide-react';
-import { useMapTransform } from '../../hooks/useMapTransform';
-import { geoToScreen } from '../../utils/geoProjection';
+import { MapPin, X, AlertCircle } from 'lucide-react';
+import { useWebGLSupport } from '../../hooks/useWebGLSupport';
+import GlobeMap from './GlobeMap';
 import type { CommunityMapProfile } from '../../backend';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface CommunityMapPanelProps {
   profiles: CommunityMapProfile[];
@@ -14,127 +14,44 @@ interface CommunityMapPanelProps {
 }
 
 export default function CommunityMapPanel({ profiles, selectedMemberId, onSelectMember }: CommunityMapPanelProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const {
-    zoom,
-    panX,
-    panY,
-    zoomIn,
-    zoomOut,
-    reset,
-    handleWheel,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    hasDragged,
-  } = useMapTransform({
-    initialZoom: 1,
-    minZoom: 0.5,
-    maxZoom: 4,
-    zoomStep: 0.2,
-    dragThreshold: 5,
-  });
-
-  const handleWheelEvent = (e: ReactWheelEvent) => {
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      handleWheel(e, rect);
-    }
-  };
-
-  const handleMarkerClick = (memberId: string) => {
-    if (!hasDragged) {
-      onSelectMember(selectedMemberId === memberId ? null : memberId);
-    }
-  };
-
+  const { isSupported, isChecking } = useWebGLSupport();
   const selectedProfile = profiles.find((p) => p.id.toString() === selectedMemberId);
+
+  const profilesWithCoordinates = profiles.filter((p) => p.coordinates);
 
   return (
     <Card>
       <CardContent className="p-0">
-        <div className="relative h-[500px] w-full overflow-hidden rounded-lg bg-muted">
-          <div
-            ref={containerRef}
-            className="relative h-full w-full touch-none"
-            onWheel={handleWheelEvent}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            style={{ cursor: 'grab' }}
-          >
-            <div
-              className="absolute inset-0 origin-center transition-transform"
-              style={{
-                transform: `translate(${panX}px, ${panY}px) scale(${zoom})`,
-              }}
-            >
-              <img
-                src="/assets/generated/world-map.dim_1600x900.png"
-                alt="World Map"
-                className="h-full w-full object-cover pointer-events-none select-none"
-                draggable={false}
-              />
-
-              {profiles.map((profile) => {
-                if (!profile.coordinates) return null;
-
-                const position = geoToScreen(profile.coordinates);
-                const isSelected = selectedMemberId === profile.id.toString();
-
-                return (
-                  <button
-                    key={profile.id.toString()}
-                    onClick={() => handleMarkerClick(profile.id.toString())}
-                    className={`absolute -translate-x-1/2 -translate-y-1/2 transition-all ${
-                      isSelected ? 'z-20 scale-125' : 'z-10 hover:scale-110'
-                    }`}
-                    style={{
-                      left: `${position.x}%`,
-                      top: `${position.y}%`,
-                    }}
-                  >
-                    <div
-                      className={`rounded-full p-1 shadow-lg ${
-                        isSelected ? 'bg-primary ring-4 ring-primary/30' : 'bg-background ring-2 ring-border'
-                      }`}
-                    >
-                      <Avatar className="h-8 w-8">
-                        {profile.profilePicture ? (
-                          <AvatarImage src={profile.profilePicture} alt={profile.displayName} />
-                        ) : null}
-                        <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                          {profile.displayName
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </div>
-                  </button>
-                );
-              })}
+        <div className="relative h-[500px] w-full overflow-hidden rounded-lg bg-gradient-to-b from-slate-900 via-blue-950 to-slate-900">
+          {isChecking ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center space-y-2">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+                <p className="text-sm text-muted-foreground">Loading globe...</p>
+              </div>
             </div>
-          </div>
+          ) : !isSupported ? (
+            <div className="flex items-center justify-center h-full p-8">
+              <Alert variant="destructive" className="max-w-md">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>3D Globe Unavailable</AlertTitle>
+                <AlertDescription>
+                  Your browser or device does not support WebGL, which is required for the interactive 3D globe.
+                  Please try using a modern browser like Chrome, Firefox, Safari, or Edge.
+                </AlertDescription>
+              </Alert>
+            </div>
+          ) : (
+            <GlobeMap
+              profiles={profilesWithCoordinates}
+              selectedMemberId={selectedMemberId}
+              onSelectMember={onSelectMember}
+            />
+          )}
 
-          <div className="absolute top-4 right-4 flex flex-col gap-2">
-            <Button size="icon" variant="secondary" onClick={zoomIn} className="shadow-lg">
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-            <Button size="icon" variant="secondary" onClick={zoomOut} className="shadow-lg">
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <Button size="icon" variant="secondary" onClick={reset} className="shadow-lg">
-              <Maximize2 className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {selectedProfile && (
-            <div className="absolute bottom-4 left-4 right-4 md:left-4 md:right-auto md:max-w-sm">
-              <Card className="shadow-xl">
+          {selectedProfile && isSupported && !isChecking && (
+            <div className="absolute bottom-4 left-4 right-4 md:left-4 md:right-auto md:max-w-sm z-10">
+              <Card className="shadow-xl backdrop-blur-sm bg-background/95">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
                     <Avatar className="h-12 w-12">

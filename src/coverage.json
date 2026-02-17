@@ -1,134 +1,72 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T05:11:38.136Z",
+  "generatedAt": "2026-02-11T03:15:08.538Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 5,
+    "total": 4,
+    "implemented": 4,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Polish UI/UX across all existing pages so they feel consistent and seamless: align typography scale, spacing, page headings, section layout, and empty/loading/error states across Landing, Browse, Listing Detail, Listing Form, My Tools, Requests, My Rentals, Rental Detail, Messaging, Profile, and Community Map pages.",
+        "summary": "Replace the current 2D world map in `frontend/src/components/community/CommunityMapPanel.tsx` with an interactive Google Earth-like 3D globe that supports rotate and zoom, while keeping the existing Community Map page framework (page layout, member directory, and selected-member details card behavior) intact.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/layout/PageShell.tsx",
-          "frontend/src/components/layout/PageHeader.tsx",
-          "frontend/src/components/states/LoadingState.tsx",
-          "frontend/src/components/states/EmptyStateCard.tsx",
-          "frontend/src/components/states/ErrorStateCard.tsx",
-          "frontend/src/pages/BrowseListingsPage.tsx",
-          "frontend/src/pages/MyToolsPage.tsx",
-          "frontend/src/pages/RequestsPage.tsx",
-          "frontend/src/pages/MyRentalsPage.tsx",
-          "frontend/src/pages/RentalDetailPage.tsx",
-          "frontend/src/pages/CommunityMapPage.tsx",
-          "frontend/src/components/rentals/RentalChatPanel.tsx",
-          "frontend/src/pages/LandingPage.tsx",
-          "frontend/src/pages/ListingDetailPage.tsx",
-          "frontend/src/pages/ListingFormPage.tsx",
-          "frontend/src/pages/MessagingPage.tsx",
-          "frontend/src/pages/ProfilePage.tsx",
-          "frontend/src/index.css"
+          "frontend/src/components/community/CommunityMapPanel.tsx",
+          "frontend/src/components/community/GlobeMap.tsx",
+          "frontend/src/hooks/useGlobeControls.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/layout/PageShell.tsx",
-          "frontend/src/components/layout/PageHeader.tsx",
-          "frontend/src/components/states/LoadingState.tsx",
-          "frontend/src/components/states/EmptyStateCard.tsx",
-          "frontend/src/components/states/ErrorStateCard.tsx",
-          "frontend/src/pages/BrowseListingsPage.tsx",
-          "frontend/src/pages/MyToolsPage.tsx",
-          "frontend/src/pages/RequestsPage.tsx",
-          "frontend/src/pages/MyRentalsPage.tsx",
-          "frontend/src/pages/RentalDetailPage.tsx",
-          "frontend/src/pages/CommunityMapPage.tsx",
-          "frontend/src/components/rentals/RentalChatPanel.tsx",
-          "frontend/src/pages/ListingDetailPage.tsx",
-          "frontend/src/pages/MessagingPage.tsx",
-          "frontend/src/pages/ProfilePage.tsx",
-          "frontend/src/index.css"
+          "frontend/src/components/community/CommunityMapPanel.tsx",
+          "frontend/src/components/community/GlobeMap.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Introduce shared frontend utilities/components to eliminate duplicated logic and mappings currently repeated across pages/components (e.g., rental status label/color mapping and date formatting). Replace page-local implementations with shared imports.",
+        "summary": "Render a pin/marker on the globe for each community member returned by `getCommunityMapProfiles()` that has `coordinates`, positioning markers using latitude/longitude on the sphere surface, and allow selecting members by clicking their pin.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/utils/rentals/rentalStatusPresentation.ts",
-          "frontend/src/utils/rentals/rentalDateFormat.ts",
-          "frontend/src/pages/MyRentalsPage.tsx",
-          "frontend/src/pages/RequestsPage.tsx",
-          "frontend/src/pages/RentalDetailPage.tsx",
-          "frontend/src/components/messaging/ConversationsList.tsx",
-          "frontend/src/components/messaging/ActiveConversationPanel.tsx",
-          "frontend/src/components/rentals/RentalChatPanel.tsx",
-          "frontend/src/components/rentals/RentalStatusActions.tsx"
+          "frontend/src/components/community/GlobeMap.tsx",
+          "frontend/src/utils/globeProjection.ts",
+          "frontend/src/components/community/CommunityMapPanel.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/utils/rentals/rentalStatusPresentation.ts",
-          "frontend/src/utils/rentals/rentalDateFormat.ts",
-          "frontend/src/pages/MyRentalsPage.tsx",
-          "frontend/src/pages/RequestsPage.tsx",
-          "frontend/src/pages/RentalDetailPage.tsx",
-          "frontend/src/components/messaging/ConversationsList.tsx",
-          "frontend/src/components/messaging/ActiveConversationPanel.tsx",
-          "frontend/src/components/rentals/RentalChatPanel.tsx"
+          "frontend/src/components/community/GlobeMap.tsx",
+          "frontend/src/utils/globeProjection.ts",
+          "frontend/src/components/community/CommunityMapPanel.tsx"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Remove dead/duplicate frontend code and placeholders, and ensure the codebase has no unused exports/imports related to removed files. In particular, address the empty placeholder hook file frontend/src/hooks/useMapZoom.ts by either removing it or implementing it and consolidating map zoom behavior into a single, clearly-named hook without duplication.",
+        "summary": "Use new static Earth texture asset(s) for the globe surface and load them from `frontend/public/assets/generated` (do not fetch textures through the backend).",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useMapTransform.ts",
-          "frontend/src/hooks/useMapZoom.ts",
-          "frontend/src/components/community/CommunityMapPanel.tsx"
+          "frontend/public/assets/generated/earth-day-texture.dim_2048x1024.jpg",
+          "frontend/public/assets/generated/earth-night-texture.dim_2048x1024.jpg",
+          "frontend/src/components/community/GlobeMap.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useMapZoom.ts",
-          "frontend/src/components/community/CommunityMapPanel.tsx"
+          "frontend/public/assets/generated/earth-day-texture.dim_2048x1024.jpg",
+          "frontend/public/assets/generated/earth-night-texture.dim_2048x1024.jpg",
+          "frontend/src/components/community/GlobeMap.tsx"
         ]
       },
       {
         "id": "REQ-4",
-        "summary": "Make cross-page interactions feel seamless by standardizing navigation and action patterns: consistent primary/secondary CTAs, consistent link styling, and predictable placement of key actions (e.g., “Add Tool”, “View Details”, “Manage Rentals/Requests”) across relevant pages.",
+        "summary": "Add a graceful fallback UI if the user’s environment cannot render the 3D globe (e.g., WebGL not available), using an English user-facing message within the map card area.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/navigation/AppNavLink.tsx",
-          "frontend/src/components/layout/AppHeader.tsx",
-          "frontend/src/pages/MyToolsPage.tsx",
-          "frontend/src/pages/MyRentalsPage.tsx",
-          "frontend/src/pages/RequestsPage.tsx",
-          "frontend/src/pages/RentalDetailPage.tsx",
-          "frontend/src/pages/ListingDetailPage.tsx",
-          "frontend/src/pages/MessagingPage.tsx"
+          "frontend/src/hooks/useWebGLSupport.ts",
+          "frontend/src/components/community/CommunityMapPanel.tsx",
+          "frontend/src/components/community/GlobeMap.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/navigation/AppNavLink.tsx",
-          "frontend/src/components/layout/AppHeader.tsx",
-          "frontend/src/pages/MyToolsPage.tsx",
-          "frontend/src/pages/MyRentalsPage.tsx",
-          "frontend/src/pages/RequestsPage.tsx",
-          "frontend/src/pages/RentalDetailPage.tsx",
-          "frontend/src/pages/ListingDetailPage.tsx",
-          "frontend/src/pages/MessagingPage.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Apply a single coherent visual theme across the app (colors, typography, surface styles, radii, shadows) and enforce it consistently using existing Tailwind + shadcn primitives; keep the theme neutral and modern (avoid a blue/purple-dominant palette).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/index.css",
-          "frontend/tailwind.config.js",
-          "frontend/src/components/layout/AppLayout.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/index.css"
+          "frontend/src/hooks/useWebGLSupport.ts",
+          "frontend/src/components/community/CommunityMapPanel.tsx",
+          "frontend/src/components/community/GlobeMap.tsx"
         ]
       }
     ]
@@ -138,30 +76,12 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
+    "frontend/public/assets/generated/earth-day-texture.dim_2048x1024.jpg",
+    "frontend/public/assets/generated/earth-night-texture.dim_2048x1024.jpg",
     "frontend/src/components/community/CommunityMapPanel.tsx",
-    "frontend/src/components/layout/AppHeader.tsx",
-    "frontend/src/components/layout/PageHeader.tsx",
-    "frontend/src/components/layout/PageShell.tsx",
-    "frontend/src/components/messaging/ActiveConversationPanel.tsx",
-    "frontend/src/components/messaging/ConversationsList.tsx",
-    "frontend/src/components/navigation/AppNavLink.tsx",
-    "frontend/src/components/rentals/RentalChatPanel.tsx",
-    "frontend/src/components/states/EmptyStateCard.tsx",
-    "frontend/src/components/states/ErrorStateCard.tsx",
-    "frontend/src/components/states/LoadingState.tsx",
-    "frontend/src/hooks/useMapZoom.ts",
-    "frontend/src/index.css",
-    "frontend/src/pages/BrowseListingsPage.tsx",
-    "frontend/src/pages/CommunityMapPage.tsx",
-    "frontend/src/pages/ListingDetailPage.tsx",
-    "frontend/src/pages/MessagingPage.tsx",
-    "frontend/src/pages/MyRentalsPage.tsx",
-    "frontend/src/pages/MyToolsPage.tsx",
-    "frontend/src/pages/ProfilePage.tsx",
-    "frontend/src/pages/RentalDetailPage.tsx",
-    "frontend/src/pages/RequestsPage.tsx",
-    "frontend/src/utils/rentals/rentalDateFormat.ts",
-    "frontend/src/utils/rentals/rentalStatusPresentation.ts",
+    "frontend/src/components/community/GlobeMap.tsx",
+    "frontend/src/hooks/useWebGLSupport.ts",
+    "frontend/src/utils/globeProjection.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

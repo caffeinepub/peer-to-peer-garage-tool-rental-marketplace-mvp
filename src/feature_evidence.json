@@ -2,25 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-polish-ui-ux-across-all-existing-pages-so-they-feel-consistent-and-seamless-align-typography-scale-spacing-page-headings-section-layout-and-empty-loading-error-states-across-landing-browse-listing-detail-listing-form-my-tools-requests-my-rentals-rental-detail-messaging-profile-and-community-map-pages",
-      "featureTitle": "Polish UI/UX across all existing pages so they feel consistent and seamless: align typography scale, spacing, page headings, section layout, and empty/loading/error states across Landing, Browse, Listing Detail, Listing Form, My Tools, Requests, My Rentals, Rental Detail, Messaging, Profile, and Community Map pages.",
+      "featureId": "feature-replace-the-current-2d-world-map-in-frontend-src-components-community-communitymappanel-tsx-with-an-interactive-google-earth-like-3d-globe-that-supports-rotate-and-zoom-while-keeping-the-existing-community-map-page-framework-page-layout-member-directory-and-selected-member-details-card-behavior-intact",
+      "featureTitle": "Replace the current 2D world map in `frontend/src/components/community/CommunityMapPanel.tsx` with an interactive Google Earth-like 3D globe that supports rotate and zoom, while keeping the existing Community Map page framework (page layout, member directory, and selected-member details card behavior) intact.",
       "files": [
-        "frontend/src/components/layout/PageHeader.tsx",
-        "frontend/src/components/layout/PageShell.tsx",
-        "frontend/src/components/rentals/RentalChatPanel.tsx",
-        "frontend/src/components/states/EmptyStateCard.tsx",
-        "frontend/src/components/states/ErrorStateCard.tsx",
-        "frontend/src/components/states/LoadingState.tsx",
-        "frontend/src/index.css",
-        "frontend/src/pages/BrowseListingsPage.tsx",
-        "frontend/src/pages/CommunityMapPage.tsx",
-        "frontend/src/pages/ListingDetailPage.tsx",
-        "frontend/src/pages/MessagingPage.tsx",
-        "frontend/src/pages/MyRentalsPage.tsx",
-        "frontend/src/pages/MyToolsPage.tsx",
-        "frontend/src/pages/ProfilePage.tsx",
-        "frontend/src/pages/RentalDetailPage.tsx",
-        "frontend/src/pages/RequestsPage.tsx"
+        "frontend/src/components/community/CommunityMapPanel.tsx",
+        "frontend/src/components/community/GlobeMap.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -37,17 +23,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-introduce-shared-frontend-utilities-components-to-eliminate-duplicated-logic-and-mappings-currently-repeated-across-pages-components-e-g-rental-status-label-color-mapping-and-date-formatting-replace-page-local-implementations-with-shared-imports",
-      "featureTitle": "Introduce shared frontend utilities/components to eliminate duplicated logic and mappings currently repeated across pages/components (e.g., rental status label/color mapping and date formatting). Replace page-local implementations with shared imports.",
+      "featureId": "feature-render-a-pin-marker-on-the-globe-for-each-community-member-returned-by-getcommunitymapprofiles-that-has-coordinates-positioning-markers-using-latitude-longitude-on-the-sphere-surface-and-allow-selecting-members-by-clicking-their-pin",
+      "featureTitle": "Render a pin/marker on the globe for each community member returned by `getCommunityMapProfiles()` that has `coordinates`, positioning markers using latitude/longitude on the sphere surface, and allow selecting members by clicking their pin.",
       "files": [
-        "frontend/src/components/messaging/ActiveConversationPanel.tsx",
-        "frontend/src/components/messaging/ConversationsList.tsx",
-        "frontend/src/components/rentals/RentalChatPanel.tsx",
-        "frontend/src/pages/MyRentalsPage.tsx",
-        "frontend/src/pages/RentalDetailPage.tsx",
-        "frontend/src/pages/RequestsPage.tsx",
-        "frontend/src/utils/rentals/rentalDateFormat.ts",
-        "frontend/src/utils/rentals/rentalStatusPresentation.ts"
+        "frontend/src/components/community/CommunityMapPanel.tsx",
+        "frontend/src/components/community/GlobeMap.tsx",
+        "frontend/src/utils/globeProjection.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -64,11 +45,10 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-remove-dead-duplicate-frontend-code-and-placeholders-and-ensure-the-codebase-has-no-unused-exports-imports-related-to-removed-files-in-particular-address-the-empty-placeholder-hook-file-frontend-src-hooks-usemapzoom-ts-by-either-removing-it-or-implementing-it-and-consolidating-map-zoom-behavior-into-a-single-clearly-named-hook-without-duplication",
-      "featureTitle": "Remove dead/duplicate frontend code and placeholders, and ensure the codebase has no unused exports/imports related to removed files. In particular, address the empty placeholder hook file frontend/src/hooks/useMapZoom.ts by either removing it or implementing it and consolidating map zoom behavior into a single, clearly-named hook without duplication.",
+      "featureId": "feature-use-new-static-earth-texture-asset-s-for-the-globe-surface-and-load-them-from-frontend-public-assets-generated-do-not-fetch-textures-through-the-backend",
+      "featureTitle": "Use new static Earth texture asset(s) for the globe surface and load them from `frontend/public/assets/generated` (do not fetch textures through the backend).",
       "files": [
-        "frontend/src/components/community/CommunityMapPanel.tsx",
-        "frontend/src/hooks/useMapZoom.ts"
+        "frontend/src/components/community/GlobeMap.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -85,17 +65,12 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-make-cross-page-interactions-feel-seamless-by-standardizing-navigation-and-action-patterns-consistent-primary-secondary-ctas-consistent-link-styling-and-predictable-placement-of-key-actions-e-g-add-tool-view-details-manage-rentals-requests-across-relevant-pages",
-      "featureTitle": "Make cross-page interactions feel seamless by standardizing navigation and action patterns: consistent primary/secondary CTAs, consistent link styling, and predictable placement of key actions (e.g., “Add Tool”, “View Details”, “Manage Rentals/Requests”) across relevant pages.",
+      "featureId": "feature-add-a-graceful-fallback-ui-if-the-user-s-environment-cannot-render-the-3d-globe-e-g-webgl-not-available-using-an-english-user-facing-message-within-the-map-card-area",
+      "featureTitle": "Add a graceful fallback UI if the user’s environment cannot render the 3D globe (e.g., WebGL not available), using an English user-facing message within the map card area.",
       "files": [
-        "frontend/src/components/layout/AppHeader.tsx",
-        "frontend/src/components/navigation/AppNavLink.tsx",
-        "frontend/src/pages/ListingDetailPage.tsx",
-        "frontend/src/pages/MessagingPage.tsx",
-        "frontend/src/pages/MyRentalsPage.tsx",
-        "frontend/src/pages/MyToolsPage.tsx",
-        "frontend/src/pages/RentalDetailPage.tsx",
-        "frontend/src/pages/RequestsPage.tsx"
+        "frontend/src/components/community/CommunityMapPanel.tsx",
+        "frontend/src/components/community/GlobeMap.tsx",
+        "frontend/src/hooks/useWebGLSupport.ts"
       ],
       "components": [
         "authorization@4.0.0",
@@ -108,26 +83,6 @@
       ],
       "testIds": [
         "REQ-4"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-apply-a-single-coherent-visual-theme-across-the-app-colors-typography-surface-styles-radii-shadows-and-enforce-it-consistently-using-existing-tailwind-shadcn-primitives-keep-the-theme-neutral-and-modern-avoid-a-blue-purple-dominant-palette",
-      "featureTitle": "Apply a single coherent visual theme across the app (colors, typography, surface styles, radii, shadows) and enforce it consistently using existing Tailwind + shadcn primitives; keep the theme neutral and modern (avoid a blue/purple-dominant palette).",
-      "files": [
-        "frontend/src/index.css"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-5"
       ],
       "confidence": "high"
     }

@@ -1,92 +1,50 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-06T05:11:38.132Z",
-  "summary": "Diff implements several UI consistency primitives (PageShell/PageHeader, LoadingState, EmptyStateCard/ErrorStateCard), refactors rental status/date presentation into shared utilities, updates multiple pages/components to use these patterns, and adjusts global theme variables. However, some requirements appear only partially met: not all pages/routes are evidenced as updated, map zoom logic appears duplicated (useMapZoom introduced while CommunityMap uses useMapTransform), and several changes introduce new photo/camera functionality that is not part of the requested polish/refactor scope.",
+  "generatedAt": "2026-02-11T03:15:08.534Z",
+  "summary": "The diff implements a new 3D globe component with local Earth textures, renders clickable member pins from coordinates, and adds a WebGL capability check with a fallback message. Some REQ-1 acceptance criteria (rotate/zoom interaction and preserving existing page behaviors like directory click scroll-to-top) cannot be confirmed from the provided truncated diff summary.",
   "missing_requirements": [
     {
       "id": "REQ-1",
-      "requirement": "Ensure every route defined in frontend/src/App.tsx uses a consistent page header pattern (title + optional subtitle) and consistent top/bottom padding.",
-      "reason": "Diff shows PageShell/PageHeader adoption in several pages (Browse, Messaging, MyRentals, MyTools, Requests, Profile, CommunityMap), but the diff summary does not provide evidence that all routes/pages (e.g., Landing page) were updated to use the same pattern.",
+      "requirement": "Users can rotate the globe (drag) and zoom in/out (mouse wheel / trackpad), producing a Google Earth-like interaction feel.",
+      "reason": "Although `OrbitControls` is imported in `GlobeMap.tsx`, the truncated file content does not show it being rendered/configured, so rotate/zoom behavior cannot be verified from the diff summary alone.",
       "evidence": [
-        "frontend/src/components/layout/PageShell.tsx",
-        "frontend/src/components/layout/PageHeader.tsx",
-        "frontend/src/pages/BrowseListingsPage.tsx",
-        "frontend/src/pages/MessagingPage.tsx",
-        "frontend/src/pages/MyRentalsPage.tsx",
-        "frontend/src/pages/MyToolsPage.tsx",
-        "frontend/src/pages/RequestsPage.tsx",
-        "frontend/src/pages/ProfilePage.tsx",
-        "frontend/src/pages/CommunityMapPage.tsx",
-        "frontend/src/App.tsx (mentioned in frontend-file-summaries.txt, but page-by-page coverage not shown)"
+        "frontend/src/components/community/GlobeMap.tsx (truncated)"
       ]
     },
     {
       "id": "REQ-1",
-      "requirement": "All pages that load data show a consistent loading UI and a consistent empty state (card/panel styling, aligned CTA button styles).",
-      "reason": "Some loading/empty states are standardized via LoadingState/EmptyStateCard, but at least one empty-state-like UI remains custom (CommunityMapPage's \"No Members Yet\" block uses bespoke markup rather than EmptyStateCard). Also RentalChatPanel still uses inline loading/error/empty markup rather than the shared state components.",
+      "requirement": "Keep the existing Community Map page framework intact (route /community-map, header, member directory cards, stats panel) and preserve directory-card click behavior (select on globe + scroll-to-top).",
+      "reason": "The diff summary only shows changes to `CommunityMapPanel.tsx` and the new globe-related files; it does not show the surrounding page/route component behavior or the member directory click/scroll-to-top behavior, so this cannot be verified from the diff summary.",
       "evidence": [
-        "frontend/src/pages/CommunityMapPage.tsx (custom \"No Members Yet\" empty block)",
-        "frontend/src/components/rentals/RentalChatPanel.tsx (inline loading/error/empty rendering)",
-        "frontend/src/components/states/LoadingState.tsx",
-        "frontend/src/components/states/EmptyStateCard.tsx"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "requirement": "Consolidate map zoom/pan interaction logic into one hook (no overlapping/duplicated implementations across hooks).",
-      "reason": "useMapZoom.ts is implemented, but CommunityMapPanel uses a different hook (useMapTransform). Based on the diff, both hooks appear to coexist, which suggests zoom-related logic is not consolidated into a single hook as required.",
-      "evidence": [
-        "frontend/src/hooks/useMapZoom.ts",
-        "frontend/src/components/community/CommunityMapPanel.tsx (imports/uses useMapTransform)"
+        "frontend/src/components/community/CommunityMapPanel.tsx (truncated)",
+        "frontend-file-summaries.txt (truncated)"
       ]
     }
   ],
   "hallucinated_features": [
     {
-      "description": "Introduced camera capture/photo reference management functionality for listing forms (camera UI, data URL conversion, photo management field).",
-      "reason": "BuildRequest explicitly scoped to UI polish/refactor and avoiding new product features; camera capture for photos appears to add new end-user functionality rather than just polish/refactor.",
+      "description": "Automatic globe rotation (continuous slow spin).",
+      "reason": "Not requested in any requirement or acceptance criteria; REQ-1 specifies user-driven rotate/zoom interactions, not auto-rotation.",
       "evidence": [
-        "frontend/src/components/listings/CameraCapturePanel.tsx (mentioned in frontend-file-summaries.txt)",
-        "frontend/src/components/listings/PhotoReferencesField.tsx (mentioned in frontend-file-summaries.txt)",
-        "frontend/src/utils/fileToDataUrl.ts (mentioned in frontend-file-summaries.txt)"
+        "frontend/src/components/community/GlobeMap.tsx (truncated): `globeRef.current.rotation.y += 0.0005;`"
       ]
     },
     {
-      "description": "Added/mentioned a new /community-map route in App.tsx.",
-      "reason": "Non-goals/constraints state not to add new routes beyond those already present in frontend/src/App.tsx. The diff summary claims routing includes a new /community-map route; if it was not previously present, this would violate scope. (Cannot confirm previous state from diff alone, but the change is explicitly described as new.)",
+      "description": "Additional globe/coordinate utility helpers (isValidCoordinates, parseCoordinate).",
+      "reason": "Not requested; only lat/lon positioning on a sphere is required for pins.",
       "evidence": [
-        "frontend/src/App.tsx (\"including new /community-map route\" in frontend-file-summaries.txt)"
+        "frontend/src/utils/globeProjection.ts"
       ]
     }
   ],
-  "confidence": 0.62,
+  "confidence": 0.64,
   "changed_files": [
     "frontend-file-summaries.txt",
     "frontend/src/components/community/CommunityMapPanel.tsx",
-    "frontend/src/components/layout/AppHeader.tsx",
-    "frontend/src/components/layout/PageHeader.tsx",
-    "frontend/src/components/layout/PageShell.tsx",
-    "frontend/src/components/messaging/ActiveConversationPanel.tsx",
-    "frontend/src/components/messaging/ConversationsList.tsx",
-    "frontend/src/components/navigation/AppNavLink.tsx",
-    "frontend/src/components/rentals/RentalChatPanel.tsx",
-    "frontend/src/components/states/EmptyStateCard.tsx",
-    "frontend/src/components/states/ErrorStateCard.tsx",
-    "frontend/src/components/states/LoadingState.tsx",
-    "frontend/src/hooks/useMapZoom.ts",
-    "frontend/src/index.css",
-    "frontend/src/pages/BrowseListingsPage.tsx",
-    "frontend/src/pages/CommunityMapPage.tsx",
-    "frontend/src/pages/ListingDetailPage.tsx",
-    "frontend/src/pages/MessagingPage.tsx",
-    "frontend/src/pages/MyRentalsPage.tsx",
-    "frontend/src/pages/MyToolsPage.tsx",
-    "frontend/src/pages/ProfilePage.tsx",
-    "frontend/src/pages/RentalDetailPage.tsx",
-    "frontend/src/pages/RequestsPage.tsx",
-    "frontend/src/utils/rentals/rentalDateFormat.ts",
-    "frontend/src/utils/rentals/rentalStatusPresentation.ts",
+    "frontend/src/components/community/GlobeMap.tsx",
+    "frontend/src/hooks/useWebGLSupport.ts",
+    "frontend/src/utils/globeProjection.ts",
     "project_state.json"
   ]
 }

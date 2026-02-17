@@ -1,9 +1,12 @@
 import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Wrench, Search, Shield, DollarSign, Users, Clock, Hammer, Drill, Ruler, Paintbrush } from 'lucide-react';
+import { Wrench, Search, Shield, DollarSign, Users, Clock, MapPin, MessageSquare, Star } from 'lucide-react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import ToolshedJourneySection from '../components/landing/ToolshedJourneySection';
+import FloatingObjectsLayer from '../components/landing/FloatingObjectsLayer';
+import InteractiveTilt from '../components/landing/InteractiveTilt';
+import LandingImageBlock from '../components/landing/LandingImageBlock';
+import LandingIllustrationImage from '../components/landing/LandingIllustrationImage';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -11,288 +14,297 @@ export default function LandingPage() {
   const isAuthenticated = !!identity;
 
   return (
-    <div className="flex flex-col relative">
-      {/* Floating dust motes decoration */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="motion-safe:animate-float-slow absolute top-[10%] left-[15%] w-2 h-2 bg-primary/20 rounded-full blur-sm" />
-        <div className="motion-safe:animate-float-medium absolute top-[30%] right-[20%] w-1.5 h-1.5 bg-primary/15 rounded-full blur-sm" />
-        <div className="motion-safe:animate-float-slow absolute top-[60%] left-[25%] w-2.5 h-2.5 bg-primary/10 rounded-full blur-sm" />
-        <div className="motion-safe:animate-float-medium absolute top-[80%] right-[30%] w-1 h-1 bg-primary/20 rounded-full blur-sm" />
-        <div className="motion-safe:animate-float-slow absolute top-[45%] right-[10%] w-2 h-2 bg-primary/15 rounded-full blur-sm" />
-      </div>
+    <div className="flex flex-col relative min-h-screen">
+      {/* Floating 3D Objects Background */}
+      <FloatingObjectsLayer />
 
-      {/* Hero Section - Entrance to the Shed */}
-      <section className="relative overflow-hidden border-b-4 border-primary/30 bg-gradient-to-b from-amber-50/80 via-orange-50/60 to-background dark:from-amber-950/30 dark:via-orange-950/20 dark:to-background">
-        {/* Wood texture overlay */}
-        <div 
-          className="absolute inset-0 opacity-[0.03] dark:opacity-[0.08] mix-blend-multiply dark:mix-blend-overlay pointer-events-none"
-          style={{
-            backgroundImage: 'url(/assets/generated/toolshed-wood-texture.dim_1024x1024.png)',
-            backgroundSize: '400px 400px',
-            backgroundRepeat: 'repeat'
-          }}
-        />
+      {/* Hero Section */}
+      <section className="relative overflow-hidden border-b border-border/50">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-background to-background" />
         
-        <div className="container relative z-10 py-16 md:py-24">
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-            <div className="flex flex-col justify-center space-y-6">
-              {/* Shed entrance sign */}
-              <div className="inline-flex items-center gap-2 self-start px-4 py-2 bg-primary/10 border-2 border-primary/30 rounded-lg shadow-md motion-safe:animate-sway-gentle">
-                <Wrench className="h-5 w-5 text-primary" />
-                <span className="text-sm font-bold text-primary uppercase tracking-wide">Welcome to the Shed</span>
-              </div>
-              
-              <div className="space-y-4">
-                <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-                  Share Tools,
-                  <br />
-                  <span className="text-primary">Build Community</span>
-                </h1>
-                <p className="text-lg text-muted-foreground md:text-xl">
-                  Step into our community workshop. Rent garage tools from your neighbors, list your unused equipment, and earn extra income. It's peer-to-peer tool sharing made simple.
-                </p>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button size="lg" onClick={() => navigate({ to: '/browse' })} className="text-base shadow-lg">
+        <div className="container relative z-10 py-20 md:py-32 lg:py-40">
+          <div className="mx-auto max-w-4xl text-center space-y-8">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
+              <Wrench className="h-4 w-4 text-primary" />
+              <span className="text-sm font-semibold text-primary">Community Tool Sharing</span>
+            </div>
+            
+            <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl lg:text-8xl">
+              Share Tools,
+              <br />
+              <span className="text-primary">Build Community</span>
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Rent tools from neighbors, list your unused equipment, and earn extra income. Peer-to-peer tool sharing made simple.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <InteractiveTilt intensity={0.8}>
+                <Button size="lg" onClick={() => navigate({ to: '/browse' })} className="text-lg px-8 py-6 shadow-lg">
                   <Search className="mr-2 h-5 w-5" />
                   Browse Tools
                 </Button>
-                {!isAuthenticated ? (
-                  <Button size="lg" variant="outline" onClick={login} className="text-base shadow-md">
+              </InteractiveTilt>
+              {!isAuthenticated ? (
+                <InteractiveTilt intensity={0.8}>
+                  <Button size="lg" variant="outline" onClick={login} className="text-lg px-8 py-6">
                     Get Started
                   </Button>
-                ) : (
-                  <Button size="lg" variant="outline" onClick={() => navigate({ to: '/add-listing' })} className="text-base shadow-md">
+                </InteractiveTilt>
+              ) : (
+                <InteractiveTilt intensity={0.8}>
+                  <Button size="lg" variant="outline" onClick={() => navigate({ to: '/add-listing' })} className="text-lg px-8 py-6">
                     <Wrench className="mr-2 h-5 w-5" />
                     List a Tool
                   </Button>
-                )}
+                </InteractiveTilt>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* New Image Block Section */}
+      <LandingImageBlock />
+
+      {/* How It Works - Large Visual Section with Spot Illustrations */}
+      <section className="relative py-24 md:py-32 border-b border-border/50">
+        <div className="container relative z-10">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-4xl md:text-5xl font-bold">How It Works</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Three simple steps to start sharing tools in your community
+            </p>
+          </div>
+          
+          <div className="grid gap-12 md:grid-cols-3 max-w-6xl mx-auto">
+            <div className="text-center space-y-6">
+              <div className="mx-auto w-48 h-48 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center shadow-lg overflow-hidden border border-primary/20">
+                <LandingIllustrationImage
+                  src="/assets/generated/how-it-works-spot-1.dim_512x512.png"
+                  alt="Simple illustration of a magnifying glass over garage tools representing tool search"
+                  width={512}
+                  height={512}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-2xl font-bold">Find Tools</h3>
+                <p className="text-muted-foreground text-lg leading-relaxed">
+                  Browse available tools in your area. Filter by category, price, and availability to find exactly what you need.
+                </p>
               </div>
             </div>
-            <div className="relative">
-              <div className="absolute -inset-4 bg-gradient-to-br from-primary/20 to-orange-500/20 rounded-2xl blur-2xl motion-safe:animate-pulse-slow" />
-              <img
-                src="/assets/generated/toolshare-hero-toolshed.dim_1600x900.png"
-                alt="Tool sharing community workshop"
-                className="relative rounded-xl shadow-2xl border-4 border-primary/20"
-              />
-              {/* Decorative stickers */}
-              <div className="absolute -top-3 -right-3 w-16 h-16 bg-primary rounded-full flex items-center justify-center shadow-lg motion-safe:animate-bounce-slow">
-                <Hammer className="h-8 w-8 text-primary-foreground" />
+
+            <div className="text-center space-y-6">
+              <div className="mx-auto w-48 h-48 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center shadow-lg overflow-hidden border border-primary/20">
+                <LandingIllustrationImage
+                  src="/assets/generated/how-it-works-spot-2.dim_512x512.png"
+                  alt="Simple illustration of handshake with tools representing rental agreement"
+                  width={512}
+                  height={512}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-2xl font-bold">Connect & Rent</h3>
+                <p className="text-muted-foreground text-lg leading-relaxed">
+                  Send a rental request with your dates. Chat with the owner to arrange pickup and discuss details.
+                </p>
+              </div>
+            </div>
+
+            <div className="text-center space-y-6">
+              <div className="mx-auto w-48 h-48 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center shadow-lg overflow-hidden border border-primary/20">
+                <LandingIllustrationImage
+                  src="/assets/generated/how-it-works-spot-3.dim_512x512.png"
+                  alt="Simple illustration of completed project with tools representing successful rental"
+                  width={512}
+                  height={512}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-2xl font-bold">Get It Done</h3>
+                <p className="text-muted-foreground text-lg leading-relaxed">
+                  Pick up the tool, complete your project, and return it. Rate your experience and help the community grow.
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Tool Aisle - Browse Section */}
-      <ToolshedJourneySection
-        label="Aisle 1: Power Tools"
-        title="Find What You Need"
-        description="Walk down our virtual aisles and discover tools for every project"
-        icon={<Drill className="h-6 w-6" />}
-        variant="light"
-      >
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <Card className="border-2 border-primary/20 shadow-md hover:shadow-xl transition-shadow">
-            <CardContent className="pt-6">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-orange-500/20 shadow-inner">
-                <Search className="h-7 w-7 text-primary" />
-              </div>
-              <h3 className="mb-2 text-xl font-semibold">Find Tools</h3>
-              <p className="text-muted-foreground">
-                Browse available tools in your area. Search by category, price, and availability.
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-primary/20 shadow-md hover:shadow-xl transition-shadow">
-            <CardContent className="pt-6">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-orange-500/20 shadow-inner">
-                <Users className="h-7 w-7 text-primary" />
-              </div>
-              <h3 className="mb-2 text-xl font-semibold">Request Rental</h3>
-              <p className="text-muted-foreground">
-                Send a rental request with your desired dates. Connect directly with tool owners.
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="border-2 border-primary/20 shadow-md hover:shadow-xl transition-shadow">
-            <CardContent className="pt-6">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-orange-500/20 shadow-inner">
-                <Wrench className="h-7 w-7 text-primary" />
-              </div>
-              <h3 className="mb-2 text-xl font-semibold">Get the Job Done</h3>
-              <p className="text-muted-foreground">
-                Pick up the tool, complete your project, and return it. Rate your experience.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </ToolshedJourneySection>
+      {/* Benefits - Consolidated Large Cards */}
+      <section className="relative py-24 md:py-32 bg-muted/30">
+        <div className="container relative z-10">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-4xl md:text-5xl font-bold">Why ToolShare?</h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Join a community that values sharing, sustainability, and getting things done
+            </p>
+          </div>
 
-      {/* Workbench Section - Visual Break */}
-      <section className="relative overflow-hidden border-y-4 border-primary/30 bg-gradient-to-r from-amber-100/50 via-orange-100/50 to-amber-100/50 dark:from-amber-950/20 dark:via-orange-950/20 dark:to-amber-950/20">
-        <div 
-          className="absolute inset-0 opacity-[0.05] dark:opacity-[0.12] mix-blend-multiply dark:mix-blend-overlay"
-          style={{
-            backgroundImage: 'url(/assets/generated/workbench-banner.dim_1600x600.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        />
-        <div className="container relative z-10 py-12 md:py-16">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary shadow-lg">
-                <Ruler className="h-8 w-8 text-primary-foreground" />
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
+            <InteractiveTilt intensity={0.6}>
+              <Card className="border-2 hover:border-primary/50 transition-colors h-full">
+                <CardContent className="pt-8 pb-8 space-y-4">
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <DollarSign className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold">Save Money</h3>
+                  <p className="text-muted-foreground text-lg leading-relaxed">
+                    Rent tools for a fraction of the purchase price. No need to buy expensive equipment you'll rarely use.
+                  </p>
+                </CardContent>
+              </Card>
+            </InteractiveTilt>
+
+            <InteractiveTilt intensity={0.6}>
+              <Card className="border-2 hover:border-primary/50 transition-colors h-full">
+                <CardContent className="pt-8 pb-8 space-y-4">
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <Clock className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold">Earn Income</h3>
+                  <p className="text-muted-foreground text-lg leading-relaxed">
+                    List your unused tools and earn money when they're rented. Turn idle equipment into steady income.
+                  </p>
+                </CardContent>
+              </Card>
+            </InteractiveTilt>
+
+            <InteractiveTilt intensity={0.6}>
+              <Card className="border-2 hover:border-primary/50 transition-colors h-full">
+                <CardContent className="pt-8 pb-8 space-y-4">
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <Users className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold">Build Community</h3>
+                  <p className="text-muted-foreground text-lg leading-relaxed">
+                    Connect with neighbors, share resources, and strengthen local bonds through collaborative tool sharing.
+                  </p>
+                </CardContent>
+              </Card>
+            </InteractiveTilt>
+
+            <InteractiveTilt intensity={0.6}>
+              <Card className="border-2 hover:border-primary/50 transition-colors h-full">
+                <CardContent className="pt-8 pb-8 space-y-4">
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <Shield className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold">Secure Platform</h3>
+                  <p className="text-muted-foreground text-lg leading-relaxed">
+                    Built on Internet Computer with secure authentication. Your data and transactions are protected.
+                  </p>
+                </CardContent>
+              </Card>
+            </InteractiveTilt>
+
+            <InteractiveTilt intensity={0.6}>
+              <Card className="border-2 hover:border-primary/50 transition-colors h-full">
+                <CardContent className="pt-8 pb-8 space-y-4">
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <MapPin className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold">Local Access</h3>
+                  <p className="text-muted-foreground text-lg leading-relaxed">
+                    Find tools nearby and support your local community. Reduce waste and environmental impact together.
+                  </p>
+                </CardContent>
+              </Card>
+            </InteractiveTilt>
+
+            <InteractiveTilt intensity={0.6}>
+              <Card className="border-2 hover:border-primary/50 transition-colors h-full">
+                <CardContent className="pt-8 pb-8 space-y-4">
+                  <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <Star className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold">Quality Tools</h3>
+                  <p className="text-muted-foreground text-lg leading-relaxed">
+                    Access well-maintained equipment from trusted community members. Rate and review every rental.
+                  </p>
+                </CardContent>
+              </Card>
+            </InteractiveTilt>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="relative py-24 md:py-32 border-t border-border/50">
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-background to-background" />
+        
+        <div className="container relative z-10">
+          <div className="mx-auto max-w-3xl text-center space-y-12">
+            <div className="space-y-6">
+              <h2 className="text-4xl md:text-5xl font-bold">Ready to Get Started?</h2>
+              <p className="text-xl text-muted-foreground leading-relaxed">
+                Join our community of tool sharers today and start building, creating, and connecting with your neighbors.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="p-6 bg-primary/5 rounded-xl border border-primary/20">
+                <div className="text-4xl font-bold text-primary mb-2">500+</div>
+                <div className="text-sm text-muted-foreground">Tools Listed</div>
               </div>
-              <div>
-                <h3 className="text-2xl font-bold">The Workbench</h3>
-                <p className="text-muted-foreground">Where projects come to life</p>
+              <div className="p-6 bg-primary/5 rounded-xl border border-primary/20">
+                <div className="text-4xl font-bold text-primary mb-2">200+</div>
+                <div className="text-sm text-muted-foreground">Active Users</div>
+              </div>
+              <div className="p-6 bg-primary/5 rounded-xl border border-primary/20">
+                <div className="text-4xl font-bold text-primary mb-2">1000+</div>
+                <div className="text-sm text-muted-foreground">Rentals</div>
+              </div>
+              <div className="p-6 bg-primary/5 rounded-xl border border-primary/20">
+                <div className="text-4xl font-bold text-primary mb-2">4.8★</div>
+                <div className="text-sm text-muted-foreground">Avg Rating</div>
               </div>
             </div>
-            <div className="flex gap-6 flex-wrap justify-center">
-              <div className="flex items-center gap-2 px-4 py-2 bg-background/80 rounded-lg shadow-md border border-primary/20">
-                <Hammer className="h-5 w-5 text-primary" />
-                <span className="font-semibold">Power Tools</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-background/80 rounded-lg shadow-md border border-primary/20">
-                <Wrench className="h-5 w-5 text-primary" />
-                <span className="font-semibold">Hand Tools</span>
-              </div>
-              <div className="flex items-center gap-2 px-4 py-2 bg-background/80 rounded-lg shadow-md border border-primary/20">
-                <Paintbrush className="h-5 w-5 text-primary" />
-                <span className="font-semibold">Specialty</span>
-              </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+              <InteractiveTilt intensity={0.8}>
+                <Button size="lg" onClick={() => navigate({ to: '/browse' })} className="text-lg px-8 py-6 shadow-lg">
+                  <Search className="mr-2 h-5 w-5" />
+                  Browse Tools
+                </Button>
+              </InteractiveTilt>
+              {!isAuthenticated && (
+                <InteractiveTilt intensity={0.8}>
+                  <Button size="lg" variant="outline" onClick={login} className="text-lg px-8 py-6">
+                    Sign Up Now
+                  </Button>
+                </InteractiveTilt>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Tool Board - Benefits Section */}
-      <ToolshedJourneySection
-        label="Tool Board: Posted Benefits"
-        title="Why ToolShare?"
-        description="Check out what makes our community workshop special"
-        icon={<Shield className="h-6 w-6" />}
-        variant="muted"
-      >
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          <div className="flex gap-4 p-6 bg-card rounded-xl border-2 border-primary/20 shadow-md hover:shadow-lg transition-shadow">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-orange-500/20 shadow-inner">
-              <DollarSign className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="mb-2 font-bold text-lg">Save Money</h3>
-              <p className="text-sm text-muted-foreground">
-                Rent tools for a fraction of the purchase price. No need to buy expensive equipment you'll rarely use.
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-4 p-6 bg-card rounded-xl border-2 border-primary/20 shadow-md hover:shadow-lg transition-shadow">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-orange-500/20 shadow-inner">
-              <Shield className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="mb-2 font-bold text-lg">Secure Platform</h3>
-              <p className="text-sm text-muted-foreground">
-                Built on Internet Computer with secure authentication. Your data and transactions are protected.
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-4 p-6 bg-card rounded-xl border-2 border-primary/20 shadow-md hover:shadow-lg transition-shadow">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-orange-500/20 shadow-inner">
-              <Clock className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h3 className="mb-2 font-bold text-lg">Earn Extra Income</h3>
-              <p className="text-sm text-muted-foreground">
-                List your unused tools and earn money when they're rented. Turn idle equipment into income.
-              </p>
-            </div>
-          </div>
-        </div>
-      </ToolshedJourneySection>
-
-      {/* Journey Hero Section */}
-      <section className="relative overflow-hidden border-y-4 border-primary/30">
-        <div 
-          className="absolute inset-0 opacity-20 dark:opacity-30"
-          style={{
-            backgroundImage: 'url(/assets/generated/toolshed-journey-hero.dim_1600x900.png)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/80" />
-        <div className="container relative z-10 py-20 md:py-32">
-          <div className="mx-auto max-w-3xl text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-6 py-3 bg-primary/10 border-2 border-primary/30 rounded-full shadow-lg motion-safe:animate-sway-gentle">
-              <Wrench className="h-6 w-6 text-primary" />
-              <span className="font-bold text-primary uppercase tracking-wide">Community Workshop</span>
-            </div>
-            <h2 className="text-4xl font-bold tracking-tight md:text-5xl">
-              Your Neighborhood Tool Library
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Every tool has a story. Every project brings neighbors together. Join a community that believes in sharing, sustainability, and getting things done.
+      {/* Footer */}
+      <footer className="relative border-t border-border/50 py-8 bg-muted/20">
+        <div className="container relative z-10">
+          <div className="text-center text-sm text-muted-foreground">
+            <p>
+              © {new Date().getFullYear()} ToolShare. Built with ❤️ using{' '}
+              <a
+                href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(
+                  typeof window !== 'undefined' ? window.location.hostname : 'toolshare'
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                caffeine.ai
+              </a>
             </p>
           </div>
         </div>
-      </section>
-
-      {/* Exit CTA Section - Checkout Counter */}
-      <ToolshedJourneySection
-        label="Checkout Counter"
-        title="Ready to Get Started?"
-        description="Join our community of tool sharers today"
-        icon={<Users className="h-6 w-6" />}
-        variant="light"
-      >
-        <div className="mx-auto max-w-2xl text-center space-y-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-              <div className="text-3xl font-bold text-primary">500+</div>
-              <div className="text-sm text-muted-foreground">Tools Listed</div>
-            </div>
-            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-              <div className="text-3xl font-bold text-primary">200+</div>
-              <div className="text-sm text-muted-foreground">Active Users</div>
-            </div>
-            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-              <div className="text-3xl font-bold text-primary">1000+</div>
-              <div className="text-sm text-muted-foreground">Rentals</div>
-            </div>
-            <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-              <div className="text-3xl font-bold text-primary">4.8★</div>
-              <div className="text-sm text-muted-foreground">Avg Rating</div>
-            </div>
-          </div>
-          
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button size="lg" onClick={() => navigate({ to: '/browse' })} className="text-base shadow-lg">
-              <Search className="mr-2 h-5 w-5" />
-              Browse Tools
-            </Button>
-            {!isAuthenticated && (
-              <Button size="lg" variant="outline" onClick={login} className="text-base shadow-md">
-                Sign Up Now
-              </Button>
-            )}
-          </div>
-        </div>
-      </ToolshedJourneySection>
-
-      {/* Decorative stickers overlay */}
-      <div 
-        className="fixed bottom-4 right-4 w-32 h-32 pointer-events-none opacity-10 dark:opacity-20 motion-safe:animate-float-slow z-0"
-        style={{
-          backgroundImage: 'url(/assets/generated/toolshed-ui-stickers.dim_1400x900.png)',
-          backgroundSize: 'contain',
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'center'
-        }}
-      />
+      </footer>
     </div>
   );
 }

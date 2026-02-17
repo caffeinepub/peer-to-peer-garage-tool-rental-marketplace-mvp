@@ -1,265 +1,112 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Website-wide UI polish + shared UI patterns and utility refactor",
+  "title": "Community Map 3D Globe with Member Pins (No External Map Provider)",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Unify page layout and data-state presentation across all existing routes (headers, spacing, loading/empty/error patterns, and shared UI look in light/dark).",
+      "summary": "Replace the 2D CommunityMapPanel map with an interactive, Earth-like 3D globe (rotate + zoom) while preserving the existing Community Map page framework and selection UX.",
       "acceptanceCriteria": [
-        "Every route defined in frontend/src/App.tsx has a consistent page header pattern (title + optional subtitle) and consistent top/bottom padding.",
-        "All pages that load data show a consistent loading UI (same component/pattern) and a consistent empty state (card/panel styling, aligned CTA button styles).",
-        "Common UI elements (badges, cards, buttons, alerts) look visually consistent across pages in both light and dark mode."
+        "The Community Map page route (`/community-map`) remains the same and continues to render the existing header, member directory cards, and stats panel.",
+        "The map area is rendered as a 3D globe (Earth-like) instead of the current flat image `/assets/generated/world-map.dim_1600x900.png`.",
+        "Users can rotate the globe (drag) and zoom in/out (mouse wheel / trackpad), producing a Google Earth-like interaction feel.",
+        "The existing member selection UX is preserved: selecting a member on the map highlights them and shows the selected-member details card overlay; clicking the X clears selection.",
+        "Clicking a member card in the directory still selects the same member on the globe and brings the user back to the map area (current scroll-to-top behavior is preserved)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/layout/PageShell.tsx",
+          "path": "frontend/src/components/community/CommunityMapPanel.tsx",
+          "operation": "modify",
+          "description": "Replace the current 2D image-based map rendering and 2D pan/zoom handling with a 3D globe panel that supports drag-to-rotate and wheel/trackpad zoom, while keeping the existing card layout, zoom/reset controls placement, and selected-member details overlay behavior intact."
+        },
+        {
+          "path": "frontend/src/components/community/GlobeMap.tsx",
           "operation": "create",
-          "description": "Create a shared PageShell layout wrapper that applies the consistent container width and top/bottom padding used across pages, so pages no longer hand-roll container/spacing."
+          "description": "Create a dedicated 3D globe component responsible for initializing and rendering the Earth-like globe (WebGL/canvas), handling rotate and zoom interactions, and exposing selection callbacks to the parent panel."
         },
         {
-          "path": "frontend/src/components/layout/PageHeader.tsx",
+          "path": "frontend/src/hooks/useGlobeControls.ts",
           "operation": "create",
-          "description": "Create a shared PageHeader component (title, optional subtitle, optional right-side actions slot) to standardize heading typography and header spacing across pages."
-        },
-        {
-          "path": "frontend/src/components/states/LoadingState.tsx",
-          "operation": "create",
-          "description": "Create a shared LoadingState component (consistent spinner + sizing + min-height) used by all data-loading pages/components."
-        },
-        {
-          "path": "frontend/src/components/states/EmptyStateCard.tsx",
-          "operation": "create",
-          "description": "Create a shared EmptyStateCard component (icon/title/description/optional CTA) to standardize empty states across pages."
-        },
-        {
-          "path": "frontend/src/components/states/ErrorStateCard.tsx",
-          "operation": "create",
-          "description": "Create a shared ErrorStateCard component (title/description/optional retry/optional action) to standardize error states across pages."
-        },
-        {
-          "path": "frontend/src/pages/BrowseListingsPage.tsx",
-          "operation": "modify",
-          "description": "Refactor Browse page to use PageShell + PageHeader and the shared LoadingState/EmptyState pattern where applicable (ensure consistent spacing and header styling)."
-        },
-        {
-          "path": "frontend/src/pages/MyToolsPage.tsx",
-          "operation": "modify",
-          "description": "Refactor My Tools page to use PageShell + PageHeader (with right-side primary action), and replace ad-hoc loading/empty panels with LoadingState/EmptyStateCard for consistent presentation."
-        },
-        {
-          "path": "frontend/src/pages/RequestsPage.tsx",
-          "operation": "modify",
-          "description": "Refactor Requests page to use PageShell + PageHeader and shared LoadingState/EmptyStateCard, ensuring consistent card/panel styling and CTA alignment."
-        },
-        {
-          "path": "frontend/src/pages/MyRentalsPage.tsx",
-          "operation": "modify",
-          "description": "Refactor My Rentals page to use PageShell + PageHeader and shared LoadingState/EmptyStateCard, ensuring consistent typography scale and spacing."
-        },
-        {
-          "path": "frontend/src/pages/RentalDetailPage.tsx",
-          "operation": "modify",
-          "description": "Refactor Rental Detail page to align with the standardized header pattern and spacing (PageShell + PageHeader), and use the shared error/empty/loading states where relevant."
-        },
-        {
-          "path": "frontend/src/pages/CommunityMapPage.tsx",
-          "operation": "modify",
-          "description": "Refactor Community Map page to use PageShell + PageHeader and shared LoadingState/ErrorStateCard/EmptyStateCard patterns to replace page-specific skeleton/error cards where appropriate."
-        },
-        {
-          "path": "frontend/src/components/rentals/RentalChatPanel.tsx",
-          "operation": "modify",
-          "description": "Update chat panel to use the shared LoadingState and standardized empty/error panel styling so component-level states match the app-wide pattern."
-        },
-        {
-          "path": "frontend/src/pages/LandingPage.tsx",
-          "operation": "modify",
-          "description": "Polish Landing page section spacing and heading scale to match the standardized typography/spacing patterns used elsewhere (no new routes or features)."
-        },
-        {
-          "path": "frontend/src/pages/ListingDetailPage.tsx",
-          "operation": "modify",
-          "description": "Polish Listing Detail page layout spacing and headings to align with PageShell/PageHeader conventions, and ensure loading/empty/error states match shared components."
-        },
-        {
-          "path": "frontend/src/pages/ListingFormPage.tsx",
-          "operation": "modify",
-          "description": "Polish Listing Form page header/spacing and loading/error presentation to match the shared patterns (do not modify any files under frontend/src/components/ui)."
-        },
-        {
-          "path": "frontend/src/pages/MessagingPage.tsx",
-          "operation": "modify",
-          "description": "Polish Messaging page layout/heading/spacing and ensure any loading/empty/error states use the shared state components for consistency."
-        },
-        {
-          "path": "frontend/src/pages/ProfilePage.tsx",
-          "operation": "modify",
-          "description": "Polish Profile page header/spacing, align form section layout and any loading/error messaging to the shared UI patterns."
-        },
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Adjust base typography defaults (heading scale consistency), surface/background defaults, and global spacing-related primitives (via existing Tailwind/shadcn theme variables) to make pages feel consistent in both light and dark mode."
+          "description": "Add a hook to manage globe interaction state (rotation/zoom), unify mouse + touch drag gestures, and provide imperative helpers for zoom in/out/reset to keep the existing UI button behavior consistent."
         }
       ]
     },
     {
       "id": "REQ-2",
-      "summary": "Create shared utility modules for repeated mappings/formatting (rental status presentation and rental date formatting) and replace duplicated inline logic with imports.",
+      "summary": "Render globe pins for members with coordinates from getCommunityMapProfiles() and allow pin click selection with distinct selected state.",
       "acceptanceCriteria": [
-        "Rental status labels and badge classes are defined in a single shared module and reused wherever RentalStatus is rendered (no duplicated status maps in page files).",
-        "Common date formatting used for rentals is defined in a single shared utility and reused by rental-related pages/components.",
-        "After refactor, pages previously containing inline duplicates (e.g., MyRentalsPage) no longer define their own status label/color maps or ad-hoc date formatting helpers."
+        "For every `CommunityMapProfile` with non-null `coordinates`, a visible pin/marker is shown on the globe at the correct approximate location.",
+        "Clicking a pin selects/deselects the corresponding member (toggle behavior consistent with current map marker behavior).",
+        "Selected member pin/marker has a clearly distinct visual state (e.g., scale/ring/brightness) compared to unselected pins.",
+        "Pins are not rendered for profiles where `coordinates` is null/undefined.",
+        "No external map services (Google Maps/Earth APIs) are required for the map to function."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/utils/rentals/rentalStatusPresentation.ts",
+          "path": "frontend/src/components/community/GlobeMap.tsx",
+          "operation": "modify",
+          "description": "Implement pin/marker rendering for each profile with `coordinates` by converting latitude/longitude to positions on the sphere surface, projecting to screen space (or rendering directly in WebGL), and enabling click-based hit detection that toggles selection and applies a distinct selected visual state."
+        },
+        {
+          "path": "frontend/src/utils/globeProjection.ts",
           "operation": "create",
-          "description": "Create a single shared rental status presentation module exporting status label + badge class helpers for RentalStatus rendering."
+          "description": "Add utilities for converting latitude/longitude to sphere surface vectors and projecting to 2D screen coordinates (as needed) so markers appear at correct approximate globe locations and can be culled when on the far side of the globe."
         },
         {
-          "path": "frontend/src/utils/rentals/rentalDateFormat.ts",
-          "operation": "create",
-          "description": "Create shared rental date/time formatting utilities (e.g., date range, long date, chat timestamp) to replace repeated ad-hoc conversions from bigint timestamps."
-        },
-        {
-          "path": "frontend/src/pages/MyRentalsPage.tsx",
+          "path": "frontend/src/components/community/CommunityMapPanel.tsx",
           "operation": "modify",
-          "description": "Remove page-local rental status maps and inline date formatter; replace with imports from the shared rentalStatusPresentation and rentalDateFormat utilities."
-        },
-        {
-          "path": "frontend/src/pages/RequestsPage.tsx",
-          "operation": "modify",
-          "description": "Remove page-local rental status maps and inline date formatter; replace with imports from the shared rentalStatusPresentation and rentalDateFormat utilities."
-        },
-        {
-          "path": "frontend/src/pages/RentalDetailPage.tsx",
-          "operation": "modify",
-          "description": "Remove duplicated status maps and date formatting helper; render status via shared rentalStatusPresentation and format dates via shared rentalDateFormat utilities."
-        },
-        {
-          "path": "frontend/src/components/messaging/ConversationsList.tsx",
-          "operation": "modify",
-          "description": "Update any RentalStatus label/badge rendering and any rental date formatting to use shared utilities so messaging views match rental pages."
-        },
-        {
-          "path": "frontend/src/components/messaging/ActiveConversationPanel.tsx",
-          "operation": "modify",
-          "description": "Update any RentalStatus label/badge rendering and any rental date formatting to use shared utilities for consistent status/date presentation."
-        },
-        {
-          "path": "frontend/src/components/rentals/RentalChatPanel.tsx",
-          "operation": "modify",
-          "description": "Replace inline chat timestamp formatting with the shared rentalDateFormat utility to ensure consistent timestamps anywhere chat messages are displayed."
-        },
-        {
-          "path": "frontend/src/components/rentals/RentalStatusActions.tsx",
-          "operation": "modify",
-          "description": "Ensure any displayed status label/badge styling relies on the shared rentalStatusPresentation utility (avoid local/duplicated label logic)."
+          "description": "Wire the existing `selectedMemberId` and `onSelectMember` behavior to the globe pin interactions so map selection, deselection, and selected-member details overlay continue to work identically to the current panel behavior."
         }
       ]
     },
     {
       "id": "REQ-3",
-      "summary": "Remove dead/duplicate map-zoom code by consolidating to a single hook and eliminating the empty placeholder hook file behavior.",
+      "summary": "Use local static Earth texture assets from frontend/public/assets/generated for the globe surface (no backend texture fetching).",
       "acceptanceCriteria": [
-        "frontend/src/hooks/useMapZoom.ts is no longer an empty placeholder; the project builds cleanly with no references to missing/removed symbols.",
-        "Map zoom/pan interaction logic lives in one hook (no overlapping/duplicated implementations across hooks).",
-        "TypeScript build passes without unused import/export warnings introduced by the cleanup."
+        "The globe surface uses the provided generated Earth texture asset(s) located under `frontend/public/assets/generated`.",
+        "All texture URLs are local static asset paths (e.g., `/assets/generated/...`) and load correctly in production builds.",
+        "The previous 2D map image is no longer required for the main globe rendering path."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useMapTransform.ts",
-          "operation": "delete",
-          "description": "Delete the duplicated map transform hook after consolidating its implementation into a single clearly-named hook (to avoid overlapping implementations)."
+          "path": "frontend/public/assets/generated/earth-day-texture.dim_2048x1024.jpg",
+          "operation": "create",
+          "description": "Add the generated high-resolution equirectangular Earth day texture asset as a static file at this exact path so the globe can load it locally."
         },
         {
-          "path": "frontend/src/hooks/useMapZoom.ts",
-          "operation": "modify",
-          "description": "Implement the consolidated map zoom/pan hook here (using the existing behavior currently in useMapTransform), making this the single source of truth for map interactions."
+          "path": "frontend/public/assets/generated/earth-night-texture.dim_2048x1024.jpg",
+          "operation": "create",
+          "description": "Add the generated equirectangular Earth night lights texture asset as a static file at this exact path so the globe can load it locally."
         },
         {
-          "path": "frontend/src/components/community/CommunityMapPanel.tsx",
+          "path": "frontend/src/components/community/GlobeMap.tsx",
           "operation": "modify",
-          "description": "Update CommunityMapPanel to import and use the consolidated useMapZoom hook, removing references to the deleted/old hook and ensuring behavior remains consistent."
+          "description": "Load and apply the globe surface textures from local static asset paths `frontend/public/assets/generated/earth-day-texture.dim_2048x1024.jpg` and `frontend/public/assets/generated/earth-night-texture.dim_2048x1024.jpg` (referenced via `/assets/generated/...`) without fetching textures through the backend, and ensure the old `/assets/generated/world-map.dim_1600x900.png` is not used in the main globe rendering path."
         }
       ]
     },
     {
       "id": "REQ-4",
-      "summary": "Standardize navigation and action patterns (CTA hierarchy, link styling, and predictable placement of key actions) across relevant pages and header navigation.",
+      "summary": "Add a graceful fallback message inside the map card when 3D globe rendering cannot initialize (e.g., WebGL unavailable).",
       "acceptanceCriteria": [
-        "Primary actions use a consistent button variant and placement pattern across pages (e.g., top-right header action on management pages like My Tools).",
-        "Secondary actions (links and outline/ghost buttons) follow a consistent hierarchy and styling across pages.",
-        "No page contains conflicting navigation patterns for similar tasks (e.g., “View Tool”, “View Details”)—labels and components are consistent."
+        "If 3D rendering cannot initialize, the map panel shows a clear English message indicating the interactive globe is unavailable on the device/browser.",
+        "The rest of the Community Map page (member directory and stats) remains usable even if the globe cannot render."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/navigation/AppNavLink.tsx",
+          "path": "frontend/src/hooks/useWebGLSupport.ts",
           "operation": "create",
-          "description": "Create a shared navigation link component that encapsulates consistent link styling for header and in-page nav usage (active/hover states) while composing existing UI primitives."
+          "description": "Add a small hook/utility that detects whether WebGL initialization is likely to succeed (and optionally captures initialization errors) so the map panel can decide whether to render the interactive globe or a fallback message."
         },
         {
-          "path": "frontend/src/components/layout/AppHeader.tsx",
+          "path": "frontend/src/components/community/CommunityMapPanel.tsx",
           "operation": "modify",
-          "description": "Refactor header navigation links to use the shared AppNavLink for consistent link styling and predictable nav behavior across desktop/mobile."
+          "description": "Render a fallback UI inside the existing map card area when WebGL/3D globe initialization fails (English user-facing message), while keeping the directory and stats panels unaffected and usable."
         },
         {
-          "path": "frontend/src/pages/MyToolsPage.tsx",
+          "path": "frontend/src/components/community/GlobeMap.tsx",
           "operation": "modify",
-          "description": "Ensure the primary CTA (Add Tool) is consistently placed in the PageHeader actions area and uses the standardized primary button variant."
-        },
-        {
-          "path": "frontend/src/pages/MyRentalsPage.tsx",
-          "operation": "modify",
-          "description": "Standardize action labeling and hierarchy (e.g., consistent “View Details” label and primary/secondary variants) using shared PageHeader/action conventions and consistent Button variants."
-        },
-        {
-          "path": "frontend/src/pages/RequestsPage.tsx",
-          "operation": "modify",
-          "description": "Standardize action labeling and hierarchy (e.g., consistent “View Details” label and Button variants) to match My Rentals and Rental Detail patterns."
-        },
-        {
-          "path": "frontend/src/pages/RentalDetailPage.tsx",
-          "operation": "modify",
-          "description": "Align navigation/back action styling and any inline links (e.g., view listing) to the standardized link/button hierarchy so cross-page interactions feel consistent."
-        },
-        {
-          "path": "frontend/src/pages/ListingDetailPage.tsx",
-          "operation": "modify",
-          "description": "Align primary/secondary actions (e.g., request rental / edit / manage) to the standardized button hierarchy and ensure labels match similar actions elsewhere."
-        },
-        {
-          "path": "frontend/src/pages/MessagingPage.tsx",
-          "operation": "modify",
-          "description": "Ensure conversation selection and key actions follow the standardized CTA/link patterns and match rental-related pages for seamless cross-page interactions."
-        }
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "summary": "Apply a neutral, modern, cohesive visual theme using the existing Tailwind + shadcn variable system and enforce consistent surfaces/typography across the app (no new features).",
-      "acceptanceCriteria": [
-        "A consistent theme is visible across all pages (same surface/background treatment, consistent typography scale, consistent card and input styling).",
-        "Theme works well in both light and dark mode using the existing theme variables setup.",
-        "No new product features are introduced as part of the visual refresh—only styling and consistency improvements."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/index.css",
-          "operation": "modify",
-          "description": "Refine the existing CSS variable palette and base typography defaults to keep the theme neutral/modern (not blue/purple dominant) while improving contrast and surface consistency in light/dark modes."
-        },
-        {
-          "path": "frontend/tailwind.config.js",
-          "operation": "modify",
-          "description": "Adjust Tailwind theme extensions as needed to support the refined neutral surface styles (radii/shadows/typography scale) while continuing to rely on existing CSS variables."
-        },
-        {
-          "path": "frontend/src/components/layout/AppLayout.tsx",
-          "operation": "modify",
-          "description": "Ensure the global layout applies consistent background/surface treatment and that main content spacing harmonizes with PageShell usage across pages."
+          "description": "Ensure globe initialization failures are caught and reported back to the parent (or handled internally) so the parent can switch to the fallback UI instead of breaking the page."
         }
       ]
     }

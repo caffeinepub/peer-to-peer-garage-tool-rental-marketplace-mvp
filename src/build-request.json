@@ -1,111 +1,109 @@
 {
   "kind": "build_request",
-  "title": "Website-wide polish pass and refactor to remove duplicate code",
+  "title": "Update Community Map to a Google Earth-like 3D globe with member location pins",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Polish UI/UX across all existing pages so they feel consistent and seamless: align typography scale, spacing, page headings, section layout, and empty/loading/error states across Landing, Browse, Listing Detail, Listing Form, My Tools, Requests, My Rentals, Rental Detail, Messaging, Profile, and Community Map pages.",
+      "text": "Replace the current 2D world map in `frontend/src/components/community/CommunityMapPanel.tsx` with an interactive Google Earth-like 3D globe that supports rotate and zoom, while keeping the existing Community Map page framework (page layout, member directory, and selected-member details card behavior) intact.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages-4"
+          "msg-1"
         ],
         "quotes": [
-          "please take the whole website now and polish up each page and get rid of duplicate functions and make things more seamless"
+          "now change the community map page. I like the framework of it but the map itself is not right . i want it to be similart to a google earth map with pins where each user lives"
         ]
       },
       "acceptanceCriteria": [
-        "Every route defined in frontend/src/App.tsx has a consistent page header pattern (title + optional subtitle) and consistent top/bottom padding.",
-        "All pages that load data show a consistent loading UI (same component/pattern) and a consistent empty state (card/panel styling, aligned CTA button styles).",
-        "Common UI elements (badges, cards, buttons, alerts) look visually consistent across pages in both light and dark mode."
+        "The Community Map page route (`/community-map`) remains the same and continues to render the existing header, member directory cards, and stats panel.",
+        "The map area is rendered as a 3D globe (Earth-like) instead of the current flat image `/assets/generated/world-map.dim_1600x900.png`.",
+        "Users can rotate the globe (drag) and zoom in/out (mouse wheel / trackpad), producing a Google Earth-like interaction feel.",
+        "The existing member selection UX is preserved: selecting a member on the map highlights them and shows the selected-member details card overlay; clicking the X clears selection.",
+        "Clicking a member card in the directory still selects the same member on the globe and brings the user back to the map area (current scroll-to-top behavior is preserved)."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Introduce shared frontend utilities/components to eliminate duplicated logic and mappings currently repeated across pages/components (e.g., rental status label/color mapping and date formatting). Replace page-local implementations with shared imports.",
+      "text": "Render a pin/marker on the globe for each community member returned by `getCommunityMapProfiles()` that has `coordinates`, positioning markers using latitude/longitude on the sphere surface, and allow selecting members by clicking their pin.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages-4"
+          "msg-1"
         ],
         "quotes": [
-          "get rid of duplicate functions"
+          "i want it to be similart to a google earth map with pins where each user lives"
         ]
       },
       "acceptanceCriteria": [
-        "Rental status labels and badge classes are defined in a single shared module and reused wherever RentalStatus is rendered (no duplicated status maps in page files).",
-        "Common date formatting used for rentals is defined in a single shared utility and reused by rental-related pages/components.",
-        "After refactor, pages previously containing inline duplicates (e.g., MyRentalsPage) no longer define their own status label/color maps or ad-hoc date formatting helpers."
+        "For every `CommunityMapProfile` with non-null `coordinates`, a visible pin/marker is shown on the globe at the correct approximate location.",
+        "Clicking a pin selects/deselects the corresponding member (toggle behavior consistent with current map marker behavior).",
+        "Selected member pin/marker has a clearly distinct visual state (e.g., scale/ring/brightness) compared to unselected pins.",
+        "Pins are not rendered for profiles where `coordinates` is null/undefined.",
+        "No external map services (Google Maps/Earth APIs) are required for the map to function."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Remove dead/duplicate frontend code and placeholders, and ensure the codebase has no unused exports/imports related to removed files. In particular, address the empty placeholder hook file frontend/src/hooks/useMapZoom.ts by either removing it or implementing it and consolidating map zoom behavior into a single, clearly-named hook without duplication.",
+      "text": "Use new static Earth texture asset(s) for the globe surface and load them from `frontend/public/assets/generated` (do not fetch textures through the backend).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages-4"
+          "msg-1"
         ],
         "quotes": [
-          "get rid of duplicate functions"
+          "i want it to be similart to a google earth map"
         ]
       },
       "acceptanceCriteria": [
-        "frontend/src/hooks/useMapZoom.ts is no longer an empty placeholder; the project builds cleanly with no references to missing/removed symbols.",
-        "Map zoom/pan interaction logic lives in one hook (no overlapping/duplicated implementations across hooks).",
-        "TypeScript build passes without unused import/export warnings introduced by the cleanup."
+        "The globe surface uses the provided generated Earth texture asset(s) located under `frontend/public/assets/generated`.",
+        "All texture URLs are local static asset paths (e.g., `/assets/generated/...`) and load correctly in production builds.",
+        "The previous 2D map image is no longer required for the main globe rendering path."
       ]
     },
     {
       "id": "REQ-4",
-      "text": "Make cross-page interactions feel seamless by standardizing navigation and action patterns: consistent primary/secondary CTAs, consistent link styling, and predictable placement of key actions (e.g., “Add Tool”, “View Details”, “Manage Rentals/Requests”) across relevant pages.",
+      "text": "Add a graceful fallback UI if the user’s environment cannot render the 3D globe (e.g., WebGL not available), using an English user-facing message within the map card area.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages-4"
+          "msg-1"
         ],
         "quotes": [
-          "make things more seamless"
+          "the map itself is not right"
         ]
       },
       "acceptanceCriteria": [
-        "Primary actions use a consistent button variant and placement pattern across pages (e.g., top-right header action on management pages like My Tools).",
-        "Secondary actions (links and outline/ghost buttons) follow a consistent hierarchy and styling across pages.",
-        "No page contains conflicting navigation patterns for similar tasks (e.g., “View Tool”, “View Details”)—labels and components are consistent."
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Apply a single coherent visual theme across the app (colors, typography, surface styles, radii, shadows) and enforce it consistently using existing Tailwind + shadcn primitives; keep the theme neutral and modern (avoid a blue/purple-dominant palette).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "recent-messages-4"
-        ],
-        "quotes": [
-          "polish up each page"
-        ]
-      },
-      "acceptanceCriteria": [
-        "A consistent theme is visible across all pages (same surface/background treatment, consistent typography scale, consistent card and input styling).",
-        "Theme works well in both light and dark mode using the existing theme variables setup.",
-        "No new product features are introduced as part of the visual refresh—only styling and consistency improvements."
+        "If 3D rendering cannot initialize, the map panel shows a clear English message indicating the interactive globe is unavailable on the device/browser.",
+        "The rest of the Community Map page (member directory and stats) remains usable even if the globe cannot render."
       ]
     }
   ],
   "constraints": [
-    "Do not edit files under frontend/src/components/ui (compose these components instead).",
-    "Do not edit any frontend immutablePaths listed in SYSTEM_CONTEXT.",
-    "Backend must remain a single Motoko actor in backend/main.mo; only add backend migration code if state schema must change (avoid schema changes for this polish/refactor request)."
+    "Frontend immutable paths (e.g., `frontend/src/hooks/useInternetIdentity.ts(x)`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`, and `frontend/src/components/ui/**`) must not be edited.",
+    "Backend must remain a single Motoko actor (`backend/main.mo`).",
+    "Do not integrate or depend on Google Earth/Google Maps APIs or any third-party map provider."
   ],
   "nonGoals": [
-    "Adding new product features or new routes not already present in frontend/src/App.tsx.",
-    "Changing backend data models or introducing new persistent state purely for UI polish.",
-    "Integrating third-party services (analytics, auth providers beyond Internet Identity, etc.)."
+    "Implementing address-to-coordinate geocoding.",
+    "Collecting or inferring member location automatically (GPS/geolocation).",
+    "Real-time presence or live location updates."
   ],
   "imageRequirements": {
-    "required": [],
+    "required": [
+      "High-resolution equirectangular Earth day texture, realistic satellite-style (earth-day-texture.dim_2048x1024.jpg)",
+      "Equirectangular Earth night lights texture (earth-night-texture.dim_2048x1024.jpg)"
+    ],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }
