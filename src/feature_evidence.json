@@ -2,11 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-replace-the-current-2d-world-map-in-frontend-src-components-community-communitymappanel-tsx-with-an-interactive-google-earth-like-3d-globe-that-supports-rotate-and-zoom-while-keeping-the-existing-community-map-page-framework-page-layout-member-directory-and-selected-member-details-card-behavior-intact",
-      "featureTitle": "Replace the current 2D world map in `frontend/src/components/community/CommunityMapPanel.tsx` with an interactive Google Earth-like 3D globe that supports rotate and zoom, while keeping the existing Community Map page framework (page layout, member directory, and selected-member details card behavior) intact.",
+      "featureId": "feature-make-the-address-field-required-in-the-setcoordinatesdialog-component-on-the-community-map-page-so-users-cannot-submit-without-providing-their-address",
+      "featureTitle": "Make the address field required in the SetCoordinatesDialog component on the community map page so users cannot submit without providing their address",
       "files": [
-        "frontend/src/components/community/CommunityMapPanel.tsx",
-        "frontend/src/components/community/GlobeMap.tsx"
+        "frontend/src/components/community/SetCoordinatesDialog.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -15,7 +14,8 @@
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
         "github-export-icp-cli@1.0.0",
-        "camera@1.0.0"
+        "camera@1.0.0",
+        "http-outcalls@3.0.0"
       ],
       "testIds": [
         "REQ-1"
@@ -23,12 +23,11 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-render-a-pin-marker-on-the-globe-for-each-community-member-returned-by-getcommunitymapprofiles-that-has-coordinates-positioning-markers-using-latitude-longitude-on-the-sphere-surface-and-allow-selecting-members-by-clicking-their-pin",
-      "featureTitle": "Render a pin/marker on the globe for each community member returned by `getCommunityMapProfiles()` that has `coordinates`, positioning markers using latitude/longitude on the sphere surface, and allow selecting members by clicking their pin.",
+      "featureId": "feature-add-zoom-in-and-zoom-out-controls-to-the-globemap-component-so-users-can-control-the-camera-distance-to-the-globe",
+      "featureTitle": "Add zoom in and zoom out controls to the GlobeMap component so users can control the camera distance to the globe",
       "files": [
         "frontend/src/components/community/CommunityMapPanel.tsx",
-        "frontend/src/components/community/GlobeMap.tsx",
-        "frontend/src/utils/globeProjection.ts"
+        "frontend/src/components/community/GlobeMap.tsx"
       ],
       "components": [
         "authorization@4.0.0",
@@ -37,7 +36,8 @@
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
         "github-export-icp-cli@1.0.0",
-        "camera@1.0.0"
+        "camera@1.0.0",
+        "http-outcalls@3.0.0"
       ],
       "testIds": [
         "REQ-2"
@@ -45,8 +45,8 @@
       "confidence": "high"
     },
     {
-      "featureId": "feature-use-new-static-earth-texture-asset-s-for-the-globe-surface-and-load-them-from-frontend-public-assets-generated-do-not-fetch-textures-through-the-backend",
-      "featureTitle": "Use new static Earth texture asset(s) for the globe surface and load them from `frontend/public/assets/generated` (do not fetch textures through the backend).",
+      "featureId": "feature-display-user-locations-with-visible-pin-markers-on-the-globe-in-the-globemap-component-showing-where-users-live-based-on-their-addresses",
+      "featureTitle": "Display user locations with visible pin markers on the globe in the GlobeMap component showing where users live based on their addresses",
       "files": [
         "frontend/src/components/community/GlobeMap.tsx"
       ],
@@ -57,32 +57,11 @@
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
         "github-export-icp-cli@1.0.0",
-        "camera@1.0.0"
+        "camera@1.0.0",
+        "http-outcalls@3.0.0"
       ],
       "testIds": [
         "REQ-3"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-a-graceful-fallback-ui-if-the-user-s-environment-cannot-render-the-3d-globe-e-g-webgl-not-available-using-an-english-user-facing-message-within-the-map-card-area",
-      "featureTitle": "Add a graceful fallback UI if the user’s environment cannot render the 3D globe (e.g., WebGL not available), using an English user-facing message within the map card area.",
-      "files": [
-        "frontend/src/components/community/CommunityMapPanel.tsx",
-        "frontend/src/components/community/GlobeMap.tsx",
-        "frontend/src/hooks/useWebGLSupport.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "camera@1.0.0"
-      ],
-      "testIds": [
-        "REQ-4"
       ],
       "confidence": "high"
     }

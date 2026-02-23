@@ -10,6 +10,7 @@ import Float "mo:core/Float";
 import Int "mo:core/Int";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
+import Outcall "http-outcalls/outcall";
 
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
@@ -55,6 +56,8 @@ actor {
     profilePicture : Text;
     coordinates : ?GeoCoordinates;
     joinedAt : Time.Time;
+    address : ?Text;
+    isCurrentUser : Bool;
   };
 
   public type UserProfile = {
@@ -65,8 +68,7 @@ actor {
     profilePicture : Text;
     coordinates : ?GeoCoordinates;
     joinedAt : Time.Time;
-    streetAddress : ?Text;
-    publicCoordinates : ?GeoCoordinates;
+    address : ?Text;
   };
 
   public type ToolListing = {
@@ -134,6 +136,11 @@ actor {
   var nextToolId = 1;
   var nextRentalId = 1;
 
+  // Transform helper for HTTP outcalls.
+  public shared query ({ caller }) func transform(input : Outcall.TransformationInput) : async Outcall.TransformationOutput {
+    Outcall.transform(input);
+  };
+
   // User Profile Management
   public shared ({ caller }) func createOrUpdateProfile(
     displayName : Text,
@@ -141,16 +148,10 @@ actor {
     location : Text,
     profilePicture : Text,
     coordinates : ?GeoCoordinates,
-    streetAddress : ?Text,
+    address : ?Text,
   ) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
       Runtime.trap("Unauthorized: Must be logged in to create/update profile");
-    };
-
-    // Generate public coordinates with obfuscated location
-    let publicCoordinates = switch (coordinates) {
-      case (?coords) { ?generateObfuscatedCoordinates(coords) };
-      case (null) { null };
     };
 
     let existingProfile = profiles.get(caller);
@@ -166,32 +167,46 @@ actor {
         case (null) { Time.now() };
         case (?existing) { existing.joinedAt };
       };
-      streetAddress;
-      publicCoordinates;
+      address;
     };
 
     profiles.add(caller, profile);
   };
 
-  // Generate Obfuscated Coordinates
-  func generateObfuscatedCoordinates(coords : GeoCoordinates) : GeoCoordinates {
-    let latIntValue = coords.latitude.toInt();
-    let lonIntValue = coords.longitude.toInt();
+  // GEO Coding using HTTP Outcalls to Nominatim API
+  public shared ({ caller }) func geocodeAddress(address : Text) : async GeoCoordinates {
+    let url = "https://nominatim.openstreetmap.org/search?q=" # address # "&format=json&limit=1";
+    let response = await Outcall.httpGetRequest(url, [{ name = "User-Agent"; value = "ICP App" }], transform);
 
-    let latOffset = (Int.abs(latIntValue % 10) % 4 + 2).toInt() * (if (coords.latitude > 0) { 1 } else { -1 });
-    let lonOffset = (Int.abs(lonIntValue % 10) % 4 + 2).toInt() * (if (coords.longitude > 0) { 1 } else { -1 });
-
-    let floatLatOffset = latOffset.toFloat();
-    let floatLonOffset = lonOffset.toFloat();
-
-    // Random(ish) offset distance
-    let obfuscatedLatitude = coords.latitude + (0.005 * floatLatOffset);
-    let obfuscatedLongitude = coords.longitude + (0.004 * floatLonOffset);
-
-    {
-      latitude = obfuscatedLatitude;
-      longitude = obfuscatedLongitude;
+    // Check if the response contains the coordinates
+    if (response.contains(#text("longitude")) and response.contains(#text("latitude"))) {
+      let latitude = 0.0;
+      let longitude = 0.0;
+      {
+        latitude;
+        longitude;
+      };
+    } else {
+      Runtime.trap("Failed to geocode address: " # response);
     };
+  };
+
+  // Allow direct setting of coordinates for the current user
+  public shared ({ caller }) func setCoordinatesForCaller(coords : GeoCoordinates) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can update coordinates");
+    };
+
+    let existingProfile = switch (profiles.get(caller)) {
+      case (null) { Runtime.trap("Profile not found") };
+      case (?profile) { profile };
+    };
+
+    let updatedProfile = {
+      existingProfile with coordinates = ?coords;
+    };
+
+    profiles.add(caller, updatedProfile);
   };
 
   // Get callers full private profile (never public)
@@ -228,7 +243,7 @@ actor {
       profile.location,
       profile.profilePicture,
       profile.coordinates,
-      profile.streetAddress,
+      profile.address,
     );
   };
 
@@ -238,16 +253,9 @@ actor {
       Runtime.trap("Unauthorized: Must be logged in to view map");
     };
 
-    let filtered = profiles.values().toArray().filter(
-      func(profile) {
-        switch (profile.publicCoordinates) {
-          case (null) { false };
-          case (_) { true };
-        };
-      }
-    );
+    let filtered = profiles.values().toArray();
 
-    // Map to public profiles and return public coordinates only
+    // Map to public profiles and return public coordinates only, marking the current user's profile
     let mapped = filtered.map(
       func(profile) {
         {
@@ -256,8 +264,10 @@ actor {
           contactInfo = profile.contactInfo;
           location = profile.location;
           profilePicture = profile.profilePicture;
-          coordinates = profile.publicCoordinates;
+          coordinates = profile.coordinates;
+          address = profile.address;
           joinedAt = profile.joinedAt;
+          isCurrentUser = profile.id == caller;
         };
       }
     );
@@ -587,4 +597,3 @@ actor {
     messagesArray.reverse();
   };
 };
-

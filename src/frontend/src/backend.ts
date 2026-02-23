@@ -89,19 +89,10 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface ToolListing {
-    id: bigint;
-    title: string;
-    created: Time;
-    owner: Principal;
-    description: string;
-    available: boolean;
-    category: ToolCategory;
-    dailyPrice: bigint;
-    securityDeposit?: bigint;
-    location: string;
-    photos: Array<string>;
-    condition: ToolCondition;
+export interface TransformationOutput {
+    status: bigint;
+    body: Uint8Array;
+    headers: Array<http_header>;
 }
 export type Time = bigint;
 export interface RentalRequest {
@@ -119,29 +110,57 @@ export interface GeoCoordinates {
     latitude: number;
     longitude: number;
 }
-export interface ChatMessage {
-    sender: Principal;
-    message: string;
-    timestamp: Time;
-}
 export interface CommunityMapProfile {
     id: Principal;
     contactInfo?: string;
     displayName: string;
     joinedAt: Time;
+    isCurrentUser: boolean;
+    address?: string;
     profilePicture: string;
     location: string;
     coordinates?: GeoCoordinates;
+}
+export interface http_header {
+    value: string;
+    name: string;
+}
+export interface http_request_result {
+    status: bigint;
+    body: Uint8Array;
+    headers: Array<http_header>;
+}
+export interface ToolListing {
+    id: bigint;
+    title: string;
+    created: Time;
+    owner: Principal;
+    description: string;
+    available: boolean;
+    category: ToolCategory;
+    dailyPrice: bigint;
+    securityDeposit?: bigint;
+    location: string;
+    photos: Array<string>;
+    condition: ToolCondition;
+}
+export interface TransformationInput {
+    context: Uint8Array;
+    response: http_request_result;
+}
+export interface ChatMessage {
+    sender: Principal;
+    message: string;
+    timestamp: Time;
 }
 export interface UserProfile {
     id: Principal;
     contactInfo?: string;
     displayName: string;
     joinedAt: Time;
-    publicCoordinates?: GeoCoordinates;
+    address?: string;
     profilePicture: string;
     location: string;
-    streetAddress?: string;
     coordinates?: GeoCoordinates;
 }
 export enum RentalStatus {
@@ -174,8 +193,9 @@ export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     addToolListing(title: string, category: ToolCategory, description: string, condition: ToolCondition, dailyPrice: bigint, securityDeposit: bigint | null, location: string, photos: Array<string>): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createOrUpdateProfile(displayName: string, contactInfo: string | null, location: string, profilePicture: string, coordinates: GeoCoordinates | null, streetAddress: string | null): Promise<void>;
+    createOrUpdateProfile(displayName: string, contactInfo: string | null, location: string, profilePicture: string, coordinates: GeoCoordinates | null, address: string | null): Promise<void>;
     editToolListing(toolId: bigint, title: string, category: ToolCategory, description: string, condition: ToolCondition, dailyPrice: bigint, securityDeposit: bigint | null, location: string, available: boolean, photos: Array<string>): Promise<void>;
+    geocodeAddress(address: string): Promise<GeoCoordinates>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCommunityMapProfiles(): Promise<Array<CommunityMapProfile>>;
@@ -193,6 +213,8 @@ export interface backendInterface {
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     searchTools(searchText: string | null, category: ToolCategory | null, minPrice: bigint | null, maxPrice: bigint | null, availableOnly: boolean, sortBy: string): Promise<Array<ToolListing>>;
     sendRentalMessage(rentalId: bigint, message: string): Promise<void>;
+    setCoordinatesForCaller(coords: GeoCoordinates): Promise<void>;
+    transform(input: TransformationInput): Promise<TransformationOutput>;
     updateRentalStatus(rentalId: bigint, newStatus: RentalStatus, _comments: string | null): Promise<void>;
 }
 import type { CommunityMapProfile as _CommunityMapProfile, GeoCoordinates as _GeoCoordinates, RentalRequest as _RentalRequest, RentalStatus as _RentalStatus, Time as _Time, ToolCategory as _ToolCategory, ToolCondition as _ToolCondition, ToolListing as _ToolListing, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
@@ -265,6 +287,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.editToolListing(arg0, arg1, to_candid_ToolCategory_n1(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_ToolCondition_n3(this._uploadFile, this._downloadFile, arg4), arg5, to_candid_opt_n5(this._uploadFile, this._downloadFile, arg6), arg7, arg8, arg9);
+            return result;
+        }
+    }
+    async geocodeAddress(arg0: string): Promise<GeoCoordinates> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.geocodeAddress(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.geocodeAddress(arg0);
             return result;
         }
     }
@@ -467,6 +503,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async setCoordinatesForCaller(arg0: GeoCoordinates): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setCoordinatesForCaller(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setCoordinatesForCaller(arg0);
+            return result;
+        }
+    }
+    async transform(arg0: TransformationInput): Promise<TransformationOutput> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.transform(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.transform(arg0);
+            return result;
+        }
+    }
     async updateRentalStatus(arg0: bigint, arg1: RentalStatus, arg2: string | null): Promise<void> {
         if (this.processError) {
             try {
@@ -526,20 +590,18 @@ function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uin
     contactInfo: [] | [string];
     displayName: string;
     joinedAt: _Time;
-    publicCoordinates: [] | [_GeoCoordinates];
+    address: [] | [string];
     profilePicture: string;
     location: string;
-    streetAddress: [] | [string];
     coordinates: [] | [_GeoCoordinates];
 }): {
     id: Principal;
     contactInfo?: string;
     displayName: string;
     joinedAt: Time;
-    publicCoordinates?: GeoCoordinates;
+    address?: string;
     profilePicture: string;
     location: string;
-    streetAddress?: string;
     coordinates?: GeoCoordinates;
 } {
     return {
@@ -547,10 +609,9 @@ function from_candid_record_n12(_uploadFile: (file: ExternalBlob) => Promise<Uin
         contactInfo: record_opt_to_undefined(from_candid_opt_n13(_uploadFile, _downloadFile, value.contactInfo)),
         displayName: value.displayName,
         joinedAt: value.joinedAt,
-        publicCoordinates: record_opt_to_undefined(from_candid_opt_n14(_uploadFile, _downloadFile, value.publicCoordinates)),
+        address: record_opt_to_undefined(from_candid_opt_n13(_uploadFile, _downloadFile, value.address)),
         profilePicture: value.profilePicture,
         location: value.location,
-        streetAddress: record_opt_to_undefined(from_candid_opt_n13(_uploadFile, _downloadFile, value.streetAddress)),
         coordinates: record_opt_to_undefined(from_candid_opt_n14(_uploadFile, _downloadFile, value.coordinates))
     };
 }
@@ -559,6 +620,8 @@ function from_candid_record_n19(_uploadFile: (file: ExternalBlob) => Promise<Uin
     contactInfo: [] | [string];
     displayName: string;
     joinedAt: _Time;
+    isCurrentUser: boolean;
+    address: [] | [string];
     profilePicture: string;
     location: string;
     coordinates: [] | [_GeoCoordinates];
@@ -567,6 +630,8 @@ function from_candid_record_n19(_uploadFile: (file: ExternalBlob) => Promise<Uin
     contactInfo?: string;
     displayName: string;
     joinedAt: Time;
+    isCurrentUser: boolean;
+    address?: string;
     profilePicture: string;
     location: string;
     coordinates?: GeoCoordinates;
@@ -576,6 +641,8 @@ function from_candid_record_n19(_uploadFile: (file: ExternalBlob) => Promise<Uin
         contactInfo: record_opt_to_undefined(from_candid_opt_n13(_uploadFile, _downloadFile, value.contactInfo)),
         displayName: value.displayName,
         joinedAt: value.joinedAt,
+        isCurrentUser: value.isCurrentUser,
+        address: record_opt_to_undefined(from_candid_opt_n13(_uploadFile, _downloadFile, value.address)),
         profilePicture: value.profilePicture,
         location: value.location,
         coordinates: record_opt_to_undefined(from_candid_opt_n14(_uploadFile, _downloadFile, value.coordinates))
@@ -757,20 +824,18 @@ function to_candid_record_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     contactInfo?: string;
     displayName: string;
     joinedAt: Time;
-    publicCoordinates?: GeoCoordinates;
+    address?: string;
     profilePicture: string;
     location: string;
-    streetAddress?: string;
     coordinates?: GeoCoordinates;
 }): {
     id: Principal;
     contactInfo: [] | [string];
     displayName: string;
     joinedAt: _Time;
-    publicCoordinates: [] | [_GeoCoordinates];
+    address: [] | [string];
     profilePicture: string;
     location: string;
-    streetAddress: [] | [string];
     coordinates: [] | [_GeoCoordinates];
 } {
     return {
@@ -778,10 +843,9 @@ function to_candid_record_n36(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         contactInfo: value.contactInfo ? candid_some(value.contactInfo) : candid_none(),
         displayName: value.displayName,
         joinedAt: value.joinedAt,
-        publicCoordinates: value.publicCoordinates ? candid_some(value.publicCoordinates) : candid_none(),
+        address: value.address ? candid_some(value.address) : candid_none(),
         profilePicture: value.profilePicture,
         location: value.location,
-        streetAddress: value.streetAddress ? candid_some(value.streetAddress) : candid_none(),
         coordinates: value.coordinates ? candid_some(value.coordinates) : candid_none()
     };
 }

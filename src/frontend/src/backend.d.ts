@@ -7,19 +7,10 @@ export interface None {
     __kind__: "None";
 }
 export type Option<T> = Some<T> | None;
-export interface ToolListing {
-    id: bigint;
-    title: string;
-    created: Time;
-    owner: Principal;
-    description: string;
-    available: boolean;
-    category: ToolCategory;
-    dailyPrice: bigint;
-    securityDeposit?: bigint;
-    location: string;
-    photos: Array<string>;
-    condition: ToolCondition;
+export interface TransformationOutput {
+    status: bigint;
+    body: Uint8Array;
+    headers: Array<http_header>;
 }
 export type Time = bigint;
 export interface RentalRequest {
@@ -37,29 +28,57 @@ export interface GeoCoordinates {
     latitude: number;
     longitude: number;
 }
-export interface ChatMessage {
-    sender: Principal;
-    message: string;
-    timestamp: Time;
-}
 export interface CommunityMapProfile {
     id: Principal;
     contactInfo?: string;
     displayName: string;
     joinedAt: Time;
+    isCurrentUser: boolean;
+    address?: string;
     profilePicture: string;
     location: string;
     coordinates?: GeoCoordinates;
+}
+export interface http_header {
+    value: string;
+    name: string;
+}
+export interface http_request_result {
+    status: bigint;
+    body: Uint8Array;
+    headers: Array<http_header>;
+}
+export interface ToolListing {
+    id: bigint;
+    title: string;
+    created: Time;
+    owner: Principal;
+    description: string;
+    available: boolean;
+    category: ToolCategory;
+    dailyPrice: bigint;
+    securityDeposit?: bigint;
+    location: string;
+    photos: Array<string>;
+    condition: ToolCondition;
+}
+export interface TransformationInput {
+    context: Uint8Array;
+    response: http_request_result;
+}
+export interface ChatMessage {
+    sender: Principal;
+    message: string;
+    timestamp: Time;
 }
 export interface UserProfile {
     id: Principal;
     contactInfo?: string;
     displayName: string;
     joinedAt: Time;
-    publicCoordinates?: GeoCoordinates;
+    address?: string;
     profilePicture: string;
     location: string;
-    streetAddress?: string;
     coordinates?: GeoCoordinates;
 }
 export enum RentalStatus {
@@ -91,8 +110,9 @@ export enum UserRole {
 export interface backendInterface {
     addToolListing(title: string, category: ToolCategory, description: string, condition: ToolCondition, dailyPrice: bigint, securityDeposit: bigint | null, location: string, photos: Array<string>): Promise<bigint>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
-    createOrUpdateProfile(displayName: string, contactInfo: string | null, location: string, profilePicture: string, coordinates: GeoCoordinates | null, streetAddress: string | null): Promise<void>;
+    createOrUpdateProfile(displayName: string, contactInfo: string | null, location: string, profilePicture: string, coordinates: GeoCoordinates | null, address: string | null): Promise<void>;
     editToolListing(toolId: bigint, title: string, category: ToolCategory, description: string, condition: ToolCondition, dailyPrice: bigint, securityDeposit: bigint | null, location: string, available: boolean, photos: Array<string>): Promise<void>;
+    geocodeAddress(address: string): Promise<GeoCoordinates>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getCommunityMapProfiles(): Promise<Array<CommunityMapProfile>>;
@@ -110,5 +130,7 @@ export interface backendInterface {
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     searchTools(searchText: string | null, category: ToolCategory | null, minPrice: bigint | null, maxPrice: bigint | null, availableOnly: boolean, sortBy: string): Promise<Array<ToolListing>>;
     sendRentalMessage(rentalId: bigint, message: string): Promise<void>;
+    setCoordinatesForCaller(coords: GeoCoordinates): Promise<void>;
+    transform(input: TransformationInput): Promise<TransformationOutput>;
     updateRentalStatus(rentalId: bigint, newStatus: RentalStatus, _comments: string | null): Promise<void>;
 }

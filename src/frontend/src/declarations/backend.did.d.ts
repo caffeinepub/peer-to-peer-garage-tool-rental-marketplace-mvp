@@ -20,6 +20,8 @@ export interface CommunityMapProfile {
   'contactInfo' : [] | [string],
   'displayName' : string,
   'joinedAt' : Time,
+  'isCurrentUser' : boolean,
+  'address' : [] | [string],
   'profilePicture' : string,
   'location' : string,
   'coordinates' : [] | [GeoCoordinates],
@@ -66,20 +68,34 @@ export interface ToolListing {
   'photos' : Array<string>,
   'condition' : ToolCondition,
 }
+export interface TransformationInput {
+  'context' : Uint8Array,
+  'response' : http_request_result,
+}
+export interface TransformationOutput {
+  'status' : bigint,
+  'body' : Uint8Array,
+  'headers' : Array<http_header>,
+}
 export interface UserProfile {
   'id' : Principal,
   'contactInfo' : [] | [string],
   'displayName' : string,
   'joinedAt' : Time,
-  'publicCoordinates' : [] | [GeoCoordinates],
+  'address' : [] | [string],
   'profilePicture' : string,
   'location' : string,
-  'streetAddress' : [] | [string],
   'coordinates' : [] | [GeoCoordinates],
 }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
+export interface http_header { 'value' : string, 'name' : string }
+export interface http_request_result {
+  'status' : bigint,
+  'body' : Uint8Array,
+  'headers' : Array<http_header>,
+}
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'addToolListing' : ActorMethod<
@@ -122,6 +138,7 @@ export interface _SERVICE {
     ],
     undefined
   >,
+  'geocodeAddress' : ActorMethod<[string], GeoCoordinates>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getCommunityMapProfiles' : ActorMethod<[], Array<CommunityMapProfile>>,
@@ -149,6 +166,8 @@ export interface _SERVICE {
     Array<ToolListing>
   >,
   'sendRentalMessage' : ActorMethod<[bigint, string], undefined>,
+  'setCoordinatesForCaller' : ActorMethod<[GeoCoordinates], undefined>,
+  'transform' : ActorMethod<[TransformationInput], TransformationOutput>,
   'updateRentalStatus' : ActorMethod<
     [bigint, RentalStatus, [] | [string]],
     undefined

@@ -41,10 +41,14 @@ export default function RentalRequestForm({ toolId, isAvailable }: RentalRequest
     }
 
     try {
+      // Convert Date to bigint timestamp (nanoseconds for IC)
+      const startTimestamp = BigInt(start.getTime()) * BigInt(1_000_000);
+      const endTimestamp = BigInt(end.getTime()) * BigInt(1_000_000);
+
       await requestRental.mutateAsync({
         toolId,
-        startDate: start,
-        endDate: end,
+        startDate: startTimestamp,
+        endDate: endTimestamp,
       });
       toast.success('Rental request submitted successfully!');
       navigate({ to: '/my-rentals' });

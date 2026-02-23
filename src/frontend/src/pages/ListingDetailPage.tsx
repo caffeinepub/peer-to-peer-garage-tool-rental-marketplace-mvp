@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from '@tanstack/react-router';
-import { useGetTool, useGetToolAvailability } from '../hooks/useQueries';
+import { useGetTool } from '../hooks/useQueries';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +34,6 @@ export default function ListingDetailPage() {
   const navigate = useNavigate();
   const { identity } = useInternetIdentity();
   const { data: listing, isLoading } = useGetTool(BigInt(listingId));
-  const { data: isAvailable } = useGetToolAvailability(BigInt(listingId));
 
   if (isLoading) {
     return (
@@ -135,7 +134,7 @@ export default function ListingDetailPage() {
                     <div>
                       <p className="text-sm font-medium">Availability</p>
                       <p className="text-sm text-muted-foreground">
-                        {isAvailable ? 'Available now' : 'Currently rented'}
+                        {listing.available ? 'Available now' : 'Currently rented'}
                       </p>
                     </div>
                   </div>
@@ -170,7 +169,7 @@ export default function ListingDetailPage() {
             </Card>
 
             {!isOwner && isAuthenticated && (
-              <RentalRequestForm toolId={listing.id} isAvailable={isAvailable ?? false} />
+              <RentalRequestForm toolId={listing.id} isAvailable={listing.available} />
             )}
 
             {!isAuthenticated && (

@@ -1,45 +1,32 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Website update: community map page should use a Google Earth-like interactive map with pins indicating where each user lives.",
-  "architectural_notes": [
-    "Community map page requires an interactive map provider (e.g., Google Maps/Earth-style) supporting user-location pins/markers."
-  ],
-  "known_issues": [
-    "Current community map is \"not right\" compared to desired Google Earth-like map behavior."
-  ],
-  "isFixRequest": true,
-  "imageRequirements": "## Required Images\n- High-resolution equirectangular Earth day texture, realistic satellite-style (earth-day-texture.dim_2048x1024.jpg)\n- Equirectangular Earth night lights texture (earth-night-texture.dim_2048x1024.jpg)",
+  "summary": "Community mapping application with interactive globe showing user locations",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
   "existing_features": [
     {
-      "id": "feature-replace-the-current-2d-world-map-in-frontend-src-components-community-communitymappanel-tsx-with-an-interactive-google-earth-like-3d-globe-that-supports-rotate-and-zoom-while-keeping-the-existing-community-map-page-framework-page-layout-member-directory-and-selected-member-details-card-behavior-intact",
-      "title": "Replace the current 2D world map in `frontend/src/components/community/CommunityMapPanel.tsx` with an interactive Google Earth-like 3D globe that supports rotate and zoom, while keeping the existing Community Map page framework (page layout, member directory, and selected-member details card behavior) intact.",
+      "id": "feature-make-the-address-field-required-in-the-setcoordinatesdialog-component-on-the-community-map-page-so-users-cannot-submit-without-providing-their-address",
+      "title": "Make the address field required in the SetCoordinatesDialog component on the community map page so users cannot submit without providing their address",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-render-a-pin-marker-on-the-globe-for-each-community-member-returned-by-getcommunitymapprofiles-that-has-coordinates-positioning-markers-using-latitude-longitude-on-the-sphere-surface-and-allow-selecting-members-by-clicking-their-pin",
-      "title": "Render a pin/marker on the globe for each community member returned by `getCommunityMapProfiles()` that has `coordinates`, positioning markers using latitude/longitude on the sphere surface, and allow selecting members by clicking their pin.",
+      "id": "feature-add-zoom-in-and-zoom-out-controls-to-the-globemap-component-so-users-can-control-the-camera-distance-to-the-globe",
+      "title": "Add zoom in and zoom out controls to the GlobeMap component so users can control the camera distance to the globe",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-use-new-static-earth-texture-asset-s-for-the-globe-surface-and-load-them-from-frontend-public-assets-generated-do-not-fetch-textures-through-the-backend",
-      "title": "Use new static Earth texture asset(s) for the globe surface and load them from `frontend/public/assets/generated` (do not fetch textures through the backend).",
+      "id": "feature-display-user-locations-with-visible-pin-markers-on-the-globe-in-the-globemap-component-showing-where-users-live-based-on-their-addresses",
+      "title": "Display user locations with visible pin markers on the globe in the GlobeMap component showing where users live based on their addresses",
       "reqIds": [
         "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-add-a-graceful-fallback-ui-if-the-user-s-environment-cannot-render-the-3d-globe-e-g-webgl-not-available-using-an-english-user-facing-message-within-the-map-card-area",
-      "title": "Add a graceful fallback UI if the user’s environment cannot render the 3D globe (e.g., WebGL not available), using an English user-facing message within the map card area.",
-      "reqIds": [
-        "REQ-4"
       ],
       "version": 1
     }
@@ -47,12 +34,24 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Update the community map page to use a Google Earth-like map experience with pins for each user's location",
+      "summary": "Make address a required field in the community map page",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add zoom in/out functionality to the globe",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Display user locations with pins on the globe",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "Update Community Map to a Google Earth-like 3D globe with member location pins",
+  "projectName": "Make address required and add zoom controls with location pins to community map",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

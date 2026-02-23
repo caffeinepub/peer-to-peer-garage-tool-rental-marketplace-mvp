@@ -32,7 +32,7 @@ export default function ProfilePage() {
   const [contactInfo, setContactInfo] = useState('');
   const [location, setLocation] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
-  const [streetAddress, setStreetAddress] = useState('');
+  const [address, setAddress] = useState('');
 
   const isAuthenticated = !!identity;
 
@@ -42,7 +42,7 @@ export default function ProfilePage() {
       setContactInfo(userProfile.contactInfo || '');
       setLocation(userProfile.location || '');
       setProfilePicture(userProfile.profilePicture || '');
-      setStreetAddress(userProfile.streetAddress || '');
+      setAddress(userProfile.address || '');
     }
   }, [userProfile]);
 
@@ -83,7 +83,7 @@ export default function ProfilePage() {
         location: location.trim() || 'Not specified',
         profilePicture: profilePicture.trim(),
         coordinates: undefined,
-        streetAddress: streetAddress.trim() || undefined,
+        address: address.trim() || undefined,
       });
       toast.success('Profile updated successfully!');
       setIsEditing(false);
@@ -100,7 +100,7 @@ export default function ProfilePage() {
       setContactInfo(userProfile.contactInfo || '');
       setLocation(userProfile.location || '');
       setProfilePicture(userProfile.profilePicture || '');
-      setStreetAddress(userProfile.streetAddress || '');
+      setAddress(userProfile.address || '');
     }
     setIsEditing(false);
     removeEditParam();
@@ -246,15 +246,15 @@ export default function ProfilePage() {
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <Home className="h-5 w-5 text-muted-foreground" />
-                      <Label htmlFor="streetAddress" className="text-base font-semibold">Street Address</Label>
+                      <Label htmlFor="address" className="text-base font-semibold">Address</Label>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Your street address is private and only visible to you.
+                      Your address is used for the community map. It will be geocoded to place your pin on the globe.
                     </p>
                     <Input
-                      id="streetAddress"
-                      value={streetAddress}
-                      onChange={(e) => setStreetAddress(e.target.value)}
+                      id="address"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
                       placeholder="123 Main St, City, State, ZIP"
                     />
                   </div>
@@ -307,8 +307,8 @@ export default function ProfilePage() {
                   <div className="flex items-start gap-3">
                     <Home className="h-5 w-5 text-muted-foreground mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-muted-foreground">Street Address</p>
-                      <p className="text-base">{userProfile?.streetAddress || 'Not provided'}</p>
+                      <p className="text-sm font-medium text-muted-foreground">Address</p>
+                      <p className="text-base">{userProfile?.address || 'Not provided'}</p>
                     </div>
                   </div>
 

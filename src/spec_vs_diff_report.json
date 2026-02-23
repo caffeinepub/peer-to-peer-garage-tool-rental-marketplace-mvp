@@ -1,50 +1,52 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-11T03:15:08.534Z",
-  "summary": "The diff implements a new 3D globe component with local Earth textures, renders clickable member pins from coordinates, and adds a WebGL capability check with a fallback message. Some REQ-1 acceptance criteria (rotate/zoom interaction and preserving existing page behaviors like directory click scroll-to-top) cannot be confirmed from the provided truncated diff summary.",
-  "missing_requirements": [
-    {
-      "id": "REQ-1",
-      "requirement": "Users can rotate the globe (drag) and zoom in/out (mouse wheel / trackpad), producing a Google Earth-like interaction feel.",
-      "reason": "Although `OrbitControls` is imported in `GlobeMap.tsx`, the truncated file content does not show it being rendered/configured, so rotate/zoom behavior cannot be verified from the diff summary alone.",
-      "evidence": [
-        "frontend/src/components/community/GlobeMap.tsx (truncated)"
-      ]
-    },
-    {
-      "id": "REQ-1",
-      "requirement": "Keep the existing Community Map page framework intact (route /community-map, header, member directory cards, stats panel) and preserve directory-card click behavior (select on globe + scroll-to-top).",
-      "reason": "The diff summary only shows changes to `CommunityMapPanel.tsx` and the new globe-related files; it does not show the surrounding page/route component behavior or the member directory click/scroll-to-top behavior, so this cannot be verified from the diff summary.",
-      "evidence": [
-        "frontend/src/components/community/CommunityMapPanel.tsx (truncated)",
-        "frontend-file-summaries.txt (truncated)"
-      ]
-    }
-  ],
+  "generatedAt": "2026-02-23T04:35:24.148Z",
+  "summary": "All three requirements are fully implemented. The diff shows: (1) address validation in SetCoordinatesDialog with required fields and error feedback, (2) zoom controls with ZoomIn/ZoomOut buttons in CommunityMapPanel managing zoom state, and (3) Pin components rendered on the globe with proper 3D positioning and visual distinction.",
+  "missing_requirements": [],
   "hallucinated_features": [
     {
-      "description": "Automatic globe rotation (continuous slow spin).",
-      "reason": "Not requested in any requirement or acceptance criteria; REQ-1 specifies user-driven rotate/zoom interactions, not auto-rotation.",
+      "description": "Pin hover interactions with cursor changes and scale animations",
+      "reason": "The Pin component implements hover state management (setHovered) and cursor styling changes that were not requested. BuildRequest only required pins to be visible and distinguishable, not interactive hover effects.",
       "evidence": [
-        "frontend/src/components/community/GlobeMap.tsx (truncated): `globeRef.current.rotation.y += 0.0005;`"
+        "frontend/src/components/community/GlobeMap.tsx"
       ]
     },
     {
-      "description": "Additional globe/coordinate utility helpers (isValidCoordinates, parseCoordinate).",
-      "reason": "Not requested; only lat/lon positioning on a sphere is required for pins.",
+      "description": "Animated halo effect for selected pins",
+      "reason": "The Pin component includes a haloRef with rotation animation and pulsing scale effect for selected pins. This visual enhancement was not part of the requirements.",
       "evidence": [
-        "frontend/src/utils/globeProjection.ts"
+        "frontend/src/components/community/GlobeMap.tsx"
+      ]
+    },
+    {
+      "description": "Camera-distance-aware pin scaling",
+      "reason": "Pins dynamically scale based on camera distance using baseScale calculations. The requirement only specified that pins maintain proper 3D positioning, not adaptive scaling based on zoom level.",
+      "evidence": [
+        "frontend/src/components/community/GlobeMap.tsx"
+      ]
+    },
+    {
+      "description": "Different pin colors for current user vs other users",
+      "reason": "Pin component distinguishes current user with green color (#10b981) vs other users with red/blue. BuildRequest only required pins to be distinguishable from globe surface, not user-specific color coding.",
+      "evidence": [
+        "frontend/src/components/community/GlobeMap.tsx"
+      ]
+    },
+    {
+      "description": "Metalness and emissive material properties for pins",
+      "reason": "Pins use meshStandardMaterial with metalness, roughness, emissive, and emissiveIntensity properties for visual polish. Basic visibility was the only requirement.",
+      "evidence": [
+        "frontend/src/components/community/GlobeMap.tsx"
       ]
     }
   ],
-  "confidence": 0.64,
+  "confidence": 0.95,
   "changed_files": [
     "frontend-file-summaries.txt",
     "frontend/src/components/community/CommunityMapPanel.tsx",
     "frontend/src/components/community/GlobeMap.tsx",
-    "frontend/src/hooks/useWebGLSupport.ts",
-    "frontend/src/utils/globeProjection.ts",
+    "frontend/src/components/community/SetCoordinatesDialog.tsx",
     "project_state.json"
   ]
 }

@@ -54,14 +54,14 @@ export function useCreateOrUpdateProfile() {
       location, 
       profilePicture,
       coordinates,
-      streetAddress
+      address
     }: { 
       displayName: string; 
       contactInfo?: string; 
       location?: string; 
       profilePicture?: string;
       coordinates?: GeoCoordinates;
-      streetAddress?: string;
+      address?: string;
     }) => {
       if (!actor) throw new Error('Actor not available');
       return actor.createOrUpdateProfile(
@@ -70,8 +70,24 @@ export function useCreateOrUpdateProfile() {
         location || '',
         profilePicture || '',
         coordinates || null,
-        streetAddress || null
+        address || null
       );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['communityMapProfiles'] });
+    },
+  });
+}
+
+export function useSetCoordinatesForCaller() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (coords: GeoCoordinates) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.setCoordinatesForCaller(coords);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
@@ -221,36 +237,32 @@ export function useEditToolListing() {
   });
 }
 
-export function useGetToolAvailability(toolId: bigint | undefined) {
+// Rental Queries
+export function useGetRentalsForUser() {
   const { actor, isFetching } = useActor();
 
-  return useQuery<boolean>({
-    queryKey: ['toolAvailability', toolId?.toString()],
+  return useQuery<{ owned: RentalRequest[]; rented: RentalRequest[] }>({
+    queryKey: ['rentalsForUser'],
     queryFn: async () => {
-      if (!actor || !toolId) return false;
-      return actor.getToolAvailability(toolId);
+      if (!actor) return { owned: [], rented: [] };
+      return actor.getRentalsForUser();
     },
-    enabled: !!actor && !isFetching && !!toolId,
+    enabled: !!actor && !isFetching,
   });
 }
 
-// Rental Queries
 export function useRequestRental() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { toolId: bigint; startDate: Date; endDate: Date }) => {
+    mutationFn: async (data: { toolId: bigint; startDate: bigint; endDate: bigint }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.requestRental(
-        data.toolId,
-        BigInt(data.startDate.getTime() * 1_000_000),
-        BigInt(data.endDate.getTime() * 1_000_000)
-      );
+      return actor.requestRental(data.toolId, data.startDate, data.endDate);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentalsForUser'] });
-      queryClient.invalidateQueries({ queryKey: ['toolAvailability'] });
+      queryClient.invalidateQueries({ queryKey: ['searchTools'] });
     },
   });
 }
@@ -266,26 +278,13 @@ export function useUpdateRentalStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rentalsForUser'] });
-      queryClient.invalidateQueries({ queryKey: ['toolAvailability'] });
+      queryClient.invalidateQueries({ queryKey: ['rentalMessages'] });
       queryClient.invalidateQueries({ queryKey: ['searchTools'] });
     },
   });
 }
 
-export function useGetRentalsForUser() {
-  const { actor, isFetching } = useActor();
-
-  return useQuery<{ owned: RentalRequest[]; rented: RentalRequest[] }>({
-    queryKey: ['rentalsForUser'],
-    queryFn: async () => {
-      if (!actor) return { owned: [], rented: [] };
-      return actor.getRentalsForUser();
-    },
-    enabled: !!actor && !isFetching,
-  });
-}
-
-// Rental Chat Queries
+// Chat Queries
 export function useGetRentalMessages(rentalId: bigint | undefined) {
   const { actor, isFetching } = useActor();
 
@@ -296,7 +295,7 @@ export function useGetRentalMessages(rentalId: bigint | undefined) {
       return actor.getRentalMessages(rentalId);
     },
     enabled: !!actor && !isFetching && !!rentalId,
-    refetchInterval: 5000, // Poll every 5 seconds
+    refetchInterval: 3000,
   });
 }
 

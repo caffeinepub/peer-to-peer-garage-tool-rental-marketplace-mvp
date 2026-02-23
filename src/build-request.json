@@ -1,109 +1,79 @@
 {
   "kind": "build_request",
-  "title": "Update Community Map to a Google Earth-like 3D globe with member location pins",
+  "title": "Make address required and add zoom controls with location pins to community map",
   "priority": "normal",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Replace the current 2D world map in `frontend/src/components/community/CommunityMapPanel.tsx` with an interactive Google Earth-like 3D globe that supports rotate and zoom, while keeping the existing Community Map page framework (page layout, member directory, and selected-member details card behavior) intact.",
+      "text": "Make the address field required in the SetCoordinatesDialog component on the community map page so users cannot submit without providing their address",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-last"
         ],
         "quotes": [
-          "now change the community map page. I like the framework of it but the map itself is not right . i want it to be similart to a google earth map with pins where each user lives"
+          "make address a required field in the community map page"
         ]
       },
       "acceptanceCriteria": [
-        "The Community Map page route (`/community-map`) remains the same and continues to render the existing header, member directory cards, and stats panel.",
-        "The map area is rendered as a 3D globe (Earth-like) instead of the current flat image `/assets/generated/world-map.dim_1600x900.png`.",
-        "Users can rotate the globe (drag) and zoom in/out (mouse wheel / trackpad), producing a Google Earth-like interaction feel.",
-        "The existing member selection UX is preserved: selecting a member on the map highlights them and shows the selected-member details card overlay; clicking the X clears selection.",
-        "Clicking a member card in the directory still selects the same member on the globe and brings the user back to the map area (current scroll-to-top behavior is preserved)."
+        "Address field in SetCoordinatesDialog has required validation",
+        "Form cannot be submitted without an address value",
+        "User sees validation feedback if they attempt to submit without an address"
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Render a pin/marker on the globe for each community member returned by `getCommunityMapProfiles()` that has `coordinates`, positioning markers using latitude/longitude on the sphere surface, and allow selecting members by clicking their pin.",
+      "text": "Add zoom in and zoom out controls to the GlobeMap component so users can control the camera distance to the globe",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-last"
         ],
         "quotes": [
-          "i want it to be similart to a google earth map with pins where each user lives"
+          "make the globe be able to zoom in and out"
         ]
       },
       "acceptanceCriteria": [
-        "For every `CommunityMapProfile` with non-null `coordinates`, a visible pin/marker is shown on the globe at the correct approximate location.",
-        "Clicking a pin selects/deselects the corresponding member (toggle behavior consistent with current map marker behavior).",
-        "Selected member pin/marker has a clearly distinct visual state (e.g., scale/ring/brightness) compared to unselected pins.",
-        "Pins are not rendered for profiles where `coordinates` is null/undefined.",
-        "No external map services (Google Maps/Earth APIs) are required for the map to function."
+        "Zoom in button increases camera proximity to globe",
+        "Zoom out button decreases camera proximity from globe",
+        "Zoom controls are visible and accessible on the GlobeMap",
+        "Smooth camera transitions when zooming",
+        "Appropriate min/max zoom limits are enforced"
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Use new static Earth texture asset(s) for the globe surface and load them from `frontend/public/assets/generated` (do not fetch textures through the backend).",
+      "text": "Display user locations with visible pin markers on the globe in the GlobeMap component showing where users live based on their addresses",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-last"
         ],
         "quotes": [
-          "i want it to be similart to a google earth map"
+          "show where users live with pins"
         ]
       },
       "acceptanceCriteria": [
-        "The globe surface uses the provided generated Earth texture asset(s) located under `frontend/public/assets/generated`.",
-        "All texture URLs are local static asset paths (e.g., `/assets/generated/...`) and load correctly in production builds.",
-        "The previous 2D map image is no longer required for the main globe rendering path."
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Add a graceful fallback UI if the user’s environment cannot render the 3D globe (e.g., WebGL not available), using an English user-facing message within the map card area.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "the map itself is not right"
-        ]
-      },
-      "acceptanceCriteria": [
-        "If 3D rendering cannot initialize, the map panel shows a clear English message indicating the interactive globe is unavailable on the device/browser.",
-        "The rest of the Community Map page (member directory and stats) remains usable even if the globe cannot render."
+        "Pin markers are clearly visible on the globe at user location coordinates",
+        "Each pin represents a user's location based on their address",
+        "Pins are distinguishable from the globe surface",
+        "Pins maintain proper 3D positioning when globe is rotated or zoomed"
       ]
     }
   ],
   "constraints": [
-    "Frontend immutable paths (e.g., `frontend/src/hooks/useInternetIdentity.ts(x)`, `frontend/src/hooks/useActor.ts`, `frontend/src/main.tsx`, and `frontend/src/components/ui/**`) must not be edited.",
-    "Backend must remain a single Motoko actor (`backend/main.mo`).",
-    "Do not integrate or depend on Google Earth/Google Maps APIs or any third-party map provider."
+    "Preserve existing Three.js globe rendering implementation",
+    "Maintain compatibility with current address-based location system",
+    "Keep existing hover and selection interactions for user profiles"
   ],
   "nonGoals": [
-    "Implementing address-to-coordinate geocoding.",
-    "Collecting or inferring member location automatically (GPS/geolocation).",
-    "Real-time presence or live location updates."
+    "Changing backend schema or UserProfile structure",
+    "Modifying geocoding logic or address validation",
+    "Altering profile setup or profile page functionality",
+    "Adding real-time location updates or tracking"
   ],
   "imageRequirements": {
-    "required": [
-      "High-resolution equirectangular Earth day texture, realistic satellite-style (earth-day-texture.dim_2048x1024.jpg)",
-      "Equirectangular Earth night lights texture (earth-night-texture.dim_2048x1024.jpg)"
-    ],
+    "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

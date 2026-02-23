@@ -36,10 +36,9 @@ export const UserProfile = IDL.Record({
   'contactInfo' : IDL.Opt(IDL.Text),
   'displayName' : IDL.Text,
   'joinedAt' : Time,
-  'publicCoordinates' : IDL.Opt(GeoCoordinates),
+  'address' : IDL.Opt(IDL.Text),
   'profilePicture' : IDL.Text,
   'location' : IDL.Text,
-  'streetAddress' : IDL.Opt(IDL.Text),
   'coordinates' : IDL.Opt(GeoCoordinates),
 });
 export const CommunityMapProfile = IDL.Record({
@@ -47,6 +46,8 @@ export const CommunityMapProfile = IDL.Record({
   'contactInfo' : IDL.Opt(IDL.Text),
   'displayName' : IDL.Text,
   'joinedAt' : Time,
+  'isCurrentUser' : IDL.Bool,
+  'address' : IDL.Opt(IDL.Text),
   'profilePicture' : IDL.Text,
   'location' : IDL.Text,
   'coordinates' : IDL.Opt(GeoCoordinates),
@@ -88,6 +89,24 @@ export const ToolListing = IDL.Record({
   'location' : IDL.Text,
   'photos' : IDL.Vec(IDL.Text),
   'condition' : ToolCondition,
+});
+export const http_header = IDL.Record({
+  'value' : IDL.Text,
+  'name' : IDL.Text,
+});
+export const http_request_result = IDL.Record({
+  'status' : IDL.Nat,
+  'body' : IDL.Vec(IDL.Nat8),
+  'headers' : IDL.Vec(http_header),
+});
+export const TransformationInput = IDL.Record({
+  'context' : IDL.Vec(IDL.Nat8),
+  'response' : http_request_result,
+});
+export const TransformationOutput = IDL.Record({
+  'status' : IDL.Nat,
+  'body' : IDL.Vec(IDL.Nat8),
+  'headers' : IDL.Vec(http_header),
 });
 
 export const idlService = IDL.Service({
@@ -135,6 +154,7 @@ export const idlService = IDL.Service({
       [],
       [],
     ),
+  'geocodeAddress' : IDL.Func([IDL.Text], [GeoCoordinates], []),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getCommunityMapProfiles' : IDL.Func(
@@ -181,6 +201,12 @@ export const idlService = IDL.Service({
       ['query'],
     ),
   'sendRentalMessage' : IDL.Func([IDL.Nat, IDL.Text], [], []),
+  'setCoordinatesForCaller' : IDL.Func([GeoCoordinates], [], []),
+  'transform' : IDL.Func(
+      [TransformationInput],
+      [TransformationOutput],
+      ['query'],
+    ),
   'updateRentalStatus' : IDL.Func(
       [IDL.Nat, RentalStatus, IDL.Opt(IDL.Text)],
       [],
@@ -219,10 +245,9 @@ export const idlFactory = ({ IDL }) => {
     'contactInfo' : IDL.Opt(IDL.Text),
     'displayName' : IDL.Text,
     'joinedAt' : Time,
-    'publicCoordinates' : IDL.Opt(GeoCoordinates),
+    'address' : IDL.Opt(IDL.Text),
     'profilePicture' : IDL.Text,
     'location' : IDL.Text,
-    'streetAddress' : IDL.Opt(IDL.Text),
     'coordinates' : IDL.Opt(GeoCoordinates),
   });
   const CommunityMapProfile = IDL.Record({
@@ -230,6 +255,8 @@ export const idlFactory = ({ IDL }) => {
     'contactInfo' : IDL.Opt(IDL.Text),
     'displayName' : IDL.Text,
     'joinedAt' : Time,
+    'isCurrentUser' : IDL.Bool,
+    'address' : IDL.Opt(IDL.Text),
     'profilePicture' : IDL.Text,
     'location' : IDL.Text,
     'coordinates' : IDL.Opt(GeoCoordinates),
@@ -271,6 +298,21 @@ export const idlFactory = ({ IDL }) => {
     'location' : IDL.Text,
     'photos' : IDL.Vec(IDL.Text),
     'condition' : ToolCondition,
+  });
+  const http_header = IDL.Record({ 'value' : IDL.Text, 'name' : IDL.Text });
+  const http_request_result = IDL.Record({
+    'status' : IDL.Nat,
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(http_header),
+  });
+  const TransformationInput = IDL.Record({
+    'context' : IDL.Vec(IDL.Nat8),
+    'response' : http_request_result,
+  });
+  const TransformationOutput = IDL.Record({
+    'status' : IDL.Nat,
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(http_header),
   });
   
   return IDL.Service({
@@ -318,6 +360,7 @@ export const idlFactory = ({ IDL }) => {
         [],
         [],
       ),
+    'geocodeAddress' : IDL.Func([IDL.Text], [GeoCoordinates], []),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getCommunityMapProfiles' : IDL.Func(
@@ -368,6 +411,12 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'sendRentalMessage' : IDL.Func([IDL.Nat, IDL.Text], [], []),
+    'setCoordinatesForCaller' : IDL.Func([GeoCoordinates], [], []),
+    'transform' : IDL.Func(
+        [TransformationInput],
+        [TransformationOutput],
+        ['query'],
+      ),
     'updateRentalStatus' : IDL.Func(
         [IDL.Nat, RentalStatus, IDL.Opt(IDL.Text)],
         [],
