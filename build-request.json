@@ -1,0 +1,111 @@
+{
+  "kind": "build_request",
+  "title": "Replace Google Maps with custom map implementation",
+  "projectName": "ToolShed Community",
+  "priority": "high",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Remove all Google Maps API dependencies: delete the Google Maps JavaScript API script tag from frontend/index.html, remove the gm_authFailure global error handler and related tracking variables, and remove any Google Maps API key references.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "the google maps implementation is not working. try building your own map exactly like google maps."
+        ]
+      },
+      "acceptanceCriteria": [
+        "No Google Maps script tag or API key references remain in the HTML or source files",
+        "No console errors related to Google Maps authentication or API loading"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Build a fully custom interactive map component (CustomMapView) that visually mimics Google Maps: render a tiled world map using OpenStreetMap tile images (https://tile.openstreetmap.org/{z}/{x}/{y}.png) on an HTML canvas or div grid, support smooth pan (click-and-drag) and zoom (scroll wheel + pinch-to-zoom) interactions, display zoom-in and zoom-out control buttons in the bottom-right corner, and show a subtle map attribution label ('© OpenStreetMap contributors') at the bottom. The map must start centered on a sensible default world view and transition smoothly between zoom levels.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "try building your own map exactly like google maps."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Map tiles load and display correctly from the OpenStreetMap tile server",
+        "User can pan the map by clicking and dragging",
+        "User can zoom in/out using the scroll wheel, pinch gesture, and +/- buttons",
+        "Map renders without flickering or broken tile gaps during interaction",
+        "Attribution label is visible on the map"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Replace the GoogleMapView component usage in CommunityMapPanel.tsx with the new CustomMapView component. Render community member profile markers as circular avatar pins (styled like Google Maps markers — teardrop shape with a circular photo inside, colored border) at their lat/lng coordinates on the custom map. When a marker is clicked, show the same member profile info card that was previously shown with Google Maps. Reuse the existing member coordinate data from the useQueries hooks without any backend changes.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "try building your own map exactly like google maps."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Community member markers appear at correct geographic positions on the custom map",
+        "Markers are styled as teardrop/pin shapes with a member avatar inside",
+        "Clicking a marker opens the member profile info card",
+        "The CommunityMapPage loads without errors and without requiring any Google Maps API key"
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "text": "Style the custom map UI controls (zoom buttons, info cards, panel overlays) to closely match Google Maps visual design: white rounded control buttons with subtle drop shadows, a clean sans-serif font, light-gray map panel backgrounds, and the same color palette used by Google Maps (white controls, green/teal accents for selected markers, red default pin color).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ],
+        "quotes": [
+          "exactly like google maps"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Zoom control buttons are white with rounded corners and drop shadows, matching Google Maps style",
+        "Marker pins use a red teardrop shape by default, consistent with Google Maps pin appearance",
+        "Selected member info card has a clean white card UI with shadow, similar to Google Maps info windows"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Update frontend/README.md to remove the Google Maps API key setup instructions and replace them with documentation explaining that the Community Map now uses a custom OpenStreetMap-based implementation requiring no API key.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4"
+        ]
+      },
+      "acceptanceCriteria": [
+        "README no longer references Google Maps API keys or setup steps",
+        "README documents the new custom map implementation"
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not modify any backend Motoko code — all member coordinate data already exists in the backend",
+    "Do not use any paid or API-key-gated map services; use OpenStreetMap tiles which are free and open",
+    "Do not modify files under frontend/src/hooks/useActor.ts, frontend/src/hooks/useInternetIdentity.ts, frontend/src/main.tsx, or frontend/src/components/ui"
+  ],
+  "nonGoals": [
+    "Adding new backend data fields or changing the UserProfile type",
+    "Implementing routing/directions functionality",
+    "Adding street-level or satellite imagery views",
+    "Geocoding new addresses (SetCoordinatesDialog already handles coordinate input)"
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

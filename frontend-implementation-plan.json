@@ -1,0 +1,113 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Replace Google Maps with Custom OpenStreetMap Implementation",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Remove all Google Maps API dependencies from the frontend",
+      "acceptanceCriteria": [
+        "No Google Maps script tag or API key references remain in the HTML or source files",
+        "No console errors related to Google Maps authentication or API loading"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/index.html",
+          "operation": "modify",
+          "description": "Remove the Google Maps JavaScript API script tag and the gm_authFailure global error handler function. Delete all tracking variables related to Google Maps API key validation and load errors (hasValidKey, isScriptLoaded, authFailureDetected)."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Build a fully custom interactive map component using OpenStreetMap tiles",
+      "acceptanceCriteria": [
+        "Map tiles load and display correctly from the OpenStreetMap tile server",
+        "User can pan the map by clicking and dragging",
+        "User can zoom in/out using the scroll wheel, pinch gesture, and +/- buttons",
+        "Map renders without flickering or broken tile gaps during interaction",
+        "Attribution label is visible on the map"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/community/CustomMapView.tsx",
+          "operation": "create",
+          "description": "Create a custom interactive map component that renders OpenStreetMap tiles (https://tile.openstreetmap.org/{z}/{x}/{y}.png) on a div-based tile grid. Implement smooth pan (click-and-drag) and zoom (scroll wheel + pinch-to-zoom) interactions using the existing useMapTransform hook. Display zoom-in and zoom-out control buttons styled as white rounded buttons with drop shadows in the bottom-right corner. Show a subtle '© OpenStreetMap contributors' attribution label at the bottom of the map. Start centered on a sensible default world view (lat: 20, lng: 0, zoom: 2). Support displaying custom markers at geographic coordinates passed as props. Implement tile caching to prevent flickering during pan/zoom operations."
+        },
+        {
+          "path": "frontend/src/hooks/useMapTiles.ts",
+          "operation": "create",
+          "description": "Create a custom hook that manages OpenStreetMap tile loading and caching. Accept zoom level, center coordinates, and viewport dimensions as parameters. Calculate visible tile coordinates based on the current viewport and zoom level. Return an array of tile objects with their screen positions and image URLs. Implement tile preloading for adjacent zoom levels to ensure smooth transitions. Handle tile load errors gracefully with retry logic."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Replace GoogleMapView with CustomMapView in CommunityMapPanel and render member markers",
+      "acceptanceCriteria": [
+        "Community member markers appear at correct geographic positions on the custom map",
+        "Markers are styled as teardrop/pin shapes with a member avatar inside",
+        "Clicking a marker opens the member profile info card",
+        "The CommunityMapPage loads without errors and without requiring any Google Maps API key"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/community/CommunityMapPanel.tsx",
+          "operation": "modify",
+          "description": "Replace the GoogleMapView component import and usage with the new CustomMapView component. Pass community member profiles with coordinates as props to CustomMapView for marker rendering. Maintain the existing member selection state and profile card display logic. Remove all Google Maps-specific error handling and API key references. Reuse the existing useQueries hooks (useGetCommunityMapProfiles) without any changes to preserve backend data flow."
+        },
+        {
+          "path": "frontend/src/components/community/CustomMarker.tsx",
+          "operation": "create",
+          "description": "Create a marker component that renders as a teardrop/pin shape (red by default, green/teal when selected) with a circular member avatar photo inside. Accept member profile data, screen position coordinates, selection state, and click handler as props. Style the marker to match Google Maps pin appearance: white border around the avatar, drop shadow, and a pointed bottom tip. Position the marker absolutely at the calculated screen coordinates from the parent map component."
+        },
+        {
+          "path": "frontend/src/components/community/GoogleMapView.tsx",
+          "operation": "delete",
+          "description": "Delete the GoogleMapView component file as it is no longer needed after replacing it with CustomMapView throughout the application."
+        }
+      ]
+    },
+    {
+      "id": "REQ-4",
+      "summary": "Style custom map UI controls to match Google Maps visual design",
+      "acceptanceCriteria": [
+        "Zoom control buttons are white with rounded corners and drop shadows, matching Google Maps style",
+        "Marker pins use a red teardrop shape by default, consistent with Google Maps pin appearance",
+        "Selected member info card has a clean white card UI with shadow, similar to Google Maps info windows"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/community/CustomMapView.tsx",
+          "operation": "modify",
+          "description": "Apply Google Maps-style visual design to zoom control buttons: white background (bg-white), rounded corners (rounded-lg), subtle drop shadows (shadow-md), clean sans-serif font, and hover states (hover:bg-gray-50). Position controls in the bottom-right corner with proper spacing. Style the attribution label with a light semi-transparent background and small text size. Ensure the overall map panel has a light-gray background matching Google Maps aesthetic."
+        },
+        {
+          "path": "frontend/src/components/community/CustomMarker.tsx",
+          "operation": "modify",
+          "description": "Style markers as teardrop pins with a red fill (#EA4335) by default and green/teal accent (#34A853) when selected, matching Google Maps color palette. Add a white circular border around the avatar photo, a drop shadow (shadow-lg) for depth, and ensure the pointed bottom tip is properly rendered. Use CSS for the teardrop shape or an SVG path if needed."
+        },
+        {
+          "path": "frontend/src/components/community/CommunityMapPanel.tsx",
+          "operation": "modify",
+          "description": "Ensure the selected member profile info card uses a clean white card background (bg-white), rounded corners (rounded-lg), drop shadow (shadow-lg), and proper padding, matching the Google Maps info window style. Maintain the existing card content layout and information display without changes."
+        }
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "summary": "Update frontend README to document the new custom map implementation",
+      "acceptanceCriteria": [
+        "README no longer references Google Maps API keys or setup steps",
+        "README documents the new custom map implementation"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/README.md",
+          "operation": "modify",
+          "description": "Remove all sections referencing Google Maps API key setup, including instructions for obtaining an API key, enabling required APIs, configuring restrictions, and installing the key in index.html. Replace with a new section explaining that the Community Map feature now uses a custom OpenStreetMap-based implementation that requires no API key or external service registration. Note that map tiles are loaded directly from OpenStreetMap's public tile server and are subject to their usage policy."
+        }
+      ]
+    }
+  ]
+}

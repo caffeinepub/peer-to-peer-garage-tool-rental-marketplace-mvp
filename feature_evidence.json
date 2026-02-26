@@ -1,0 +1,115 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-remove-all-google-maps-api-dependencies-delete-the-google-maps-javascript-api-script-tag-from-frontend-index-html-remove-the-gm-authfailure-global-error-handler-and-related-tracking-variables-and-remove-any-google-maps-api-key-references",
+      "featureTitle": "Remove all Google Maps API dependencies: delete the Google Maps JavaScript API script tag from frontend/index.html, remove the gm_authFailure global error handler and related tracking variables, and remove any Google Maps API key references.",
+      "files": [
+        "frontend/index.html"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-build-a-fully-custom-interactive-map-component-custommapview-that-visually-mimics-google-maps-render-a-tiled-world-map-using-openstreetmap-tile-images-https-tile-openstreetmap-org-z-x-y-png-on-an-html-canvas-or-div-grid-support-smooth-pan-click-and-drag-and-zoom-scroll-wheel-pinch-to-zoom-interactions-display-zoom-in-and-zoom-out-control-buttons-in-the-bottom-right-corner-and-show-a-subtle-map-attribution-label-openstreetmap-contributors-at-the-bottom-the-map-must-start-centered-on-a-sensible-default-world-view-and-transition-smoothly-between-zoom-levels",
+      "featureTitle": "Build a fully custom interactive map component (CustomMapView) that visually mimics Google Maps: render a tiled world map using OpenStreetMap tile images (https://tile.openstreetmap.org/{z}/{x}/{y}.png) on an HTML canvas or div grid, support smooth pan (click-and-drag) and zoom (scroll wheel + pinch-to-zoom) interactions, display zoom-in and zoom-out control buttons in the bottom-right corner, and show a subtle map attribution label ('© OpenStreetMap contributors') at the bottom. The map must start centered on a sensible default world view and transition smoothly between zoom levels.",
+      "files": [
+        "frontend/src/components/community/CustomMapView.tsx",
+        "frontend/src/hooks/useMapTiles.ts"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-replace-the-googlemapview-component-usage-in-communitymappanel-tsx-with-the-new-custommapview-component-render-community-member-profile-markers-as-circular-avatar-pins-styled-like-google-maps-markers-teardrop-shape-with-a-circular-photo-inside-colored-border-at-their-lat-lng-coordinates-on-the-custom-map-when-a-marker-is-clicked-show-the-same-member-profile-info-card-that-was-previously-shown-with-google-maps-reuse-the-existing-member-coordinate-data-from-the-usequeries-hooks-without-any-backend-changes",
+      "featureTitle": "Replace the GoogleMapView component usage in CommunityMapPanel.tsx with the new CustomMapView component. Render community member profile markers as circular avatar pins (styled like Google Maps markers — teardrop shape with a circular photo inside, colored border) at their lat/lng coordinates on the custom map. When a marker is clicked, show the same member profile info card that was previously shown with Google Maps. Reuse the existing member coordinate data from the useQueries hooks without any backend changes.",
+      "files": [
+        "frontend/src/components/community/CommunityMapPanel.tsx",
+        "frontend/src/components/community/CustomMarker.tsx",
+        "frontend/src/components/community/GoogleMapView.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-style-the-custom-map-ui-controls-zoom-buttons-info-cards-panel-overlays-to-closely-match-google-maps-visual-design-white-rounded-control-buttons-with-subtle-drop-shadows-a-clean-sans-serif-font-light-gray-map-panel-backgrounds-and-the-same-color-palette-used-by-google-maps-white-controls-green-teal-accents-for-selected-markers-red-default-pin-color",
+      "featureTitle": "Style the custom map UI controls (zoom buttons, info cards, panel overlays) to closely match Google Maps visual design: white rounded control buttons with subtle drop shadows, a clean sans-serif font, light-gray map panel backgrounds, and the same color palette used by Google Maps (white controls, green/teal accents for selected markers, red default pin color).",
+      "files": [
+        "frontend/src/components/community/CommunityMapPanel.tsx",
+        "frontend/src/components/community/CustomMapView.tsx",
+        "frontend/src/components/community/CustomMarker.tsx"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-4"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-frontend-readme-md-to-remove-the-google-maps-api-key-setup-instructions-and-replace-them-with-documentation-explaining-that-the-community-map-now-uses-a-custom-openstreetmap-based-implementation-requiring-no-api-key",
+      "featureTitle": "Update frontend/README.md to remove the Google Maps API key setup instructions and replace them with documentation explaining that the Community Map now uses a custom OpenStreetMap-based implementation requiring no API key.",
+      "files": [
+        "frontend/README.md"
+      ],
+      "components": [
+        "authorization@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "camera@1.0.0",
+        "http-outcalls@3.0.0"
+      ],
+      "testIds": [
+        "REQ-5"
+      ],
+      "confidence": "high"
+    }
+  ]
+}
