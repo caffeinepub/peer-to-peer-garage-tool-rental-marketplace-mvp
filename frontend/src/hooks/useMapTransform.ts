@@ -1,263 +1,159 @@
-import { useState, useCallback, useRef, PointerEvent, WheelEvent } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
-export interface UseMapTransformOptions {
-  initialZoom?: number;
-  minZoom?: number;
-  maxZoom?: number;
-  zoomStep?: number;
-  dragThreshold?: number;
+export interface MapTransform {
+  centerLat: number;
+  centerLng: number;
+  zoom: number;
 }
 
 export interface UseMapTransformReturn {
-  zoom: number;
-  panX: number;
-  panY: number;
+  transform: MapTransform;
+  setTransform: React.Dispatch<React.SetStateAction<MapTransform>>;
+  isDragging: boolean;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  onPointerDown: (e: React.PointerEvent) => void;
+  onPointerMove: (e: React.PointerEvent) => void;
+  onPointerUp: (e: React.PointerEvent) => void;
+  onPointerLeave: (e: React.PointerEvent) => void;
   zoomIn: () => void;
   zoomOut: () => void;
-  reset: () => void;
-  handleWheel: (e: WheelEvent, containerRect: DOMRect) => void;
-  handlePointerDown: (e: PointerEvent) => void;
-  handlePointerMove: (e: PointerEvent) => void;
-  handlePointerUp: (e: PointerEvent) => void;
-  isDragging: boolean;
-  hasDragged: boolean;
+  reset: (lat: number, lng: number, zoom: number) => void;
+  isAtMaxZoom: boolean;
+  isAtMinZoom: boolean;
 }
 
-export function useMapTransform(options: UseMapTransformOptions = {}): UseMapTransformReturn {
-  const {
-    initialZoom = 1,
-    minZoom = 0.5,
-    maxZoom = 4,
-    zoomStep = 0.2,
-    dragThreshold = 5,
-  } = options;
+const MIN_ZOOM = 2;
+const MAX_ZOOM = 19;
+const TILE_SIZE = 256;
 
-  const [zoom, setZoom] = useState(initialZoom);
-  const [panX, setPanX] = useState(0);
-  const [panY, setPanY] = useState(0);
+function latToTileY(lat: number, zoom: number): number {
+  // Clamp to valid Mercator range
+  const clampedLat = Math.max(-85.051129, Math.min(85.051129, lat));
+  const latRad = (clampedLat * Math.PI) / 180;
+  const cosVal = Math.cos(latRad);
+  if (cosVal === 0) return Math.pow(2, zoom) / 2;
+  const logArg = Math.tan(latRad) + 1 / cosVal;
+  if (logArg <= 0) return Math.pow(2, zoom) / 2;
+  return (1 - Math.log(logArg) / Math.PI) / 2 * Math.pow(2, zoom);
+}
+
+function tileYToLat(y: number, zoom: number): number {
+  const maxTile = Math.pow(2, zoom);
+  // Clamp y to valid tile range
+  const clampedY = Math.max(0, Math.min(maxTile, y));
+  const n = Math.PI - (2 * Math.PI * clampedY) / maxTile;
+  return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+}
+
+function sanitizeTransform(t: MapTransform): MapTransform {
+  return {
+    centerLat: isFinite(t.centerLat) ? Math.max(-85.051129, Math.min(85.051129, t.centerLat)) : 0,
+    centerLng: isFinite(t.centerLng) ? ((((t.centerLng + 180) % 360) + 360) % 360) - 180 : 0,
+    zoom: isFinite(t.zoom) ? Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, t.zoom)) : MIN_ZOOM,
+  };
+}
+
+export function useMapTransform(initialTransform: MapTransform): UseMapTransformReturn {
+  const [transform, setTransformRaw] = useState<MapTransform>(() => sanitizeTransform(initialTransform));
   const [isDragging, setIsDragging] = useState(false);
-  const [hasDragged, setHasDragged] = useState(false);
 
-  const dragStartRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
-  const dragDistanceRef = useRef(0);
-  const pointerCountRef = useRef(0);
-  const pinchStartRef = useRef<{ distance: number; zoom: number; midX: number; midY: number } | null>(null);
-  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const containerRef = useRef<HTMLDivElement>(null);
+  const dragStartRef = useRef<{ x: number; y: number; lat: number; lng: number } | null>(null);
+  const lastTouchDistRef = useRef<number | null>(null);
+  const hasDraggedRef = useRef(false);
 
-  // Clamp pan values to prevent map from being dragged too far
-  const clampPan = useCallback(
-    (x: number, y: number, currentZoom: number) => {
-      // Calculate max pan based on zoom level
-      // At zoom 1, allow minimal panning; at higher zoom, allow more
-      const maxPanX = Math.max(0, (currentZoom - 1) * 400);
-      const maxPanY = Math.max(0, (currentZoom - 1) * 300);
-
-      return {
-        x: Math.max(-maxPanX, Math.min(maxPanX, x)),
-        y: Math.max(-maxPanY, Math.min(maxPanY, y)),
-      };
-    },
-    []
-  );
+  // Wrap setTransform to always sanitize output
+  const setTransform: React.Dispatch<React.SetStateAction<MapTransform>> = useCallback((action) => {
+    setTransformRaw(prev => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      return sanitizeTransform(next);
+    });
+  }, []);
 
   const zoomIn = useCallback(() => {
-    setZoom((prev) => {
-      const newZoom = Math.min(prev + zoomStep, maxZoom);
-      // Adjust pan to keep it within bounds
-      const clamped = clampPan(panX, panY, newZoom);
-      setPanX(clamped.x);
-      setPanY(clamped.y);
-      return newZoom;
-    });
-  }, [zoomStep, maxZoom, panX, panY, clampPan]);
+    setTransform(t => ({ ...t, zoom: Math.min(MAX_ZOOM, t.zoom + 1) }));
+  }, [setTransform]);
 
   const zoomOut = useCallback(() => {
-    setZoom((prev) => {
-      const newZoom = Math.max(prev - zoomStep, minZoom);
-      // Adjust pan to keep it within bounds
-      const clamped = clampPan(panX, panY, newZoom);
-      setPanX(clamped.x);
-      setPanY(clamped.y);
-      return newZoom;
+    setTransform(t => ({ ...t, zoom: Math.max(MIN_ZOOM, t.zoom - 1) }));
+  }, [setTransform]);
+
+  const reset = useCallback((lat: number, lng: number, zoom: number) => {
+    setTransform({ centerLat: lat, centerLng: lng, zoom });
+  }, [setTransform]);
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    if (e.button !== 0) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      lat: transform.centerLat,
+      lng: transform.centerLng,
+    };
+    hasDraggedRef.current = false;
+    setIsDragging(false);
+  }, [transform.centerLat, transform.centerLng]);
+
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragStartRef.current) return;
+
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+
+    if (!hasDraggedRef.current && Math.abs(dx) < 3 && Math.abs(dy) < 3) return;
+    hasDraggedRef.current = true;
+    setIsDragging(true);
+
+    setTransform(t => {
+      const z = t.zoom;
+      const scale = Math.pow(2, z) * TILE_SIZE;
+      if (scale === 0 || !isFinite(scale)) return t;
+
+      // Convert drag delta from pixels to degrees
+      const dLng = -(dx / scale) * 360;
+
+      // For latitude, use Mercator projection
+      const startTileY = latToTileY(dragStartRef.current!.lat, z);
+      const newTileY = startTileY - dy / TILE_SIZE;
+      const newLat = tileYToLat(newTileY, z);
+
+      if (!isFinite(newLat) || !isFinite(dLng)) return t;
+
+      return {
+        ...t,
+        centerLat: Math.max(-85.051129, Math.min(85.051129, newLat)),
+        centerLng: dragStartRef.current!.lng + dLng,
+      };
     });
-  }, [zoomStep, minZoom, panX, panY, clampPan]);
+  }, [setTransform]);
 
-  const reset = useCallback(() => {
-    setZoom(initialZoom);
-    setPanX(0);
-    setPanY(0);
-  }, [initialZoom]);
+  const onPointerUp = useCallback((_e: React.PointerEvent) => {
+    dragStartRef.current = null;
+    lastTouchDistRef.current = null;
+    setTimeout(() => setIsDragging(false), 50);
+  }, []);
 
-  // Zoom-to-cursor implementation
-  const handleWheel = useCallback(
-    (e: WheelEvent, containerRect: DOMRect) => {
-      e.preventDefault();
-
-      // Calculate cursor position relative to container
-      const cursorX = e.clientX - containerRect.left;
-      const cursorY = e.clientY - containerRect.top;
-
-      // Normalize cursor position to -0.5 to 0.5 range (center is 0,0)
-      const normalizedX = (cursorX / containerRect.width - 0.5);
-      const normalizedY = (cursorY / containerRect.height - 0.5);
-
-      setZoom((prevZoom) => {
-        const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
-        const newZoom = Math.max(minZoom, Math.min(maxZoom, prevZoom + delta));
-        const zoomRatio = newZoom / prevZoom;
-
-        // Adjust pan to zoom toward cursor
-        setPanX((prevPanX) => {
-          const newPanX = prevPanX * zoomRatio - normalizedX * containerRect.width * (zoomRatio - 1);
-          const clamped = clampPan(newPanX, panY, newZoom);
-          return clamped.x;
-        });
-
-        setPanY((prevPanY) => {
-          const newPanY = prevPanY * zoomRatio - normalizedY * containerRect.height * (zoomRatio - 1);
-          const clamped = clampPan(panX, newPanY, newZoom);
-          return clamped.y;
-        });
-
-        return newZoom;
-      });
-    },
-    [zoomStep, minZoom, maxZoom, clampPan, panX, panY]
-  );
-
-  const handlePointerDown = useCallback((e: PointerEvent) => {
-    const target = e.target as HTMLElement;
-    target.setPointerCapture(e.pointerId);
-
-    activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    pointerCountRef.current = activePointersRef.current.size;
-
-    if (pointerCountRef.current === 1) {
-      // Single pointer - start drag
-      dragStartRef.current = {
-        x: e.clientX,
-        y: e.clientY,
-        panX,
-        panY,
-      };
-      dragDistanceRef.current = 0;
-      setIsDragging(true);
-      setHasDragged(false);
-    } else if (pointerCountRef.current === 2) {
-      // Two pointers - start pinch
-      const pointers = Array.from(activePointersRef.current.values());
-      const dx = pointers[1].x - pointers[0].x;
-      const dy = pointers[1].y - pointers[0].y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      const midX = (pointers[0].x + pointers[1].x) / 2;
-      const midY = (pointers[0].y + pointers[1].y) / 2;
-
-      pinchStartRef.current = {
-        distance,
-        zoom,
-        midX,
-        midY,
-      };
+  const onPointerLeave = useCallback((_e: React.PointerEvent) => {
+    if (dragStartRef.current) {
       dragStartRef.current = null;
-      setIsDragging(false);
+      setTimeout(() => setIsDragging(false), 50);
     }
-  }, [panX, panY, zoom]);
-
-  const handlePointerMove = useCallback(
-    (e: PointerEvent) => {
-      if (!activePointersRef.current.has(e.pointerId)) return;
-
-      activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-      if (pointerCountRef.current === 1 && dragStartRef.current) {
-        // Single pointer drag
-        const deltaX = e.clientX - dragStartRef.current.x;
-        const deltaY = e.clientY - dragStartRef.current.y;
-
-        dragDistanceRef.current = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-        if (dragDistanceRef.current > dragThreshold) {
-          setHasDragged(true);
-        }
-
-        const newPanX = dragStartRef.current.panX + deltaX;
-        const newPanY = dragStartRef.current.panY + deltaY;
-
-        const clamped = clampPan(newPanX, newPanY, zoom);
-        setPanX(clamped.x);
-        setPanY(clamped.y);
-      } else if (pointerCountRef.current === 2 && pinchStartRef.current) {
-        // Two pointer pinch
-        const pointers = Array.from(activePointersRef.current.values());
-        const dx = pointers[1].x - pointers[0].x;
-        const dy = pointers[1].y - pointers[0].y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        const scale = distance / pinchStartRef.current.distance;
-        const newZoom = Math.max(minZoom, Math.min(maxZoom, pinchStartRef.current.zoom * scale));
-
-        // Keep midpoint stable during pinch
-        const midX = (pointers[0].x + pointers[1].x) / 2;
-        const midY = (pointers[0].y + pointers[1].y) / 2;
-        const midDeltaX = midX - pinchStartRef.current.midX;
-        const midDeltaY = midY - pinchStartRef.current.midY;
-
-        setZoom(newZoom);
-        setPanX((prev) => {
-          const clamped = clampPan(prev + midDeltaX, panY, newZoom);
-          return clamped.x;
-        });
-        setPanY((prev) => {
-          const clamped = clampPan(panX, prev + midDeltaY, newZoom);
-          return clamped.y;
-        });
-      }
-    },
-    [zoom, panX, panY, dragThreshold, clampPan, minZoom, maxZoom]
-  );
-
-  const handlePointerUp = useCallback((e: PointerEvent) => {
-    const target = e.target as HTMLElement;
-    target.releasePointerCapture(e.pointerId);
-
-    activePointersRef.current.delete(e.pointerId);
-    pointerCountRef.current = activePointersRef.current.size;
-
-    if (pointerCountRef.current === 0) {
-      setIsDragging(false);
-      dragStartRef.current = null;
-      pinchStartRef.current = null;
-
-      // Reset hasDragged after a short delay to allow click handlers to check it
-      setTimeout(() => {
-        setHasDragged(false);
-      }, 50);
-    } else if (pointerCountRef.current === 1) {
-      // Transition from pinch back to drag
-      const remaining = Array.from(activePointersRef.current.entries())[0];
-      dragStartRef.current = {
-        x: remaining[1].x,
-        y: remaining[1].y,
-        panX,
-        panY,
-      };
-      pinchStartRef.current = null;
-      setIsDragging(true);
-    }
-  }, [panX, panY]);
+  }, []);
 
   return {
-    zoom,
-    panX,
-    panY,
+    transform,
+    setTransform,
+    isDragging,
+    containerRef,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave,
     zoomIn,
     zoomOut,
     reset,
-    handleWheel,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    isDragging,
-    hasDragged,
+    isAtMaxZoom: transform.zoom >= MAX_ZOOM,
+    isAtMinZoom: transform.zoom <= MIN_ZOOM,
   };
 }

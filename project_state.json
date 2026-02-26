@@ -1,52 +1,34 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Project with a community map page. Google Maps integration failed; building a custom map implementation styled like Google Maps.",
-  "architectural_notes": [
-    "Google Maps API integration was removed due to issues; replacing with a custom-built map component"
-  ],
+  "summary": "Map application with zoom functionality. User wants to be able to zoom in to street level like Google Maps.",
+  "architectural_notes": [],
   "known_issues": [
-    "Google Maps implementation not working on the community map page"
+    "Error occurs when zooming in too far on the map"
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-remove-all-google-maps-api-dependencies-delete-the-google-maps-javascript-api-script-tag-from-frontend-index-html-remove-the-gm-authfailure-global-error-handler-and-related-tracking-variables-and-remove-any-google-maps-api-key-references",
-      "title": "Remove all Google Maps API dependencies: delete the Google Maps JavaScript API script tag from frontend/index.html, remove the gm_authFailure global error handler and related tracking variables, and remove any Google Maps API key references.",
+      "id": "feature-remove-the-zoom-ceiling-in-custommapview-and-usemaptiles-so-users-can-zoom-in-to-street-level-zoom-level-19-without-triggering-any-errors-clamp-the-zoom-level-to-a-safe-maximum-supported-by-the-cartodb-voyager-tile-provider-typically-zoom-19-rather-than-throwing-or-returning-null-tile-data",
+      "title": "Remove the zoom ceiling in CustomMapView and useMapTiles so users can zoom in to street level (zoom level 19+) without triggering any errors. Clamp the zoom level to a safe maximum supported by the CartoDB Voyager tile provider (typically zoom 19) rather than throwing or returning null tile data.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
     },
     {
-      "id": "feature-build-a-fully-custom-interactive-map-component-custommapview-that-visually-mimics-google-maps-render-a-tiled-world-map-using-openstreetmap-tile-images-https-tile-openstreetmap-org-z-x-y-png-on-an-html-canvas-or-div-grid-support-smooth-pan-click-and-drag-and-zoom-scroll-wheel-pinch-to-zoom-interactions-display-zoom-in-and-zoom-out-control-buttons-in-the-bottom-right-corner-and-show-a-subtle-map-attribution-label-openstreetmap-contributors-at-the-bottom-the-map-must-start-centered-on-a-sensible-default-world-view-and-transition-smoothly-between-zoom-levels",
-      "title": "Build a fully custom interactive map component (CustomMapView) that visually mimics Google Maps: render a tiled world map using OpenStreetMap tile images (https://tile.openstreetmap.org/{z}/{x}/{y}.png) on an HTML canvas or div grid, support smooth pan (click-and-drag) and zoom (scroll wheel + pinch-to-zoom) interactions, display zoom-in and zoom-out control buttons in the bottom-right corner, and show a subtle map attribution label ('© OpenStreetMap contributors') at the bottom. The map must start centered on a sensible default world view and transition smoothly between zoom levels.",
+      "id": "feature-update-usemaptiles-to-correctly-compute-and-return-valid-tile-urls-and-pixel-conversion-values-for-all-zoom-levels-up-to-the-tile-provider-s-maximum-zoom-19-for-cartodb-voyager-ensure-no-null-or-undefined-values-are-returned-for-tile-sets-at-high-zoom-levels-and-add-defensive-guards-so-the-hook-never-throws-or-returns-malformed-tile-data",
+      "title": "Update useMapTiles to correctly compute and return valid tile URLs and pixel-conversion values for all zoom levels up to the tile provider's maximum (zoom 19 for CartoDB Voyager). Ensure no null or undefined values are returned for tile sets at high zoom levels, and add defensive guards so the hook never throws or returns malformed tile data.",
       "reqIds": [
         "REQ-2"
       ],
       "version": 1
     },
     {
-      "id": "feature-replace-the-googlemapview-component-usage-in-communitymappanel-tsx-with-the-new-custommapview-component-render-community-member-profile-markers-as-circular-avatar-pins-styled-like-google-maps-markers-teardrop-shape-with-a-circular-photo-inside-colored-border-at-their-lat-lng-coordinates-on-the-custom-map-when-a-marker-is-clicked-show-the-same-member-profile-info-card-that-was-previously-shown-with-google-maps-reuse-the-existing-member-coordinate-data-from-the-usequeries-hooks-without-any-backend-changes",
-      "title": "Replace the GoogleMapView component usage in CommunityMapPanel.tsx with the new CustomMapView component. Render community member profile markers as circular avatar pins (styled like Google Maps markers — teardrop shape with a circular photo inside, colored border) at their lat/lng coordinates on the custom map. When a marker is clicked, show the same member profile info card that was previously shown with Google Maps. Reuse the existing member coordinate data from the useQueries hooks without any backend changes.",
+      "id": "feature-update-usemaptransform-and-or-usemapzoom-to-set-the-maximum-allowed-zoom-level-to-19-to-match-the-tile-provider-capability-ensure-the-zoom-state-never-exceeds-this-value-regardless-of-how-many-times-the-user-zooms-in-via-mouse-wheel-pinch-gesture-or-the-zoom-in-button",
+      "title": "Update useMapTransform (and/or useMapZoom) to set the maximum allowed zoom level to 19 to match the tile provider capability. Ensure the zoom state never exceeds this value regardless of how many times the user zooms in via mouse wheel, pinch gesture, or the zoom-in button.",
       "reqIds": [
         "REQ-3"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-style-the-custom-map-ui-controls-zoom-buttons-info-cards-panel-overlays-to-closely-match-google-maps-visual-design-white-rounded-control-buttons-with-subtle-drop-shadows-a-clean-sans-serif-font-light-gray-map-panel-backgrounds-and-the-same-color-palette-used-by-google-maps-white-controls-green-teal-accents-for-selected-markers-red-default-pin-color",
-      "title": "Style the custom map UI controls (zoom buttons, info cards, panel overlays) to closely match Google Maps visual design: white rounded control buttons with subtle drop shadows, a clean sans-serif font, light-gray map panel backgrounds, and the same color palette used by Google Maps (white controls, green/teal accents for selected markers, red default pin color).",
-      "reqIds": [
-        "REQ-4"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-frontend-readme-md-to-remove-the-google-maps-api-key-setup-instructions-and-replace-them-with-documentation-explaining-that-the-community-map-now-uses-a-custom-openstreetmap-based-implementation-requiring-no-api-key",
-      "title": "Update frontend/README.md to remove the Google Maps API key setup instructions and replace them with documentation explaining that the Community Map now uses a custom OpenStreetMap-based implementation requiring no API key.",
-      "reqIds": [
-        "REQ-5"
       ],
       "version": 1
     }
@@ -54,12 +36,13 @@
   "new_feature_requests": [
     {
       "id": "AR-1",
-      "summary": "Build a custom map component styled like Google Maps to replace the broken Google Maps integration",
+      "summary": "Support deep zoom to street level without errors, similar to Google Maps",
       "reqIds": [],
       "status": "pending"
     }
   ],
-  "projectName": "ToolShed Community",
+  "gameProjectType": "none",
+  "projectName": "ToolShare",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

@@ -1,97 +1,63 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-26T02:08:38.167Z",
+  "generatedAt": "2026-02-26T02:41:11.159Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 5,
-    "implemented": 5,
+    "total": 3,
+    "implemented": 3,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Remove all Google Maps API dependencies: delete the Google Maps JavaScript API script tag from frontend/index.html, remove the gm_authFailure global error handler and related tracking variables, and remove any Google Maps API key references.",
+        "summary": "Remove the zoom ceiling in CustomMapView and useMapTiles so users can zoom in to street level (zoom level 19+) without triggering any errors. Clamp the zoom level to a safe maximum supported by the CartoDB Voyager tile provider (typically zoom 19) rather than throwing or returning null tile data.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/index.html"
+          "frontend/src/hooks/useMapTiles.ts",
+          "frontend/src/components/community/CustomMapView.tsx"
         ],
         "matchedFiles": [
-          "frontend/index.html"
+          "frontend/src/hooks/useMapTiles.ts",
+          "frontend/src/components/community/CustomMapView.tsx"
         ]
       },
       {
         "id": "REQ-2",
-        "summary": "Build a fully custom interactive map component (CustomMapView) that visually mimics Google Maps: render a tiled world map using OpenStreetMap tile images (https://tile.openstreetmap.org/{z}/{x}/{y}.png) on an HTML canvas or div grid, support smooth pan (click-and-drag) and zoom (scroll wheel + pinch-to-zoom) interactions, display zoom-in and zoom-out control buttons in the bottom-right corner, and show a subtle map attribution label ('© OpenStreetMap contributors') at the bottom. The map must start centered on a sensible default world view and transition smoothly between zoom levels.",
+        "summary": "Update useMapTiles to correctly compute and return valid tile URLs and pixel-conversion values for all zoom levels up to the tile provider's maximum (zoom 19 for CartoDB Voyager). Ensure no null or undefined values are returned for tile sets at high zoom levels, and add defensive guards so the hook never throws or returns malformed tile data.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/community/CustomMapView.tsx",
           "frontend/src/hooks/useMapTiles.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/community/CustomMapView.tsx",
           "frontend/src/hooks/useMapTiles.ts"
         ]
       },
       {
         "id": "REQ-3",
-        "summary": "Replace the GoogleMapView component usage in CommunityMapPanel.tsx with the new CustomMapView component. Render community member profile markers as circular avatar pins (styled like Google Maps markers — teardrop shape with a circular photo inside, colored border) at their lat/lng coordinates on the custom map. When a marker is clicked, show the same member profile info card that was previously shown with Google Maps. Reuse the existing member coordinate data from the useQueries hooks without any backend changes.",
+        "summary": "Update useMapTransform (and/or useMapZoom) to set the maximum allowed zoom level to 19 to match the tile provider capability. Ensure the zoom state never exceeds this value regardless of how many times the user zooms in via mouse wheel, pinch gesture, or the zoom-in button.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/community/CommunityMapPanel.tsx",
-          "frontend/src/components/community/CustomMarker.tsx",
-          "frontend/src/components/community/GoogleMapView.tsx"
+          "frontend/src/hooks/useMapZoom.ts",
+          "frontend/src/hooks/useMapTransform.ts",
+          "frontend/src/components/community/CustomMapView.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/community/CommunityMapPanel.tsx",
-          "frontend/src/components/community/CustomMarker.tsx",
-          "frontend/src/components/community/GoogleMapView.tsx"
-        ]
-      },
-      {
-        "id": "REQ-4",
-        "summary": "Style the custom map UI controls (zoom buttons, info cards, panel overlays) to closely match Google Maps visual design: white rounded control buttons with subtle drop shadows, a clean sans-serif font, light-gray map panel backgrounds, and the same color palette used by Google Maps (white controls, green/teal accents for selected markers, red default pin color).",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/community/CustomMapView.tsx",
-          "frontend/src/components/community/CustomMarker.tsx",
-          "frontend/src/components/community/CommunityMapPanel.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/community/CustomMapView.tsx",
-          "frontend/src/components/community/CustomMarker.tsx",
-          "frontend/src/components/community/CommunityMapPanel.tsx"
-        ]
-      },
-      {
-        "id": "REQ-5",
-        "summary": "Update frontend/README.md to remove the Google Maps API key setup instructions and replace them with documentation explaining that the Community Map now uses a custom OpenStreetMap-based implementation requiring no API key.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/README.md"
-        ],
-        "matchedFiles": [
-          "frontend/README.md"
+          "frontend/src/hooks/useMapTransform.ts",
+          "frontend/src/components/community/CustomMapView.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
     "build-request.json",
-    "build-template/README.md",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/README.md",
-    "frontend/index.html",
-    "frontend/src/components/community/CommunityMapPanel.tsx",
     "frontend/src/components/community/CustomMapView.tsx",
-    "frontend/src/components/community/CustomMarker.tsx",
-    "frontend/src/components/community/GoogleMapView.tsx",
     "frontend/src/hooks/useMapTiles.ts",
-    "frontend/src/pages/CommunityMapPage.tsx",
+    "frontend/src/hooks/useMapTransform.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

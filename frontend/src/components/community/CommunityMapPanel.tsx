@@ -1,107 +1,143 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, X, Mail } from 'lucide-react';
+import React, { useState } from 'react';
+import { CommunityMapProfile } from '../../backend';
 import CustomMapView from './CustomMapView';
-import type { CommunityMapProfile } from '../../backend';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { MapPin, Users } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
 interface CommunityMapPanelProps {
-  profiles: CommunityMapProfile[];
-  selectedMemberId: string | null;
-  onSelectMember: (memberId: string | null) => void;
+  members: CommunityMapProfile[];
+  isLoading: boolean;
 }
 
-export default function CommunityMapPanel({ profiles, selectedMemberId, onSelectMember }: CommunityMapPanelProps) {
-  const selectedProfile = profiles.find((p) => p.id.toString() === selectedMemberId);
-  const profilesWithCoordinates = profiles.filter((p) => p.coordinates);
-
-  if (profilesWithCoordinates.length === 0) {
-    return (
-      <Card>
-        <CardContent className="p-12 text-center">
-          <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground">No member locations available to display on the map.</p>
-        </CardContent>
-      </Card>
-    );
+function formatJoinDate(joinedAt: bigint): string {
+  try {
+    const ms = Number(joinedAt) / 1_000_000;
+    return formatDistanceToNow(new Date(ms), { addSuffix: true });
+  } catch {
+    return 'recently';
   }
+}
+
+export default function CommunityMapPanel({ members, isLoading }: CommunityMapPanelProps) {
+  const [selectedMemberId, setSelectedMemberId] = useState<string | undefined>();
+
+  const membersWithCoords = members.filter(m => m.coordinates);
+  const selectedMember = members.find(m => m.id.toString() === selectedMemberId);
+
+  const handleMemberSelect = (id: string) => {
+    setSelectedMemberId(prev => (prev === id ? undefined : id));
+  };
 
   return (
-    <Card>
-      <CardContent className="p-0">
-        <div className="relative h-[600px] w-full overflow-hidden rounded-lg">
-          <CustomMapView
-            members={profilesWithCoordinates}
-            selectedMemberId={selectedMemberId}
-            onMemberSelect={onSelectMember}
-          />
-
-          {selectedProfile && (
-            <div className="absolute bottom-4 left-4 right-4 md:left-4 md:right-auto md:max-w-sm z-30 pointer-events-auto">
-              <Card className="shadow-xl bg-white border border-gray-200">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="relative shrink-0">
-                      <Avatar className="h-12 w-12 ring-2 ring-white shadow-sm">
-                        {selectedProfile.profilePicture ? (
-                          <AvatarImage src={selectedProfile.profilePicture} alt={selectedProfile.displayName} />
-                        ) : null}
-                        <AvatarFallback
-                          className={selectedProfile.isCurrentUser ? 'bg-green-500 text-white' : 'bg-primary text-primary-foreground'}
-                        >
-                          {selectedProfile.displayName
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')
-                            .toUpperCase()
-                            .slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      {selectedProfile.isCurrentUser && (
-                        <div className="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md">
-                          ✓
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold truncate text-base text-gray-900">
-                        {selectedProfile.displayName}
-                        {selectedProfile.isCurrentUser && (
-                          <span className="text-xs text-green-600 ml-2 font-normal">(You)</span>
-                        )}
-                      </h3>
-                      <div className="flex items-center gap-1 text-sm text-gray-500 mt-1">
-                        <MapPin className="h-3.5 w-3.5 shrink-0" />
-                        <span className="truncate">{selectedProfile.location}</span>
-                      </div>
-                      {selectedProfile.address && (
-                        <p className="text-xs text-gray-400 mt-1.5 line-clamp-2">
-                          {selectedProfile.address}
-                        </p>
-                      )}
-                      {selectedProfile.contactInfo && !selectedProfile.isCurrentUser && (
-                        <div className="flex items-center gap-1 text-xs text-gray-400 mt-2 pt-2 border-t border-gray-100">
-                          <Mail className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{selectedProfile.contactInfo}</span>
-                        </div>
-                      )}
-                    </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => onSelectMember(null)}
-                      className="h-8 w-8 shrink-0 hover:bg-gray-100 text-gray-500"
-                      aria-label="Close member details"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+    <div className="flex flex-col lg:flex-row gap-4 h-full min-h-[500px]">
+      {/* Map */}
+      <div className="flex-1 min-h-[400px] lg:min-h-0 relative rounded-lg overflow-hidden border border-border">
+        {isLoading ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted">
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+              <span className="text-sm">Loading map…</span>
             </div>
-          )}
+          </div>
+        ) : (
+          <CustomMapView
+            members={membersWithCoords}
+            selectedMemberId={selectedMemberId}
+            onMemberSelect={handleMemberSelect}
+          />
+        )}
+
+        {/* Selected member info card */}
+        {selectedMember && (
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 bg-background border border-border rounded-xl shadow-lg px-4 py-3 flex items-center gap-3 min-w-[220px] max-w-xs">
+            <Avatar className="h-10 w-10 shrink-0">
+              <AvatarImage src={selectedMember.profilePicture} />
+              <AvatarFallback>{selectedMember.displayName.slice(0, 2).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-sm truncate">{selectedMember.displayName}</p>
+              {selectedMember.location && (
+                <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                  <MapPin className="h-3 w-3 shrink-0" />
+                  {selectedMember.location}
+                </p>
+              )}
+              {selectedMember.isCurrentUser && (
+                <Badge variant="secondary" className="text-xs mt-0.5">You</Badge>
+              )}
+            </div>
+            <button
+              className="text-muted-foreground hover:text-foreground ml-1 shrink-0"
+              onClick={() => setSelectedMemberId(undefined)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Member list sidebar */}
+      <div className="w-full lg:w-72 shrink-0 flex flex-col border border-border rounded-lg overflow-hidden bg-card">
+        <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <span className="font-semibold text-sm">
+            Members ({membersWithCoords.length} on map)
+          </span>
         </div>
-      </CardContent>
-    </Card>
+
+        {isLoading ? (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm p-4">
+            Loading members…
+          </div>
+        ) : members.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm p-4 text-center">
+            No community members yet.
+          </div>
+        ) : (
+          <ScrollArea className="flex-1">
+            <div className="divide-y divide-border">
+              {members.map(member => (
+                <button
+                  key={member.id.toString()}
+                  className={`w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-muted/50 transition-colors ${
+                    selectedMemberId === member.id.toString() ? 'bg-muted' : ''
+                  }`}
+                  onClick={() => member.coordinates && handleMemberSelect(member.id.toString())}
+                  disabled={!member.coordinates}
+                >
+                  <Avatar className="h-8 w-8 shrink-0">
+                    <AvatarImage src={member.profilePicture} />
+                    <AvatarFallback className="text-xs">
+                      {member.displayName.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium truncate">{member.displayName}</span>
+                      {member.isCurrentUser && (
+                        <Badge variant="secondary" className="text-[10px] px-1 py-0 h-4">You</Badge>
+                      )}
+                    </div>
+                    {member.location && (
+                      <p className="text-xs text-muted-foreground truncate">{member.location}</p>
+                    )}
+                    {!member.coordinates && (
+                      <p className="text-xs text-muted-foreground/60 italic">No location set</p>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground shrink-0">
+                    {formatJoinDate(member.joinedAt)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+      </div>
+    </div>
   );
 }

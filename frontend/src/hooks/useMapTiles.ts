@@ -1,127 +1,155 @@
 import { useMemo } from 'react';
 
-export interface TileInfo {
-  key: string;
-  url: string;
+const TILE_SIZE = 256;
+const MAX_ZOOM_LEVEL = 19;
+
+// Web Mercator tile math - with safe clamping
+export function latToTileY(lat: number, zoom: number): number {
+  // Clamp latitude to valid Mercator range to avoid NaN/Infinity
+  const clampedLat = Math.max(-85.051129, Math.min(85.051129, lat));
+  const latRad = (clampedLat * Math.PI) / 180;
+  const tanVal = Math.tan(latRad);
+  const cosVal = Math.cos(latRad);
+  // Guard against division by zero or log of non-positive
+  if (cosVal === 0) return Math.pow(2, zoom) / 2;
+  const logArg = tanVal + 1 / cosVal;
+  if (logArg <= 0) return Math.pow(2, zoom) / 2;
+  return (1 - Math.log(logArg) / Math.PI) / 2 * Math.pow(2, zoom);
+}
+
+export function lngToTileX(lng: number, zoom: number): number {
+  // Clamp longitude to valid range
+  const clampedLng = Math.max(-180, Math.min(180, lng));
+  return ((clampedLng + 180) / 360) * Math.pow(2, zoom);
+}
+
+export function tileXToLng(x: number, zoom: number): number {
+  return (x / Math.pow(2, zoom)) * 360 - 180;
+}
+
+export function tileYToLat(y: number, zoom: number): number {
+  const n = Math.PI - (2 * Math.PI * y) / Math.pow(2, zoom);
+  return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+}
+
+export interface MapTile {
   x: number;
   y: number;
-  tileX: number;
-  tileY: number;
-  tileZ: number;
+  z: number;
+  url: string;
+  pixelX: number;
+  pixelY: number;
 }
 
-export interface UseMapTilesOptions {
-  centerLat: number;
-  centerLng: number;
-  zoom: number;
-  viewportWidth: number;
-  viewportHeight: number;
-  tileSize?: number;
+export interface UseMapTilesResult {
+  tiles: MapTile[];
+  /** Convert lat/lng to pixel position within the viewport */
+  latLngToPixel: (lat: number, lng: number) => { x: number; y: number };
 }
 
-/** Convert lat/lng to tile coordinates at a given zoom level */
-export function latLngToTile(lat: number, lng: number, zoom: number): { x: number; y: number } {
-  const n = Math.pow(2, zoom);
-  const x = ((lng + 180) / 360) * n;
-  const latRad = (lat * Math.PI) / 180;
-  const y = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n;
-  return { x, y };
+// Use CartoDB Voyager tiles - CORS-friendly, no API key needed, supports zoom up to 19
+function getTileUrl(x: number, y: number, z: number): string {
+  const subdomains = ['a', 'b', 'c', 'd'];
+  const s = subdomains[(x + y) % subdomains.length];
+  return `https://${s}.basemaps.cartocdn.com/rastertiles/voyager/${z}/${x}/${y}.png`;
 }
 
-/** Convert tile coordinates to lat/lng */
-export function tileToLatLng(tileX: number, tileY: number, zoom: number): { lat: number; lng: number } {
-  const n = Math.pow(2, zoom);
-  const lng = (tileX / n) * 360 - 180;
-  const latRad = Math.atan(Math.sinh(Math.PI * (1 - (2 * tileY) / n)));
-  const lat = (latRad * 180) / Math.PI;
-  return { lat, lng };
-}
-
-/** Convert lat/lng to pixel position relative to the viewport center */
-export function latLngToPixel(
-  lat: number,
-  lng: number,
+export function useMapTiles(
   centerLat: number,
   centerLng: number,
   zoom: number,
-  tileSize: number
-): { x: number; y: number } {
-  const centerTile = latLngToTile(centerLat, centerLng, zoom);
-  const pointTile = latLngToTile(lat, lng, zoom);
-  return {
-    x: (pointTile.x - centerTile.x) * tileSize,
-    y: (pointTile.y - centerTile.y) * tileSize,
-  };
-}
-
-/** Convert pixel offset from center to lat/lng */
-export function pixelToLatLng(
-  pixelX: number,
-  pixelY: number,
-  centerLat: number,
-  centerLng: number,
-  zoom: number,
-  tileSize: number
-): { lat: number; lng: number } {
-  const centerTile = latLngToTile(centerLat, centerLng, zoom);
-  const tileX = centerTile.x + pixelX / tileSize;
-  const tileY = centerTile.y + pixelY / tileSize;
-  return tileToLatLng(tileX, tileY, zoom);
-}
-
-/** Wrap tile X coordinate to valid range */
-function wrapTileX(x: number, zoom: number): number {
-  const n = Math.pow(2, zoom);
-  return ((x % n) + n) % n;
-}
-
-export function useMapTiles({
-  centerLat,
-  centerLng,
-  zoom,
-  viewportWidth,
-  viewportHeight,
-  tileSize = 256,
-}: UseMapTilesOptions): TileInfo[] {
+  viewportWidth: number,
+  viewportHeight: number
+): UseMapTilesResult {
   return useMemo(() => {
-    if (viewportWidth === 0 || viewportHeight === 0) return [];
+    if (viewportWidth === 0 || viewportHeight === 0) {
+      return {
+        tiles: [],
+        latLngToPixel: () => ({ x: 0, y: 0 }),
+      };
+    }
 
-    const clampedZoom = Math.max(0, Math.min(19, Math.round(zoom)));
-    const centerTile = latLngToTile(centerLat, centerLng, clampedZoom);
+    // Clamp zoom to safe range [0, 19]
+    const z = Math.round(Math.max(0, Math.min(MAX_ZOOM_LEVEL, zoom)));
 
-    // How many tiles fit in each direction from center
-    const halfW = Math.ceil(viewportWidth / tileSize / 2) + 1;
-    const halfH = Math.ceil(viewportHeight / tileSize / 2) + 1;
+    // Clamp center coordinates to valid ranges
+    const safeCenterLat = Math.max(-85.051129, Math.min(85.051129, isFinite(centerLat) ? centerLat : 0));
+    const safeCenterLng = Math.max(-180, Math.min(180, isFinite(centerLng) ? centerLng : 0));
 
-    const tiles: TileInfo[] = [];
-    const maxTileY = Math.pow(2, clampedZoom) - 1;
+    // Center tile (fractional)
+    const centerTileX = lngToTileX(safeCenterLng, z);
+    const centerTileY = latToTileY(safeCenterLat, z);
 
-    for (let dy = -halfH; dy <= halfH; dy++) {
-      for (let dx = -halfW; dx <= halfW; dx++) {
-        const tileX = Math.floor(centerTile.x) + dx;
-        const tileY = Math.floor(centerTile.y) + dy;
+    // Guard against NaN in tile calculations
+    if (!isFinite(centerTileX) || !isFinite(centerTileY)) {
+      return {
+        tiles: [],
+        latLngToPixel: () => ({ x: 0, y: 0 }),
+      };
+    }
+
+    // Pixel offset of center within its tile
+    const centerPixelOffsetX = (centerTileX % 1) * TILE_SIZE;
+    const centerPixelOffsetY = (centerTileY % 1) * TILE_SIZE;
+
+    // How many tiles we need to cover the viewport
+    const tilesX = Math.ceil(viewportWidth / TILE_SIZE) + 2;
+    const tilesY = Math.ceil(viewportHeight / TILE_SIZE) + 2;
+
+    const startTileX = Math.floor(centerTileX) - Math.floor(tilesX / 2);
+    const startTileY = Math.floor(centerTileY) - Math.floor(tilesY / 2);
+
+    // Pixel position of the top-left corner of startTile relative to viewport center
+    const startPixelX = viewportWidth / 2 - centerPixelOffsetX - Math.floor(tilesX / 2) * TILE_SIZE;
+    const startPixelY = viewportHeight / 2 - centerPixelOffsetY - Math.floor(tilesY / 2) * TILE_SIZE;
+
+    const maxTile = Math.pow(2, z);
+    const tiles: MapTile[] = [];
+
+    for (let dy = 0; dy < tilesY; dy++) {
+      for (let dx = 0; dx < tilesX; dx++) {
+        const tileX = startTileX + dx;
+        const tileY = startTileY + dy;
+
+        // Wrap X tiles (longitude wraps around)
+        const wrappedX = ((tileX % maxTile) + maxTile) % maxTile;
 
         // Skip tiles outside valid Y range
-        if (tileY < 0 || tileY > maxTileY) continue;
+        if (tileY < 0 || tileY >= maxTile) continue;
 
-        const wrappedX = wrapTileX(tileX, clampedZoom);
+        const pixelX = startPixelX + dx * TILE_SIZE;
+        const pixelY = startPixelY + dy * TILE_SIZE;
 
-        // Pixel offset from viewport center
-        const pixelX = (tileX - centerTile.x) * tileSize;
-        const pixelY = (tileY - centerTile.y) * tileSize;
+        // Guard against non-finite pixel positions
+        if (!isFinite(pixelX) || !isFinite(pixelY)) continue;
 
         tiles.push({
-          key: `${clampedZoom}-${tileX}-${tileY}`,
-          url: `https://tile.openstreetmap.org/${clampedZoom}/${wrappedX}/${tileY}.png`,
-          x: pixelX,
-          y: pixelY,
-          tileX,
-          tileY,
-          tileZ: clampedZoom,
+          x: wrappedX,
+          y: tileY,
+          z,
+          url: getTileUrl(wrappedX, tileY, z),
+          pixelX,
+          pixelY,
         });
       }
     }
 
-    return tiles;
-  }, [centerLat, centerLng, zoom, viewportWidth, viewportHeight, tileSize]);
+    const latLngToPixel = (lat: number, lng: number) => {
+      const safeLat = Math.max(-85.051129, Math.min(85.051129, isFinite(lat) ? lat : 0));
+      const safeLng = Math.max(-180, Math.min(180, isFinite(lng) ? lng : 0));
+      const tileX = lngToTileX(safeLng, z);
+      const tileY = latToTileY(safeLat, z);
+      if (!isFinite(tileX) || !isFinite(tileY)) {
+        return { x: -9999, y: -9999 };
+      }
+      const x = viewportWidth / 2 + (tileX - centerTileX) * TILE_SIZE;
+      const y = viewportHeight / 2 + (tileY - centerTileY) * TILE_SIZE;
+      if (!isFinite(x) || !isFinite(y)) {
+        return { x: -9999, y: -9999 };
+      }
+      return { x, y };
+    };
+
+    return { tiles, latLngToPixel };
+  }, [centerLat, centerLng, zoom, viewportWidth, viewportHeight]);
 }

@@ -1,93 +1,103 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { MapPin, Loader2 } from 'lucide-react';
-import { useCreateOrUpdateProfile, useGetCallerUserProfile } from '../../hooks/useQueries';
-import { toast } from 'sonner';
+import { MapPin, Loader2, AlertCircle } from 'lucide-react';
+import { useCreateOrUpdateProfile } from '../../hooks/useQueries';
+import { GeoCoordinates } from '../../backend';
 
 interface SetCoordinatesDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  currentProfile: {
+    displayName: string;
+    contactInfo?: string;
+    location: string;
+    profilePicture: string;
+    address?: string;
+  };
 }
 
-export default function SetCoordinatesDialog({ open, onOpenChange }: SetCoordinatesDialogProps) {
-  const [streetAddress, setStreetAddress] = useState('');
+async function geocodeAddressClient(address: string): Promise<GeoCoordinates | null> {
+  try {
+    const encoded = encodeURIComponent(address);
+    const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1`;
+    const res = await fetch(url, {
+      headers: { 'Accept': 'application/json' },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || data.length === 0) return null;
+    const { lat, lon } = data[0];
+    return { latitude: parseFloat(lat), longitude: parseFloat(lon) };
+  } catch {
+    return null;
+  }
+}
+
+export default function SetCoordinatesDialog({
+  open,
+  onOpenChange,
+  currentProfile,
+}: SetCoordinatesDialogProps) {
+  const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
   const [postalCode, setPostalCode] = useState('');
-  const [errors, setErrors] = useState<{ streetAddress?: string; city?: string; postalCode?: string }>({});
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [geocodeError, setGeocodeError] = useState<string | null>(null);
 
-  const { data: userProfile } = useGetCallerUserProfile();
-  const createOrUpdateProfile = useCreateOrUpdateProfile();
+  const updateProfile = useCreateOrUpdateProfile();
 
-  const validateAddress = () => {
-    const newErrors: { streetAddress?: string; city?: string; postalCode?: string } = {};
-    
-    if (!streetAddress.trim()) {
-      newErrors.streetAddress = 'Street address is required';
+  const isLoading = isGeocoding || updateProfile.isPending;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!city.trim()) return;
+
+    setGeocodeError(null);
+    setIsGeocoding(true);
+
+    const fullAddress = [street.trim(), city.trim(), postalCode.trim()]
+      .filter(Boolean)
+      .join(', ');
+
+    let coords: GeoCoordinates | null = null;
+    try {
+      coords = await geocodeAddressClient(fullAddress);
+    } catch {
+      // ignore
+    } finally {
+      setIsGeocoding(false);
     }
 
-    if (!city.trim()) {
-      newErrors.city = 'City is required';
-    }
-
-    if (!postalCode.trim()) {
-      newErrors.postalCode = 'Postal code is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSave = async () => {
-    if (!validateAddress()) {
-      toast.error('Please fill in all required address fields');
-      return;
-    }
-
-    if (!userProfile) {
-      toast.error('Profile not found. Please try again.');
+    if (!coords) {
+      setGeocodeError(
+        'Could not find coordinates for this address. Please check the address and try again.'
+      );
       return;
     }
 
     try {
-      const fullAddress = `${streetAddress.trim()}, ${city.trim()}, ${postalCode.trim()}`;
-      
-      await createOrUpdateProfile.mutateAsync({
-        displayName: userProfile.displayName,
-        contactInfo: userProfile.contactInfo || undefined,
-        location: userProfile.location || '',
-        profilePicture: userProfile.profilePicture || '',
-        coordinates: undefined,
+      await updateProfile.mutateAsync({
+        displayName: currentProfile.displayName,
+        contactInfo: currentProfile.contactInfo,
+        location: city.trim(),
+        profilePicture: currentProfile.profilePicture,
+        coordinates: coords,
         address: fullAddress,
       });
-      
-      toast.success('Location saved! Your pin will appear on the map.');
       onOpenChange(false);
-      setStreetAddress('');
-      setCity('');
-      setPostalCode('');
-      setErrors({});
-    } catch (error) {
-      console.error('Failed to save address:', error);
-      toast.error('Failed to save location. Please try again.');
+    } catch {
+      setGeocodeError('Failed to save location. Please try again.');
     }
-  };
-
-  const handleCancel = () => {
-    onOpenChange(false);
-    setStreetAddress('');
-    setCity('');
-    setPostalCode('');
-    setErrors({});
   };
 
   return (
@@ -95,112 +105,89 @@ export default function SetCoordinatesDialog({ open, onOpenChange }: SetCoordina
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Add Your Location
+            <MapPin className="h-5 w-5 text-primary" />
+            Set Your Location
           </DialogTitle>
           <DialogDescription>
-            Enter your address to appear on the community map. All fields are required. Your address will be geocoded to place your pin on the globe.
+            Enter your address to appear on the community map. Your exact address is only used to
+            determine your map pin location.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="streetAddress">
-              Street Address <span className="text-destructive">*</span>
-            </Label>
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="street">Street Address</Label>
             <Input
-              id="streetAddress"
-              type="text"
-              placeholder="e.g., 123 Main Street"
-              value={streetAddress}
-              onChange={(e) => {
-                setStreetAddress(e.target.value);
-                if (errors.streetAddress) {
-                  setErrors({ ...errors, streetAddress: undefined });
-                }
-              }}
-              className={errors.streetAddress ? 'border-destructive' : ''}
-              required
+              id="street"
+              placeholder="123 Main St"
+              value={street}
+              onChange={e => setStreet(e.target.value)}
+              disabled={isLoading}
             />
-            {errors.streetAddress && (
-              <p className="text-sm text-destructive">{errors.streetAddress}</p>
-            )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="city">
-              City <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="city"
-              type="text"
-              placeholder="e.g., San Francisco"
-              value={city}
-              onChange={(e) => {
-                setCity(e.target.value);
-                if (errors.city) {
-                  setErrors({ ...errors, city: undefined });
-                }
-              }}
-              className={errors.city ? 'border-destructive' : ''}
-              required
-            />
-            {errors.city && (
-              <p className="text-sm text-destructive">{errors.city}</p>
-            )}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="city">
+                City <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="city"
+                placeholder="San Francisco"
+                value={city}
+                onChange={e => setCity(e.target.value)}
+                required
+                disabled={isLoading}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="postal">Postal Code</Label>
+              <Input
+                id="postal"
+                placeholder="94102"
+                value={postalCode}
+                onChange={e => setPostalCode(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="postalCode">
-              Postal Code <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="postalCode"
-              type="text"
-              placeholder="e.g., 94102"
-              value={postalCode}
-              onChange={(e) => {
-                setPostalCode(e.target.value);
-                if (errors.postalCode) {
-                  setErrors({ ...errors, postalCode: undefined });
-                }
-              }}
-              className={errors.postalCode ? 'border-destructive' : ''}
-              required
-            />
-            {errors.postalCode && (
-              <p className="text-sm text-destructive">{errors.postalCode}</p>
-            )}
-          </div>
+          {geocodeError && (
+            <div className="flex items-start gap-2 text-sm text-destructive bg-destructive/10 rounded-md p-3">
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              <span>{geocodeError}</span>
+            </div>
+          )}
 
-          <div className="rounded-lg bg-muted p-3 text-sm">
-            <p className="font-medium mb-1">Privacy Note:</p>
-            <p className="text-muted-foreground">
-              Your address will be used to place a pin on the community map. The exact location will be approximate for privacy.
-            </p>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleCancel}
-            disabled={createOrUpdateProfile.isPending}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={createOrUpdateProfile.isPending || !streetAddress.trim() || !city.trim() || !postalCode.trim()}
-          >
-            {createOrUpdateProfile.isPending && (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            )}
-            Save Location
-          </Button>
-        </DialogFooter>
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isLoading || !city.trim()}>
+              {isGeocoding ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Finding location…
+                </>
+              ) : updateProfile.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Save Location
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

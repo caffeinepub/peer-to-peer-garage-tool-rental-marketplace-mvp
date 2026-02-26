@@ -1,114 +1,98 @@
-import type { CommunityMapProfile } from '../../backend';
+import React from 'react';
+import { CommunityMapProfile } from '../../backend';
 
 interface CustomMarkerProps {
-  profile: CommunityMapProfile;
-  screenX: number;
-  screenY: number;
+  member: CommunityMapProfile;
+  x: number;
+  y: number;
   isSelected: boolean;
+  isCurrentUser: boolean;
   onClick: () => void;
 }
 
-export default function CustomMarker({ profile, screenX, screenY, isSelected, onClick }: CustomMarkerProps) {
-  const initials = profile.displayName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
+export default function CustomMarker({ member, x, y, isSelected, isCurrentUser, onClick }: CustomMarkerProps) {
+  const color = isCurrentUser ? '#22c55e' : isSelected ? '#3b82f6' : '#ef4444';
+  const size = isSelected ? 44 : 36;
+  const halfSize = size / 2;
 
-  const pinColor = profile.isCurrentUser
-    ? '#34A853'
-    : isSelected
-    ? '#1A73E8'
-    : '#EA4335';
-
-  const borderColor = isSelected ? '#fff' : '#fff';
-  const shadowClass = isSelected ? 'drop-shadow-[0_4px_12px_rgba(0,0,0,0.45)]' : 'drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]';
+  const initials = member.displayName
+    ? member.displayName.slice(0, 2).toUpperCase()
+    : '??';
 
   return (
     <div
-      className="absolute pointer-events-auto"
+      onClick={onClick}
       style={{
-        left: screenX,
-        top: screenY,
-        transform: 'translate(-50%, -100%)',
-        zIndex: isSelected ? 30 : 20,
+        position: 'absolute',
+        left: x - halfSize,
+        top: y - size, // pin tip at (x, y)
+        width: size,
+        height: size,
+        zIndex: isSelected ? 20 : 10,
+        cursor: 'pointer',
+        pointerEvents: 'auto',
       }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
+      title={member.displayName}
     >
       {/* Pulse ring for selected */}
       {isSelected && (
         <div
-          className="absolute rounded-full animate-ping"
           style={{
-            width: 48,
-            height: 48,
-            top: -4,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            backgroundColor: pinColor,
-            opacity: 0.25,
+            position: 'absolute',
+            inset: -6,
+            borderRadius: '50%',
+            border: `2px solid ${color}`,
+            opacity: 0.5,
+            animation: 'ping 1.5s cubic-bezier(0,0,0.2,1) infinite',
           }}
         />
       )}
 
-      {/* Pin SVG shape */}
-      <div className={`relative cursor-pointer select-none ${shadowClass}`} style={{ width: 40, height: 52 }}>
-        <svg
-          viewBox="0 0 40 52"
-          width="40"
-          height="52"
-          xmlns="http://www.w3.org/2000/svg"
-          style={{ display: 'block' }}
-        >
-          {/* Teardrop path */}
-          <path
-            d="M20 0C9 0 0 9 0 20C0 33 20 52 20 52C20 52 40 33 40 20C40 9 31 0 20 0Z"
-            fill={pinColor}
+      {/* Pin shape */}
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 44 44"
+        style={{ display: 'block', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.35))' }}
+      >
+        {/* Teardrop path */}
+        <path
+          d="M22 2 C13.16 2 6 9.16 6 18 C6 28 22 42 22 42 C22 42 38 28 38 18 C38 9.16 30.84 2 22 2 Z"
+          fill={color}
+          stroke="white"
+          strokeWidth="2"
+        />
+        {/* Avatar circle */}
+        <clipPath id={`clip-${member.id}`}>
+          <circle cx="22" cy="17" r="10" />
+        </clipPath>
+        {member.profilePicture ? (
+          <image
+            href={member.profilePicture}
+            x="12"
+            y="7"
+            width="20"
+            height="20"
+            clipPath={`url(#clip-${member.id})`}
+            preserveAspectRatio="xMidYMid slice"
           />
-          {/* White border circle */}
-          <circle cx="20" cy="20" r="13" fill={borderColor} />
-          {/* Avatar circle background */}
-          <circle cx="20" cy="20" r="11" fill={pinColor} opacity="0.15" />
-          {/* Clip path for avatar image */}
-          <clipPath id={`clip-${profile.id.toString()}`}>
-            <circle cx="20" cy="20" r="11" />
-          </clipPath>
-        </svg>
-
-        {/* Avatar content positioned over the SVG circle */}
-        <div
-          className="absolute flex items-center justify-center overflow-hidden rounded-full"
-          style={{
-            width: 22,
-            height: 22,
-            top: 9,
-            left: 9,
-            backgroundColor: pinColor,
-          }}
-        >
-          {profile.profilePicture ? (
-            <img
-              src={profile.profilePicture}
-              alt={profile.displayName}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
-              }}
-            />
-          ) : (
-            <span
-              className="text-white font-bold select-none"
-              style={{ fontSize: 8, lineHeight: 1 }}
+        ) : (
+          <>
+            <circle cx="22" cy="17" r="10" fill="white" fillOpacity="0.25" />
+            <text
+              x="22"
+              y="21"
+              textAnchor="middle"
+              fontSize="9"
+              fontWeight="bold"
+              fill="white"
+              fontFamily="sans-serif"
             >
               {initials}
-            </span>
-          )}
-        </div>
-      </div>
+            </text>
+          </>
+        )}
+      </svg>
     </div>
   );
 }

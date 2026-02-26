@@ -1,43 +1,89 @@
-import { useRef, useState, useCallback, useEffect, WheelEvent, PointerEvent } from 'react';
-import { Plus, Minus, LocateFixed } from 'lucide-react';
-import { useMapTiles, latLngToPixel, latLngToTile, tileToLatLng } from '../../hooks/useMapTiles';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { CommunityMapProfile } from '../../backend';
+import { useMapTiles } from '../../hooks/useMapTiles';
+import { useMapTransform } from '../../hooks/useMapTransform';
 import CustomMarker from './CustomMarker';
-import type { CommunityMapProfile } from '../../backend';
-
-const TILE_SIZE = 256;
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 18;
-const DEFAULT_LAT = 20;
-const DEFAULT_LNG = 0;
-const DEFAULT_ZOOM = 2;
+import { ZoomIn, ZoomOut, LocateFixed } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface CustomMapViewProps {
   members: CommunityMapProfile[];
-  selectedMemberId: string | null;
-  onMemberSelect: (memberId: string | null) => void;
+  selectedMemberId?: string;
+  onMemberSelect?: (id: string) => void;
+}
+
+const DEFAULT_CENTER = { lat: 30, lng: 0 };
+const DEFAULT_ZOOM = 2;
+const MIN_ZOOM = 2;
+const MAX_ZOOM = 19;
+
+function getBoundsCenter(members: CommunityMapProfile[]): { lat: number; lng: number; zoom: number } {
+  const withCoords = members.filter(m => m.coordinates);
+  if (withCoords.length === 0) return { lat: DEFAULT_CENTER.lat, lng: DEFAULT_CENTER.lng, zoom: DEFAULT_ZOOM };
+
+  if (withCoords.length === 1) {
+    return {
+      lat: withCoords[0].coordinates!.latitude,
+      lng: withCoords[0].coordinates!.longitude,
+      zoom: 10,
+    };
+  }
+
+  const lats = withCoords.map(m => m.coordinates!.latitude);
+  const lngs = withCoords.map(m => m.coordinates!.longitude);
+  const minLat = Math.min(...lats);
+  const maxLat = Math.max(...lats);
+  const minLng = Math.min(...lngs);
+  const maxLng = Math.max(...lngs);
+
+  const centerLat = (minLat + maxLat) / 2;
+  const centerLng = (minLng + maxLng) / 2;
+
+  const latSpan = maxLat - minLat;
+  const lngSpan = maxLng - minLng;
+  const span = Math.max(latSpan, lngSpan);
+
+  let zoom = DEFAULT_ZOOM;
+  if (span < 1) zoom = 10;
+  else if (span < 5) zoom = 7;
+  else if (span < 20) zoom = 5;
+  else if (span < 60) zoom = 4;
+  else if (span < 120) zoom = 3;
+  else zoom = 2;
+
+  return { lat: centerLat, lng: centerLng, zoom };
 }
 
 export default function CustomMapView({ members, selectedMemberId, onMemberSelect }: CustomMapViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [hasAutoFit, setHasAutoFit] = useState(false);
 
-  // Map state: center lat/lng and integer zoom level
-  const [centerLat, setCenterLat] = useState(DEFAULT_LAT);
-  const [centerLng, setCenterLng] = useState(DEFAULT_LNG);
-  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
-
-  // Drag state
-  const isDraggingRef = useRef(false);
-  const hasDraggedRef = useRef(false);
-  const dragStartRef = useRef<{ clientX: number; clientY: number; lat: number; lng: number } | null>(null);
-  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
-  const pinchStartRef = useRef<{ distance: number; zoom: number } | null>(null);
+  const initialBounds = getBoundsCenter(members);
+  const {
+    transform,
+    setTransform,
+    isDragging,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerLeave,
+    zoomIn,
+    zoomOut,
+    reset,
+    isAtMaxZoom,
+    isAtMinZoom,
+  } = useMapTransform({
+    centerLat: initialBounds.lat,
+    centerLng: initialBounds.lng,
+    zoom: initialBounds.zoom,
+  });
 
   // Measure viewport
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver((entries) => {
+    const ro = new ResizeObserver(entries => {
       for (const entry of entries) {
         setViewportSize({
           width: entry.contentRect.width,
@@ -50,345 +96,211 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
     return () => ro.disconnect();
   }, []);
 
-  // Auto-fit to members on first load
+  // Auto-fit to members once data is available
   useEffect(() => {
-    if (members.length === 0 || viewportSize.width === 0) return;
+    if (hasAutoFit || members.length === 0) return;
+    const bounds = getBoundsCenter(members);
+    reset(bounds.lat, bounds.lng, bounds.zoom);
+    setHasAutoFit(true);
+  }, [members, hasAutoFit, reset]);
 
-    const validMembers = members.filter((m) => m.coordinates);
-    if (validMembers.length === 0) return;
-
-    if (validMembers.length === 1) {
-      const coord = validMembers[0].coordinates!;
-      setCenterLat(coord.latitude);
-      setCenterLng(coord.longitude);
-      setZoom(10);
-      return;
-    }
-
-    // Compute bounding box
-    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
-    for (const m of validMembers) {
-      const { latitude: lat, longitude: lng } = m.coordinates!;
-      if (lat < minLat) minLat = lat;
-      if (lat > maxLat) maxLat = lat;
-      if (lng < minLng) minLng = lng;
-      if (lng > maxLng) maxLng = lng;
-    }
-
-    const midLat = (minLat + maxLat) / 2;
-    const midLng = (minLng + maxLng) / 2;
-    setCenterLat(midLat);
-    setCenterLng(midLng);
-
-    // Find best zoom to fit all markers
-    let bestZoom = 2;
-    for (let z = MAX_ZOOM; z >= MIN_ZOOM; z--) {
-      const minTile = latLngToTile(minLat, minLng, z);
-      const maxTile = latLngToTile(maxLat, maxLng, z);
-      const tileSpanX = Math.abs(maxTile.x - minTile.x) * TILE_SIZE;
-      const tileSpanY = Math.abs(maxTile.y - minTile.y) * TILE_SIZE;
-      if (tileSpanX < viewportSize.width * 0.7 && tileSpanY < viewportSize.height * 0.7) {
-        bestZoom = z;
-        break;
-      }
-    }
-    setZoom(Math.min(bestZoom, 12));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [members.length, viewportSize.width, viewportSize.height]);
-
-  // Pan to selected member
+  // Wheel zoom with native listener (passive: false required for preventDefault)
   useEffect(() => {
-    if (!selectedMemberId) return;
-    const member = members.find((m) => m.id.toString() === selectedMemberId);
-    if (!member?.coordinates) return;
-    setCenterLat(member.coordinates.latitude);
-    setCenterLng(member.coordinates.longitude);
-    setZoom((prev) => Math.max(prev, 8));
-  }, [selectedMemberId, members]);
+    const el = containerRef.current;
+    if (!el) return;
 
-  const tiles = useMapTiles({
-    centerLat,
-    centerLng,
-    zoom,
-    viewportWidth: viewportSize.width,
-    viewportHeight: viewportSize.height,
-    tileSize: TILE_SIZE,
-  });
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
 
-  // Zoom helpers
-  const doZoom = useCallback((delta: number, pivotX?: number, pivotY?: number) => {
-    setZoom((prevZoom) => {
-      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, prevZoom + delta));
-      if (newZoom === prevZoom) return prevZoom;
+      // Guard: viewport must be valid
+      if (viewportSize.width === 0 || viewportSize.height === 0) return;
 
-      // Zoom toward pivot point
-      if (pivotX !== undefined && pivotY !== undefined && viewportSize.width > 0) {
-        const offsetX = pivotX - viewportSize.width / 2;
-        const offsetY = pivotY - viewportSize.height / 2;
+      const rect = el.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
 
-        // Current pixel offset of pivot from center
-        const scale = Math.pow(2, newZoom - prevZoom);
+      setTransform(t => {
+        const delta = e.deltaY > 0 ? -1 : 1;
+        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, t.zoom + delta * 0.5));
+        if (newZoom === t.zoom) return t;
 
-        // Adjust center so pivot stays fixed
-        const newOffsetX = offsetX / scale;
-        const newOffsetY = offsetY / scale;
-        const shiftX = offsetX - newOffsetX;
-        const shiftY = offsetY - newOffsetY;
+        const zoomFactor = Math.pow(2, newZoom - t.zoom);
+        if (!isFinite(zoomFactor) || zoomFactor === 0) return t;
 
-        setCenterLat((prevLat) => {
-          setCenterLng((prevLng) => {
-            const { lat: newLat, lng: newLng } = tileToLatLng(
-              latLngToTile(prevLat, prevLng, newZoom).x + shiftX / TILE_SIZE,
-              latLngToTile(prevLat, prevLng, newZoom).y + shiftY / TILE_SIZE,
-              newZoom
-            );
-            setCenterLat(Math.max(-85, Math.min(85, newLat)));
-            setCenterLng(newLng);
-            return prevLng;
-          });
-          return prevLat;
-        });
-      }
+        const vpCX = viewportSize.width / 2;
+        const vpCY = viewportSize.height / 2;
 
-      return newZoom;
-    });
-  }, [viewportSize]);
+        // Vector from viewport center to mouse in pixels
+        const dx = mouseX - vpCX;
+        const dy = mouseY - vpCY;
 
-  const zoomIn = useCallback(() => doZoom(1), [doZoom]);
-  const zoomOut = useCallback(() => doZoom(-1), [doZoom]);
+        const TILE_SIZE = 256;
+        const scale = Math.pow(2, t.zoom) * TILE_SIZE;
+        if (!isFinite(scale) || scale === 0) return { ...t, zoom: newZoom };
 
-  const resetView = useCallback(() => {
-    if (members.length === 0) {
-      setCenterLat(DEFAULT_LAT);
-      setCenterLng(DEFAULT_LNG);
-      setZoom(DEFAULT_ZOOM);
-      return;
-    }
-    const validMembers = members.filter((m) => m.coordinates);
-    if (validMembers.length === 0) return;
-    if (validMembers.length === 1) {
-      const coord = validMembers[0].coordinates!;
-      setCenterLat(coord.latitude);
-      setCenterLng(coord.longitude);
-      setZoom(10);
-      return;
-    }
-    let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
-    for (const m of validMembers) {
-      const { latitude: lat, longitude: lng } = m.coordinates!;
-      if (lat < minLat) minLat = lat;
-      if (lat > maxLat) maxLat = lat;
-      if (lng < minLng) minLng = lng;
-      if (lng > maxLng) maxLng = lng;
-    }
-    setCenterLat((minLat + maxLat) / 2);
-    setCenterLng((minLng + maxLng) / 2);
-    setZoom(3);
-  }, [members]);
+        const dLng = (dx / scale) * 360;
 
-  // Wheel zoom
-  const handleWheel = useCallback((e: WheelEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const pivotX = e.clientX - rect.left;
-    const pivotY = e.clientY - rect.top;
-    const delta = e.deltaY < 0 ? 1 : -1;
-    doZoom(delta, pivotX, pivotY);
-  }, [doZoom]);
+        // Shift center by (1 - 1/zoomFactor) * offset
+        const shiftFraction = 1 - 1 / zoomFactor;
+        const newCenterLng = t.centerLng + dLng * shiftFraction;
 
-  // Pointer events for drag
-  const handlePointerDown = useCallback((e: PointerEvent<HTMLDivElement>) => {
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-    activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        // For latitude, work in tile-Y space to keep Mercator correct
+        const latRad = (Math.max(-85.051129, Math.min(85.051129, t.centerLat)) * Math.PI) / 180;
+        const cosVal = Math.cos(latRad);
+        if (cosVal === 0) return { ...t, zoom: newZoom };
+        const logArg = Math.tan(latRad) + 1 / cosVal;
+        if (logArg <= 0) return { ...t, zoom: newZoom };
 
-    if (activePointersRef.current.size === 1) {
-      isDraggingRef.current = true;
-      hasDraggedRef.current = false;
-      dragStartRef.current = {
-        clientX: e.clientX,
-        clientY: e.clientY,
-        lat: centerLat,
-        lng: centerLng,
-      };
-    } else if (activePointersRef.current.size === 2) {
-      const pts = Array.from(activePointersRef.current.values());
-      const dx = pts[1].x - pts[0].x;
-      const dy = pts[1].y - pts[0].y;
-      pinchStartRef.current = {
-        distance: Math.sqrt(dx * dx + dy * dy),
-        zoom,
-      };
-      dragStartRef.current = null;
-    }
-  }, [centerLat, centerLng, zoom]);
+        const centerTileY = (1 - Math.log(logArg) / Math.PI) / 2 * Math.pow(2, t.zoom);
+        const newCenterTileY = centerTileY + (dy / TILE_SIZE) * shiftFraction;
 
-  const handlePointerMove = useCallback((e: PointerEvent<HTMLDivElement>) => {
-    if (!activePointersRef.current.has(e.pointerId)) return;
-    activePointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        // Convert back to lat
+        const maxTile = Math.pow(2, t.zoom);
+        const clampedTileY = Math.max(0, Math.min(maxTile, newCenterTileY));
+        const n = Math.PI - (2 * Math.PI * clampedTileY) / maxTile;
+        const newCenterLat = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
 
-    if (activePointersRef.current.size === 1 && dragStartRef.current) {
-      const dx = e.clientX - dragStartRef.current.clientX;
-      const dy = e.clientY - dragStartRef.current.clientY;
+        if (!isFinite(newCenterLat) || !isFinite(newCenterLng)) {
+          return { ...t, zoom: newZoom };
+        }
 
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-        hasDraggedRef.current = true;
-      }
+        return {
+          centerLat: Math.max(-85.051129, Math.min(85.051129, newCenterLat)),
+          centerLng: newCenterLng,
+          zoom: newZoom,
+        };
+      });
+    };
 
-      // Convert pixel delta to lat/lng delta
-      const scale = TILE_SIZE * Math.pow(2, zoom);
-      const dLng = -(dx / scale) * 360;
-      const centerTileY = latLngToTile(dragStartRef.current.lat, dragStartRef.current.lng, zoom).y;
-      const dTileY = -(dy / TILE_SIZE);
-      const newTileY = centerTileY + dTileY;
-      const { lat: newLat } = tileToLatLng(0, newTileY, zoom);
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [viewportSize, setTransform]);
 
-      setCenterLat(Math.max(-85, Math.min(85, newLat)));
-      setCenterLng(dragStartRef.current.lng + dLng);
-    } else if (activePointersRef.current.size === 2 && pinchStartRef.current) {
-      const pts = Array.from(activePointersRef.current.values());
-      const dx = pts[1].x - pts[0].x;
-      const dy = pts[1].y - pts[0].y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      const scale = distance / pinchStartRef.current.distance;
-      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, pinchStartRef.current.zoom + Math.log2(scale)));
-      setZoom(Math.round(newZoom));
-    }
-  }, [zoom]);
+  const { tiles, latLngToPixel } = useMapTiles(
+    transform.centerLat,
+    transform.centerLng,
+    transform.zoom,
+    viewportSize.width,
+    viewportSize.height
+  );
 
-  const handlePointerUp = useCallback((e: PointerEvent<HTMLDivElement>) => {
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-    activePointersRef.current.delete(e.pointerId);
-
-    if (activePointersRef.current.size === 0) {
-      isDraggingRef.current = false;
-      dragStartRef.current = null;
-      pinchStartRef.current = null;
-      setTimeout(() => { hasDraggedRef.current = false; }, 50);
-    }
-  }, []);
-
-  const handleMapClick = useCallback(() => {
-    if (hasDraggedRef.current) return;
-    onMemberSelect(null);
-  }, [onMemberSelect]);
-
-  // Compute marker screen positions
-  const markerPositions = members
-    .filter((m) => m.coordinates)
-    .map((m) => {
-      const pixel = latLngToPixel(
-        m.coordinates!.latitude,
-        m.coordinates!.longitude,
-        centerLat,
-        centerLng,
-        zoom,
-        TILE_SIZE
-      );
-      return {
-        profile: m,
-        screenX: viewportSize.width / 2 + pixel.x,
-        screenY: viewportSize.height / 2 + pixel.y,
-      };
-    });
+  const handleResetView = useCallback(() => {
+    const bounds = getBoundsCenter(members);
+    reset(bounds.lat, bounds.lng, bounds.zoom);
+  }, [members, reset]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-[#e8e0d8] rounded-lg" ref={containerRef}>
+    <div className="relative w-full h-full overflow-hidden bg-muted rounded-lg" ref={containerRef}>
       {/* Tile layer */}
       <div
         className="absolute inset-0"
-        style={{ cursor: isDraggingRef.current ? 'grabbing' : 'grab' }}
-        onWheel={handleWheel}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onClick={handleMapClick}
+        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerLeave}
       >
-        {tiles.map((tile) => (
+        {tiles.map(tile => (
           <img
-            key={tile.key}
+            key={`${tile.z}-${tile.x}-${tile.y}`}
             src={tile.url}
             alt=""
             draggable={false}
-            loading="lazy"
             style={{
               position: 'absolute',
-              left: viewportSize.width / 2 + tile.x,
-              top: viewportSize.height / 2 + tile.y,
-              width: TILE_SIZE,
-              height: TILE_SIZE,
-              imageRendering: 'pixelated',
+              left: tile.pixelX,
+              top: tile.pixelY,
+              width: 256,
+              height: 256,
               userSelect: 'none',
               pointerEvents: 'none',
             }}
-          />
-        ))}
-
-        {/* Markers */}
-        {markerPositions.map(({ profile, screenX, screenY }) => (
-          <CustomMarker
-            key={profile.id.toString()}
-            profile={profile}
-            screenX={screenX}
-            screenY={screenY}
-            isSelected={selectedMemberId === profile.id.toString()}
-            onClick={() => {
-              if (!hasDraggedRef.current) {
-                onMemberSelect(
-                  selectedMemberId === profile.id.toString() ? null : profile.id.toString()
-                );
-              }
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
             }}
           />
         ))}
+
+        {/* Member markers */}
+        {members.map(member => {
+          if (!member.coordinates) return null;
+          const pixel = latLngToPixel(
+            member.coordinates.latitude,
+            member.coordinates.longitude
+          );
+          const { x, y } = pixel;
+
+          // Guard against NaN/Infinity pixel positions
+          if (!isFinite(x) || !isFinite(y)) return null;
+
+          // Only render if within viewport bounds (with some padding)
+          if (
+            x < -50 || x > viewportSize.width + 50 ||
+            y < -50 || y > viewportSize.height + 50
+          ) return null;
+
+          return (
+            <CustomMarker
+              key={member.id.toString()}
+              member={member}
+              x={x}
+              y={y}
+              isSelected={selectedMemberId === member.id.toString()}
+              isCurrentUser={member.isCurrentUser}
+              onClick={() => onMemberSelect?.(member.id.toString())}
+            />
+          );
+        })}
       </div>
 
-      {/* Zoom controls - Google Maps style */}
-      <div className="absolute bottom-8 right-3 z-20 flex flex-col gap-0.5 pointer-events-auto">
-        <button
+      {/* Map controls */}
+      <div className="absolute top-3 right-3 flex flex-col gap-1 z-10">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 bg-background shadow-md"
           onClick={zoomIn}
-          className="w-8 h-8 bg-white rounded-t-sm shadow-md flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition-colors border border-gray-200 text-gray-700"
-          aria-label="Zoom in"
-          title="Zoom in"
+          disabled={isAtMaxZoom}
+          title={isAtMaxZoom ? 'Maximum zoom reached' : 'Zoom in'}
+          aria-label={isAtMaxZoom ? 'Maximum zoom reached' : 'Zoom in'}
         >
-          <Plus className="w-4 h-4" />
-        </button>
-        <button
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 bg-background shadow-md"
           onClick={zoomOut}
-          className="w-8 h-8 bg-white rounded-b-sm shadow-md flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition-colors border border-gray-200 border-t-0 text-gray-700"
-          aria-label="Zoom out"
-          title="Zoom out"
+          disabled={isAtMinZoom}
+          title={isAtMinZoom ? 'Minimum zoom reached' : 'Zoom out'}
+          aria-label={isAtMinZoom ? 'Minimum zoom reached' : 'Zoom out'}
         >
-          <Minus className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Reset/locate button */}
-      <div className="absolute bottom-20 right-3 z-20 pointer-events-auto">
-        <button
-          onClick={resetView}
-          className="w-8 h-8 bg-white rounded-sm shadow-md flex items-center justify-center hover:bg-gray-50 active:bg-gray-100 transition-colors border border-gray-200 text-gray-700"
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 bg-background shadow-md"
+          onClick={handleResetView}
+          title="Reset view"
           aria-label="Reset view"
-          title="Fit all members"
         >
-          <LocateFixed className="w-4 h-4" />
-        </button>
+          <LocateFixed className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Attribution */}
-      <div className="absolute bottom-0 right-0 z-20 pointer-events-none">
-        <span className="text-[10px] bg-white/80 text-gray-600 px-1.5 py-0.5 rounded-tl-sm">
-          © <a
-            href="https://www.openstreetmap.org/copyright"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="pointer-events-auto hover:underline"
-          >
-            OpenStreetMap
-          </a> contributors
-        </span>
+      <div className="absolute bottom-1 right-1 z-10 text-[10px] text-muted-foreground bg-background/80 px-1 rounded">
+        © <a href="https://carto.com/" target="_blank" rel="noopener noreferrer" className="underline">CARTO</a>{' '}
+        © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline">OpenStreetMap</a>
       </div>
+
+      {/* Loading placeholder when no tiles yet */}
+      {tiles.length === 0 && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-muted-foreground text-sm">Loading map…</div>
+        </div>
+      )}
     </div>
   );
 }

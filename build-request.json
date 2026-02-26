@@ -1,108 +1,75 @@
 {
   "kind": "build_request",
-  "title": "Replace Google Maps with custom map implementation",
-  "projectName": "ToolShed Community",
+  "title": "Fix deep zoom error and enable street-level zoom on community map",
+  "projectName": "ToolShare",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Remove all Google Maps API dependencies: delete the Google Maps JavaScript API script tag from frontend/index.html, remove the gm_authFailure global error handler and related tracking variables, and remove any Google Maps API key references.",
+      "text": "Remove the zoom ceiling in CustomMapView and useMapTiles so users can zoom in to street level (zoom level 19+) without triggering any errors. Clamp the zoom level to a safe maximum supported by the CartoDB Voyager tile provider (typically zoom 19) rather than throwing or returning null tile data.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "the google maps implementation is not working. try building your own map exactly like google maps."
+          "again when i zoom in too far it says error. I want to be able to zoom in to every street just like googlemaps."
         ]
       },
       "acceptanceCriteria": [
-        "No Google Maps script tag or API key references remain in the HTML or source files",
-        "No console errors related to Google Maps authentication or API loading"
+        "Zooming in to zoom level 18 or 19 on the community map displays street-level tiles without any error message or blank state.",
+        "The map never displays an error when the user scrolls the mouse wheel or taps zoom-in repeatedly beyond the previous limit.",
+        "Tiles continue to render correctly (no null reference exceptions) at maximum supported zoom level.",
+        "Zoom controls (zoomIn button and mouse wheel) respect the tile provider's maximum zoom level as the upper bound and stop incrementing beyond it gracefully."
       ]
     },
     {
       "id": "REQ-2",
-      "text": "Build a fully custom interactive map component (CustomMapView) that visually mimics Google Maps: render a tiled world map using OpenStreetMap tile images (https://tile.openstreetmap.org/{z}/{x}/{y}.png) on an HTML canvas or div grid, support smooth pan (click-and-drag) and zoom (scroll wheel + pinch-to-zoom) interactions, display zoom-in and zoom-out control buttons in the bottom-right corner, and show a subtle map attribution label ('© OpenStreetMap contributors') at the bottom. The map must start centered on a sensible default world view and transition smoothly between zoom levels.",
+      "text": "Update useMapTiles to correctly compute and return valid tile URLs and pixel-conversion values for all zoom levels up to the tile provider's maximum (zoom 19 for CartoDB Voyager). Ensure no null or undefined values are returned for tile sets at high zoom levels, and add defensive guards so the hook never throws or returns malformed tile data.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "try building your own map exactly like google maps."
+          "again when i zoom in too far it says error"
         ]
       },
       "acceptanceCriteria": [
-        "Map tiles load and display correctly from the OpenStreetMap tile server",
-        "User can pan the map by clicking and dragging",
-        "User can zoom in/out using the scroll wheel, pinch gesture, and +/- buttons",
-        "Map renders without flickering or broken tile gaps during interaction",
-        "Attribution label is visible on the map"
+        "useMapTiles returns a valid, non-empty tile array for every zoom level from the minimum up to 19.",
+        "The lat/lng-to-pixel conversion utility returned by useMapTiles produces correct numeric values at high zoom levels.",
+        "No runtime null/undefined errors are thrown by useMapTiles at any supported zoom level."
       ]
     },
     {
       "id": "REQ-3",
-      "text": "Replace the GoogleMapView component usage in CommunityMapPanel.tsx with the new CustomMapView component. Render community member profile markers as circular avatar pins (styled like Google Maps markers — teardrop shape with a circular photo inside, colored border) at their lat/lng coordinates on the custom map. When a marker is clicked, show the same member profile info card that was previously shown with Google Maps. Reuse the existing member coordinate data from the useQueries hooks without any backend changes.",
+      "text": "Update useMapTransform (and/or useMapZoom) to set the maximum allowed zoom level to 19 to match the tile provider capability. Ensure the zoom state never exceeds this value regardless of how many times the user zooms in via mouse wheel, pinch gesture, or the zoom-in button.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "msg-4"
         ],
         "quotes": [
-          "try building your own map exactly like google maps."
+          "I want to be able to zoom in to every street just like googlemaps"
         ]
       },
       "acceptanceCriteria": [
-        "Community member markers appear at correct geographic positions on the custom map",
-        "Markers are styled as teardrop/pin shapes with a member avatar inside",
-        "Clicking a marker opens the member profile info card",
-        "The CommunityMapPage loads without errors and without requiring any Google Maps API key"
-      ]
-    },
-    {
-      "id": "REQ-4",
-      "text": "Style the custom map UI controls (zoom buttons, info cards, panel overlays) to closely match Google Maps visual design: white rounded control buttons with subtle drop shadows, a clean sans-serif font, light-gray map panel backgrounds, and the same color palette used by Google Maps (white controls, green/teal accents for selected markers, red default pin color).",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ],
-        "quotes": [
-          "exactly like google maps"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Zoom control buttons are white with rounded corners and drop shadows, matching Google Maps style",
-        "Marker pins use a red teardrop shape by default, consistent with Google Maps pin appearance",
-        "Selected member info card has a clean white card UI with shadow, similar to Google Maps info windows"
-      ]
-    },
-    {
-      "id": "REQ-5",
-      "text": "Update frontend/README.md to remove the Google Maps API key setup instructions and replace them with documentation explaining that the Community Map now uses a custom OpenStreetMap-based implementation requiring no API key.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-4"
-        ]
-      },
-      "acceptanceCriteria": [
-        "README no longer references Google Maps API keys or setup steps",
-        "README documents the new custom map implementation"
+        "The maximum zoom level enforced by the zoom hooks is 19.",
+        "Continuous mouse-wheel zoom-in stops at zoom level 19 without producing any error.",
+        "The zoom-in button is disabled or visually inactive when zoom level 19 is reached."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any backend Motoko code — all member coordinate data already exists in the backend",
-    "Do not use any paid or API-key-gated map services; use OpenStreetMap tiles which are free and open",
-    "Do not modify files under frontend/src/hooks/useActor.ts, frontend/src/hooks/useInternetIdentity.ts, frontend/src/main.tsx, or frontend/src/components/ui"
+    "Do not change backend data models or Motoko logic.",
+    "Do not modify files listed in frontend.immutablePaths.",
+    "Use only the CartoDB Voyager tile provider already in use; do not switch to a paid or API-key-gated tile provider."
   ],
   "nonGoals": [
-    "Adding new backend data fields or changing the UserProfile type",
-    "Implementing routing/directions functionality",
-    "Adding street-level or satellite imagery views",
-    "Geocoding new addresses (SetCoordinatesDialog already handles coordinate input)"
+    "Adding Google Maps SDK or any paid maps API.",
+    "Adding turn-by-turn navigation or routing features.",
+    "Changing the visual design or layout of the community map page.",
+    "Adding satellite or hybrid map views."
   ],
   "imageRequirements": {
     "required": [],
