@@ -1,49 +1,26 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-26T02:41:11.159Z",
+  "generatedAt": "2026-02-26T02:50:21.791Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 3,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
         "id": "REQ-1",
-        "summary": "Remove the zoom ceiling in CustomMapView and useMapTiles so users can zoom in to street level (zoom level 19+) without triggering any errors. Clamp the zoom level to a safe maximum supported by the CartoDB Voyager tile provider (typically zoom 19) rather than throwing or returning null tile data.",
+        "summary": "Fix the error that occurs when zooming to street level on the community map. Audit and correct tile URL computation, zoom level capping, and Web Mercator math in CustomMapView, useMapTiles, and useMapTransform so that zooming to the maximum supported zoom level (19) works without errors or broken tiles.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/hooks/useMapTiles.ts",
-          "frontend/src/components/community/CustomMapView.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useMapTiles.ts",
-          "frontend/src/components/community/CustomMapView.tsx"
-        ]
-      },
-      {
-        "id": "REQ-2",
-        "summary": "Update useMapTiles to correctly compute and return valid tile URLs and pixel-conversion values for all zoom levels up to the tile provider's maximum (zoom 19 for CartoDB Voyager). Ensure no null or undefined values are returned for tile sets at high zoom levels, and add defensive guards so the hook never throws or returns malformed tile data.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useMapTiles.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/hooks/useMapTiles.ts"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Update useMapTransform (and/or useMapZoom) to set the maximum allowed zoom level to 19 to match the tile provider capability. Ensure the zoom state never exceeds this value regardless of how many times the user zooms in via mouse wheel, pinch gesture, or the zoom-in button.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/hooks/useMapZoom.ts",
           "frontend/src/hooks/useMapTransform.ts",
           "frontend/src/components/community/CustomMapView.tsx"
         ],
         "matchedFiles": [
+          "frontend/src/hooks/useMapTiles.ts",
           "frontend/src/hooks/useMapTransform.ts",
           "frontend/src/components/community/CustomMapView.tsx"
         ]

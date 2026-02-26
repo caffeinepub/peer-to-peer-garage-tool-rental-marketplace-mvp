@@ -2,53 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-remove-the-zoom-ceiling-in-custommapview-and-usemaptiles-so-users-can-zoom-in-to-street-level-zoom-level-19-without-triggering-any-errors-clamp-the-zoom-level-to-a-safe-maximum-supported-by-the-cartodb-voyager-tile-provider-typically-zoom-19-rather-than-throwing-or-returning-null-tile-data",
-      "featureTitle": "Remove the zoom ceiling in CustomMapView and useMapTiles so users can zoom in to street level (zoom level 19+) without triggering any errors. Clamp the zoom level to a safe maximum supported by the CartoDB Voyager tile provider (typically zoom 19) rather than throwing or returning null tile data.",
+      "featureId": "feature-fix-the-error-that-occurs-when-zooming-to-street-level-on-the-community-map-audit-and-correct-tile-url-computation-zoom-level-capping-and-web-mercator-math-in-custommapview-usemaptiles-and-usemaptransform-so-that-zooming-to-the-maximum-supported-zoom-level-19-works-without-errors-or-broken-tiles",
+      "featureTitle": "Fix the error that occurs when zooming to street level on the community map. Audit and correct tile URL computation, zoom level capping, and Web Mercator math in CustomMapView, useMapTiles, and useMapTransform so that zooming to the maximum supported zoom level (19) works without errors or broken tiles.",
       "files": [
         "frontend/src/components/community/CustomMapView.tsx",
-        "frontend/src/hooks/useMapTiles.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "camera@1.0.0",
-        "http-outcalls@3.0.0"
-      ],
-      "testIds": [
-        "REQ-1"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-usemaptiles-to-correctly-compute-and-return-valid-tile-urls-and-pixel-conversion-values-for-all-zoom-levels-up-to-the-tile-provider-s-maximum-zoom-19-for-cartodb-voyager-ensure-no-null-or-undefined-values-are-returned-for-tile-sets-at-high-zoom-levels-and-add-defensive-guards-so-the-hook-never-throws-or-returns-malformed-tile-data",
-      "featureTitle": "Update useMapTiles to correctly compute and return valid tile URLs and pixel-conversion values for all zoom levels up to the tile provider's maximum (zoom 19 for CartoDB Voyager). Ensure no null or undefined values are returned for tile sets at high zoom levels, and add defensive guards so the hook never throws or returns malformed tile data.",
-      "files": [
-        "frontend/src/hooks/useMapTiles.ts"
-      ],
-      "components": [
-        "authorization@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0",
-        "camera@1.0.0",
-        "http-outcalls@3.0.0"
-      ],
-      "testIds": [
-        "REQ-2"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-usemaptransform-and-or-usemapzoom-to-set-the-maximum-allowed-zoom-level-to-19-to-match-the-tile-provider-capability-ensure-the-zoom-state-never-exceeds-this-value-regardless-of-how-many-times-the-user-zooms-in-via-mouse-wheel-pinch-gesture-or-the-zoom-in-button",
-      "featureTitle": "Update useMapTransform (and/or useMapZoom) to set the maximum allowed zoom level to 19 to match the tile provider capability. Ensure the zoom state never exceeds this value regardless of how many times the user zooms in via mouse wheel, pinch gesture, or the zoom-in button.",
-      "files": [
-        "frontend/src/components/community/CustomMapView.tsx",
+        "frontend/src/hooks/useMapTiles.ts",
         "frontend/src/hooks/useMapTransform.ts"
       ],
       "components": [
@@ -62,7 +20,7 @@
         "http-outcalls@3.0.0"
       ],
       "testIds": [
-        "REQ-3"
+        "REQ-1"
       ],
       "confidence": "high"
     }

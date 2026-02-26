@@ -1,69 +1,33 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix deep zoom error and enable street-level zoom on community map",
+  "title": "Fix street-level zoom error in CustomMapView",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Remove the zoom ceiling in CustomMapView and useMapTiles so users can zoom in to street level (zoom level 19+) without triggering any errors. Clamp the zoom level to a safe maximum supported by the CartoDB Voyager tile provider (typically zoom 19) rather than throwing or returning null tile data.",
+      "summary": "Fix the error that occurs when zooming to street level on the community map by auditing and correcting tile URL computation, zoom level capping, and Web Mercator math in CustomMapView, useMapTiles, and useMapTransform",
       "acceptanceCriteria": [
-        "Zooming in to zoom level 18 or 19 on the community map displays street-level tiles without any error message or blank state.",
-        "The map never displays an error when the user scrolls the mouse wheel or taps zoom-in repeatedly beyond the previous limit.",
-        "Tiles continue to render correctly (no null reference exceptions) at maximum supported zoom level.",
-        "Zoom controls (zoomIn button and mouse wheel) respect the tile provider's maximum zoom level as the upper bound and stop incrementing beyond it gracefully."
+        "User can zoom from overview level all the way to street level (zoom 19) without any runtime error or crash.",
+        "Map tiles load correctly at all zoom levels up to 19.",
+        "No console errors related to tile URL construction or invalid zoom values.",
+        "Pan and zoom interactions remain smooth at maximum zoom level.",
+        "Zoom controls (in/out/out/reset) function correctly at all zoom levels including the maximum."
       ],
       "file_operations": [
         {
           "path": "frontend/src/hooks/useMapTiles.ts",
           "operation": "modify",
-          "description": "Update tile URL computation to support zoom levels up to 19 for CartoDB Voyager tiles. Remove any hardcoded zoom ceiling or early return that prevents tile generation at high zoom levels. Add defensive guards to ensure the hook never returns null or undefined for tile arrays at any supported zoom level (0-19). Ensure the lat/lng-to-pixel conversion utility correctly handles the increased precision required at zoom level 19 without overflowing or producing NaN values."
-        },
-        {
-          "path": "frontend/src/components/community/CustomMapView.tsx",
-          "operation": "modify",
-          "description": "Remove any zoom ceiling logic that prevents rendering tiles beyond a certain zoom level. Ensure the map component gracefully handles zoom level 19 by correctly computing viewport bounds and requesting tiles from useMapTiles without triggering errors or null reference exceptions. Update any error boundary or try-catch blocks to handle high zoom levels without displaying an error state. Verify that the zoom-in button and mouse-wheel zoom handlers respect the maximum zoom level defined in useMapZoom and stop gracefully at zoom 19."
-        }
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "summary": "Update useMapTiles to correctly compute and return valid tile URLs and pixel-conversion values for all zoom levels up to the tile provider's maximum (zoom 19 for CartoDB Voyager). Ensure no null or undefined values are returned for tile sets at high zoom levels, and add defensive guards so the hook never throws or returns malformed tile data.",
-      "acceptanceCriteria": [
-        "useMapTiles returns a valid, non-empty tile array for every zoom level from the minimum up to 19.",
-        "The lat/lng-to-pixel conversion utility returned by useMapTiles produces correct numeric values at high zoom levels.",
-        "No runtime null/undefined errors are thrown by useMapTiles at any supported zoom level."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useMapTiles.ts",
-          "operation": "modify",
-          "description": "Refactor the tile computation logic to ensure all zoom levels from 0 to 19 produce valid tile coordinates and URLs. Add input validation to clamp zoom level to the range [0, 19] before any computation. Ensure the tile URL generation for CartoDB Voyager correctly handles zoom 19 tiles (verify the tile server supports this zoom level). Add defensive checks to prevent division by zero or Math.pow overflow when computing tile indices at high zoom. Ensure the returned tile array is always a valid non-empty array (even if it contains a single fallback tile in edge cases). Update the lat/lng-to-pixel conversion function to use sufficient numeric precision (avoid integer truncation) at zoom 19 so pixel coordinates remain accurate."
-        }
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "summary": "Update useMapTransform (and/or useMapZoom) to set the maximum allowed zoom level to 19 to match the tile provider capability. Ensure the zoom state never exceeds this value regardless of how many times the user zooms in via mouse wheel, pinch gesture, or the zoom-in button.",
-      "acceptanceCriteria": [
-        "The maximum zoom level enforced by the zoom hooks is 19.",
-        "Continuous mouse-wheel zoom-in stops at zoom level 19 without producing any error.",
-        "The zoom-in button is disabled or visually inactive when zoom level 19 is reached."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useMapZoom.ts",
-          "operation": "modify",
-          "description": "Update the maxZoom constant or configurable prop to 19 (previously it may have been lower, e.g., 15 or 16). Ensure the zoomIn function respects this maximum and does not increment zoom beyond 19. Ensure the mouse-wheel handler clamps zoom to the [minZoom, 19] range. Return an isAtMaxZoom boolean or similar state so the UI can disable the zoom-in button when zoom level 19 is reached."
+          "description": "Audit and fix Web Mercator coordinate-to-tile calculations to ensure they correctly handle zoom level 19. Verify that tile coordinate computations (tileX, tileY) are clamped to valid ranges for each zoom level (0 to 2^zoom - 1). Ensure the tile URL construction uses integer tile coordinates and does not pass out-of-bounds values to the CartoDB tile server. Add validation to prevent NaN or Infinity values in tile calculations."
         },
         {
           "path": "frontend/src/hooks/useMapTransform.ts",
           "operation": "modify",
-          "description": "If useMapTransform manages zoom state independently or in combination with useMapZoom, update its maxZoom configuration to 19. Ensure the zoomIn and mouse-wheel zoom handlers clamp zoom to 19 and do not increment beyond it. Coordinate with useMapZoom to ensure both hooks enforce the same maximum zoom level consistently."
+          "description": "Review and fix the zoom state management to ensure zoom level 19 is properly supported. Verify that coordinate sanitization correctly handles the valid Web Mercator latitude range (-85.0511 to 85.0511 degrees) and longitude range (-180 to 180 degrees) at all zoom levels including 19. Ensure that pan operations at maximum zoom do not produce invalid coordinates that break tile calculations. Add bounds checking to prevent zoom or pan operations from creating invalid map states."
         },
         {
           "path": "frontend/src/components/community/CustomMapView.tsx",
           "operation": "modify",
-          "description": "Update the zoom-in button to be disabled (or visually inactive) when the current zoom level reaches 19. Use the isAtMaxZoom state (or equivalent) returned by useMapZoom to conditionally disable the button. Ensure the button tooltip or aria-label indicates that the maximum zoom level has been reached when disabled."
+          "description": "Audit the map rendering logic to ensure it correctly handles zoom level 19 without errors. Verify that the viewport-to-tile coordinate conversion logic passes valid parameters to useMapTiles at all zoom levels. Add error boundaries or defensive checks to catch and log any tile rendering errors before they crash the component. Ensure that wheel zoom events correctly update the zoom level without exceeding the maximum supported zoom (19) or producing invalid tile requests. Test that pan and zoom interactions remain smooth and error-free at street level."
         }
       ]
     }

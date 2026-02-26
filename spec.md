@@ -1,12 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the deep zoom error on the community map and allow users to zoom in to street level (zoom 19) without errors.
+**Goal:** Fix the runtime error that occurs when zooming to street level on the community map.
 
 **Planned changes:**
-- Remove the zoom ceiling in `CustomMapView` and `useMapTiles` that causes errors at high zoom levels
-- Update `useMapTiles` to return valid tile URLs and pixel-conversion values for all zoom levels up to 19, with defensive guards against null/undefined values
-- Update `useMapTransform` and/or `useMapZoom` to set the maximum allowed zoom level to 19, clamping zoom state so it never exceeds this value
-- Disable or visually deactivate the zoom-in button when zoom level 19 is reached
+- Audit and correct tile URL computation in `CustomMapView` and `useMapTiles` to ensure valid URLs are generated at all zoom levels up to 19.
+- Fix zoom level capping logic so the maximum zoom level (19) is properly enforced without triggering errors.
+- Correct Web Mercator math in `useMapTransform` to handle maximum zoom without invalid calculations.
+- Ensure zoom controls (in/out/reset) work correctly across all zoom levels including zoom 19.
 
-**User-visible outcome:** Users can zoom in to street level on the community map (up to zoom level 19) using the mouse wheel, pinch gesture, or zoom-in button without encountering any errors or blank states.
+**User-visible outcome:** Users can zoom all the way to street level (zoom 19) on the community map without errors, broken tiles, or console warnings. Pan and zoom interactions remain smooth at all zoom levels.

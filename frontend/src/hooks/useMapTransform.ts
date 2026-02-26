@@ -27,29 +27,29 @@ const MAX_ZOOM = 19;
 const TILE_SIZE = 256;
 
 function latToTileY(lat: number, zoom: number): number {
-  // Clamp to valid Mercator range
   const clampedLat = Math.max(-85.051129, Math.min(85.051129, lat));
   const latRad = (clampedLat * Math.PI) / 180;
   const cosVal = Math.cos(latRad);
   if (cosVal === 0) return Math.pow(2, zoom) / 2;
   const logArg = Math.tan(latRad) + 1 / cosVal;
   if (logArg <= 0) return Math.pow(2, zoom) / 2;
-  return (1 - Math.log(logArg) / Math.PI) / 2 * Math.pow(2, zoom);
+  const result = (1 - Math.log(logArg) / Math.PI) / 2 * Math.pow(2, zoom);
+  return isFinite(result) ? result : Math.pow(2, zoom) / 2;
 }
 
 function tileYToLat(y: number, zoom: number): number {
   const maxTile = Math.pow(2, zoom);
-  // Clamp y to valid tile range
   const clampedY = Math.max(0, Math.min(maxTile, y));
   const n = Math.PI - (2 * Math.PI * clampedY) / maxTile;
-  return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+  const result = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+  return isFinite(result) ? Math.max(-85.051129, Math.min(85.051129, result)) : 0;
 }
 
 function sanitizeTransform(t: MapTransform): MapTransform {
   return {
     centerLat: isFinite(t.centerLat) ? Math.max(-85.051129, Math.min(85.051129, t.centerLat)) : 0,
     centerLng: isFinite(t.centerLng) ? ((((t.centerLng + 180) % 360) + 360) % 360) - 180 : 0,
-    zoom: isFinite(t.zoom) ? Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, t.zoom)) : MIN_ZOOM,
+    zoom: isFinite(t.zoom) ? Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.round(t.zoom))) : MIN_ZOOM,
   };
 }
 
@@ -59,7 +59,6 @@ export function useMapTransform(initialTransform: MapTransform): UseMapTransform
 
   const containerRef = useRef<HTMLDivElement>(null);
   const dragStartRef = useRef<{ x: number; y: number; lat: number; lng: number } | null>(null);
-  const lastTouchDistRef = useRef<number | null>(null);
   const hasDraggedRef = useRef(false);
 
   // Wrap setTransform to always sanitize output
@@ -71,11 +70,11 @@ export function useMapTransform(initialTransform: MapTransform): UseMapTransform
   }, []);
 
   const zoomIn = useCallback(() => {
-    setTransform(t => ({ ...t, zoom: Math.min(MAX_ZOOM, t.zoom + 1) }));
+    setTransform(t => ({ ...t, zoom: Math.min(MAX_ZOOM, Math.round(t.zoom) + 1) }));
   }, [setTransform]);
 
   const zoomOut = useCallback(() => {
-    setTransform(t => ({ ...t, zoom: Math.max(MIN_ZOOM, t.zoom - 1) }));
+    setTransform(t => ({ ...t, zoom: Math.max(MIN_ZOOM, Math.round(t.zoom) - 1) }));
   }, [setTransform]);
 
   const reset = useCallback((lat: number, lng: number, zoom: number) => {
@@ -110,7 +109,7 @@ export function useMapTransform(initialTransform: MapTransform): UseMapTransform
       const scale = Math.pow(2, z) * TILE_SIZE;
       if (scale === 0 || !isFinite(scale)) return t;
 
-      // Convert drag delta from pixels to degrees
+      // Convert drag delta from pixels to longitude degrees
       const dLng = -(dx / scale) * 360;
 
       // For latitude, use Mercator projection
@@ -130,7 +129,6 @@ export function useMapTransform(initialTransform: MapTransform): UseMapTransform
 
   const onPointerUp = useCallback((_e: React.PointerEvent) => {
     dragStartRef.current = null;
-    lastTouchDistRef.current = null;
     setTimeout(() => setIsDragging(false), 50);
   }, []);
 

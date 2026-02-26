@@ -16,6 +16,7 @@ const DEFAULT_CENTER = { lat: 30, lng: 0 };
 const DEFAULT_ZOOM = 2;
 const MIN_ZOOM = 2;
 const MAX_ZOOM = 19;
+const TILE_SIZE = 256;
 
 function getBoundsCenter(members: CommunityMapProfile[]): { lat: number; lng: number; zoom: number } {
   const withCoords = members.filter(m => m.coordinates);
@@ -54,9 +55,33 @@ function getBoundsCenter(members: CommunityMapProfile[]): { lat: number; lng: nu
   return { lat: centerLat, lng: centerLng, zoom };
 }
 
+/** Safe Web Mercator lat → fractional tile Y */
+function latToTileYSafe(lat: number, zoom: number): number {
+  const clamped = Math.max(-85.051129, Math.min(85.051129, lat));
+  const latRad = (clamped * Math.PI) / 180;
+  const cosVal = Math.cos(latRad);
+  if (cosVal === 0) return Math.pow(2, zoom) / 2;
+  const logArg = Math.tan(latRad) + 1 / cosVal;
+  if (logArg <= 0) return Math.pow(2, zoom) / 2;
+  const result = (1 - Math.log(logArg) / Math.PI) / 2 * Math.pow(2, zoom);
+  return isFinite(result) ? result : Math.pow(2, zoom) / 2;
+}
+
+/** Safe tile Y → lat */
+function tileYToLatSafe(y: number, zoom: number): number {
+  const maxTile = Math.pow(2, zoom);
+  const clampedY = Math.max(0, Math.min(maxTile, y));
+  const n = Math.PI - (2 * Math.PI * clampedY) / maxTile;
+  const result = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+  return isFinite(result) ? Math.max(-85.051129, Math.min(85.051129, result)) : 0;
+}
+
 export default function CustomMapView({ members, selectedMemberId, onMemberSelect }: CustomMapViewProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  // Keep a ref to viewport size so the wheel handler always reads the latest value
+  // without needing to re-register the event listener on every resize
+  const viewportSizeRef = useRef({ width: 0, height: 0 });
   const [hasAutoFit, setHasAutoFit] = useState(false);
 
   const initialBounds = getBoundsCenter(members);
@@ -79,20 +104,24 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
     zoom: initialBounds.zoom,
   });
 
-  // Measure viewport
+  // Measure viewport and keep ref in sync
   useEffect(() => {
-    const el = containerRef.current;
+    const el = mapContainerRef.current;
     if (!el) return;
     const ro = new ResizeObserver(entries => {
       for (const entry of entries) {
-        setViewportSize({
+        const size = {
           width: entry.contentRect.width,
           height: entry.contentRect.height,
-        });
+        };
+        viewportSizeRef.current = size;
+        setViewportSize(size);
       }
     });
     ro.observe(el);
-    setViewportSize({ width: el.clientWidth, height: el.clientHeight });
+    const initial = { width: el.clientWidth, height: el.clientHeight };
+    viewportSizeRef.current = initial;
+    setViewportSize(initial);
     return () => ro.disconnect();
   }, []);
 
@@ -104,61 +133,52 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
     setHasAutoFit(true);
   }, [members, hasAutoFit, reset]);
 
-  // Wheel zoom with native listener (passive: false required for preventDefault)
+  // Wheel zoom — register once on mount; read viewport size from ref to avoid stale closures
   useEffect(() => {
-    const el = containerRef.current;
+    const el = mapContainerRef.current;
     if (!el) return;
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      // Guard: viewport must be valid
-      if (viewportSize.width === 0 || viewportSize.height === 0) return;
+      const { width: vpW, height: vpH } = viewportSizeRef.current;
+      if (vpW === 0 || vpH === 0) return;
 
       const rect = el.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
       setTransform(t => {
+        // Determine zoom delta — clamp to integer steps for reliability
         const delta = e.deltaY > 0 ? -1 : 1;
-        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, t.zoom + delta * 0.5));
-        if (newZoom === t.zoom) return t;
+        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.round(t.zoom) + delta));
+        if (newZoom === Math.round(t.zoom)) return t;
 
         const zoomFactor = Math.pow(2, newZoom - t.zoom);
-        if (!isFinite(zoomFactor) || zoomFactor === 0) return t;
+        if (!isFinite(zoomFactor) || zoomFactor === 0) return { ...t, zoom: newZoom };
 
-        const vpCX = viewportSize.width / 2;
-        const vpCY = viewportSize.height / 2;
+        const vpCX = vpW / 2;
+        const vpCY = vpH / 2;
 
-        // Vector from viewport center to mouse in pixels
+        // Vector from viewport center to mouse cursor in pixels
         const dx = mouseX - vpCX;
         const dy = mouseY - vpCY;
 
-        const TILE_SIZE = 256;
+        // Current scale: pixels per degree-longitude-equivalent
         const scale = Math.pow(2, t.zoom) * TILE_SIZE;
         if (!isFinite(scale) || scale === 0) return { ...t, zoom: newZoom };
 
-        const dLng = (dx / scale) * 360;
-
-        // Shift center by (1 - 1/zoomFactor) * offset
+        // Shift fraction: how much of the offset to absorb into the new center
         const shiftFraction = 1 - 1 / zoomFactor;
+
+        // Longitude shift (linear in Mercator)
+        const dLng = (dx / scale) * 360;
         const newCenterLng = t.centerLng + dLng * shiftFraction;
 
-        // For latitude, work in tile-Y space to keep Mercator correct
-        const latRad = (Math.max(-85.051129, Math.min(85.051129, t.centerLat)) * Math.PI) / 180;
-        const cosVal = Math.cos(latRad);
-        if (cosVal === 0) return { ...t, zoom: newZoom };
-        const logArg = Math.tan(latRad) + 1 / cosVal;
-        if (logArg <= 0) return { ...t, zoom: newZoom };
-
-        const centerTileY = (1 - Math.log(logArg) / Math.PI) / 2 * Math.pow(2, t.zoom);
+        // Latitude shift (non-linear — work in tile-Y space)
+        const centerTileY = latToTileYSafe(t.centerLat, t.zoom);
         const newCenterTileY = centerTileY + (dy / TILE_SIZE) * shiftFraction;
-
-        // Convert back to lat
-        const maxTile = Math.pow(2, t.zoom);
-        const clampedTileY = Math.max(0, Math.min(maxTile, newCenterTileY));
-        const n = Math.PI - (2 * Math.PI * clampedTileY) / maxTile;
-        const newCenterLat = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+        const newCenterLat = tileYToLatSafe(newCenterTileY, t.zoom);
 
         if (!isFinite(newCenterLat) || !isFinite(newCenterLng)) {
           return { ...t, zoom: newZoom };
@@ -174,7 +194,8 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
 
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => el.removeEventListener('wheel', handleWheel);
-  }, [viewportSize, setTransform]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setTransform]); // setTransform is stable; viewportSize is read from ref
 
   const { tiles, latLngToPixel } = useMapTiles(
     transform.centerLat,
@@ -190,7 +211,7 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
   }, [members, reset]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-muted rounded-lg" ref={containerRef}>
+    <div className="relative w-full h-full overflow-hidden bg-muted rounded-lg" ref={mapContainerRef}>
       {/* Tile layer */}
       <div
         className="absolute inset-0"
@@ -210,8 +231,8 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
               position: 'absolute',
               left: tile.pixelX,
               top: tile.pixelY,
-              width: 256,
-              height: 256,
+              width: TILE_SIZE,
+              height: TILE_SIZE,
               userSelect: 'none',
               pointerEvents: 'none',
             }}
@@ -296,8 +317,8 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
       </div>
 
       {/* Loading placeholder when no tiles yet */}
-      {tiles.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center">
+      {tiles.length === 0 && viewportSize.width > 0 && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-muted-foreground text-sm">Loading map…</div>
         </div>
       )}

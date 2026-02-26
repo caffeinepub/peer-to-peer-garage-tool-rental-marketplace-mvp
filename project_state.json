@@ -1,48 +1,24 @@
 {
   "schemaVersion": "1.0.0",
   "projectStateVersion": 3,
-  "summary": "Map application with zoom functionality. User wants to be able to zoom in to street level like Google Maps.",
+  "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "Error occurs when zooming in too far on the map"
+    "Zoom error persists when zooming to street level — not fixed in Version 35"
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-remove-the-zoom-ceiling-in-custommapview-and-usemaptiles-so-users-can-zoom-in-to-street-level-zoom-level-19-without-triggering-any-errors-clamp-the-zoom-level-to-a-safe-maximum-supported-by-the-cartodb-voyager-tile-provider-typically-zoom-19-rather-than-throwing-or-returning-null-tile-data",
-      "title": "Remove the zoom ceiling in CustomMapView and useMapTiles so users can zoom in to street level (zoom level 19+) without triggering any errors. Clamp the zoom level to a safe maximum supported by the CartoDB Voyager tile provider (typically zoom 19) rather than throwing or returning null tile data.",
+      "id": "feature-fix-the-error-that-occurs-when-zooming-to-street-level-on-the-community-map-audit-and-correct-tile-url-computation-zoom-level-capping-and-web-mercator-math-in-custommapview-usemaptiles-and-usemaptransform-so-that-zooming-to-the-maximum-supported-zoom-level-19-works-without-errors-or-broken-tiles",
+      "title": "Fix the error that occurs when zooming to street level on the community map. Audit and correct tile URL computation, zoom level capping, and Web Mercator math in CustomMapView, useMapTiles, and useMapTransform so that zooming to the maximum supported zoom level (19) works without errors or broken tiles.",
       "reqIds": [
         "REQ-1"
       ],
       "version": 1
-    },
-    {
-      "id": "feature-update-usemaptiles-to-correctly-compute-and-return-valid-tile-urls-and-pixel-conversion-values-for-all-zoom-levels-up-to-the-tile-provider-s-maximum-zoom-19-for-cartodb-voyager-ensure-no-null-or-undefined-values-are-returned-for-tile-sets-at-high-zoom-levels-and-add-defensive-guards-so-the-hook-never-throws-or-returns-malformed-tile-data",
-      "title": "Update useMapTiles to correctly compute and return valid tile URLs and pixel-conversion values for all zoom levels up to the tile provider's maximum (zoom 19 for CartoDB Voyager). Ensure no null or undefined values are returned for tile sets at high zoom levels, and add defensive guards so the hook never throws or returns malformed tile data.",
-      "reqIds": [
-        "REQ-2"
-      ],
-      "version": 1
-    },
-    {
-      "id": "feature-update-usemaptransform-and-or-usemapzoom-to-set-the-maximum-allowed-zoom-level-to-19-to-match-the-tile-provider-capability-ensure-the-zoom-state-never-exceeds-this-value-regardless-of-how-many-times-the-user-zooms-in-via-mouse-wheel-pinch-gesture-or-the-zoom-in-button",
-      "title": "Update useMapTransform (and/or useMapZoom) to set the maximum allowed zoom level to 19 to match the tile provider capability. Ensure the zoom state never exceeds this value regardless of how many times the user zooms in via mouse wheel, pinch gesture, or the zoom-in button.",
-      "reqIds": [
-        "REQ-3"
-      ],
-      "version": 1
     }
   ],
-  "new_feature_requests": [
-    {
-      "id": "AR-1",
-      "summary": "Support deep zoom to street level without errors, similar to Google Maps",
-      "reqIds": [],
-      "status": "pending"
-    }
-  ],
-  "gameProjectType": "none",
-  "projectName": "ToolShare",
+  "new_feature_requests": [],
+  "projectName": "Fix street-level zoom error in CustomMapView",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

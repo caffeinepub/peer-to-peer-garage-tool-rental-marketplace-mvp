@@ -5,20 +5,17 @@ const MAX_ZOOM_LEVEL = 19;
 
 // Web Mercator tile math - with safe clamping
 export function latToTileY(lat: number, zoom: number): number {
-  // Clamp latitude to valid Mercator range to avoid NaN/Infinity
   const clampedLat = Math.max(-85.051129, Math.min(85.051129, lat));
   const latRad = (clampedLat * Math.PI) / 180;
-  const tanVal = Math.tan(latRad);
   const cosVal = Math.cos(latRad);
-  // Guard against division by zero or log of non-positive
   if (cosVal === 0) return Math.pow(2, zoom) / 2;
-  const logArg = tanVal + 1 / cosVal;
+  const logArg = Math.tan(latRad) + 1 / cosVal;
   if (logArg <= 0) return Math.pow(2, zoom) / 2;
-  return (1 - Math.log(logArg) / Math.PI) / 2 * Math.pow(2, zoom);
+  const result = (1 - Math.log(logArg) / Math.PI) / 2 * Math.pow(2, zoom);
+  return isFinite(result) ? result : Math.pow(2, zoom) / 2;
 }
 
 export function lngToTileX(lng: number, zoom: number): number {
-  // Clamp longitude to valid range
   const clampedLng = Math.max(-180, Math.min(180, lng));
   return ((clampedLng + 180) / 360) * Math.pow(2, zoom);
 }
@@ -28,7 +25,9 @@ export function tileXToLng(x: number, zoom: number): number {
 }
 
 export function tileYToLat(y: number, zoom: number): number {
-  const n = Math.PI - (2 * Math.PI * y) / Math.pow(2, zoom);
+  const maxTile = Math.pow(2, zoom);
+  const clampedY = Math.max(0, Math.min(maxTile, y));
+  const n = Math.PI - (2 * Math.PI * clampedY) / maxTile;
   return (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
 }
 
@@ -69,8 +68,8 @@ export function useMapTiles(
       };
     }
 
-    // Clamp zoom to safe range [0, 19]
-    const z = Math.round(Math.max(0, Math.min(MAX_ZOOM_LEVEL, zoom)));
+    // Clamp zoom to safe integer range [0, 19]
+    const z = Math.max(0, Math.min(MAX_ZOOM_LEVEL, Math.round(zoom)));
 
     // Clamp center coordinates to valid ranges
     const safeCenterLat = Math.max(-85.051129, Math.min(85.051129, isFinite(centerLat) ? centerLat : 0));
@@ -103,7 +102,7 @@ export function useMapTiles(
     const startPixelX = viewportWidth / 2 - centerPixelOffsetX - Math.floor(tilesX / 2) * TILE_SIZE;
     const startPixelY = viewportHeight / 2 - centerPixelOffsetY - Math.floor(tilesY / 2) * TILE_SIZE;
 
-    const maxTile = Math.pow(2, z);
+    const maxTile = Math.pow(2, z); // z is integer, so maxTile is always a power of 2
     const tiles: MapTile[] = [];
 
     for (let dy = 0; dy < tilesY; dy++) {
@@ -123,11 +122,16 @@ export function useMapTiles(
         // Guard against non-finite pixel positions
         if (!isFinite(pixelX) || !isFinite(pixelY)) continue;
 
+        // Ensure tile coordinates are valid integers
+        const intX = Math.floor(wrappedX);
+        const intY = Math.floor(tileY);
+        if (intX < 0 || intX >= maxTile || intY < 0 || intY >= maxTile) continue;
+
         tiles.push({
-          x: wrappedX,
-          y: tileY,
+          x: intX,
+          y: intY,
           z,
-          url: getTileUrl(wrappedX, tileY, z),
+          url: getTileUrl(intX, intY, z),
           pixelX,
           pixelY,
         });
