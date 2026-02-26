@@ -1,11 +1,11 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-26T02:50:21.788Z",
-  "summary": "The diff modifies the three frontend files specified in REQ-1 (CustomMapView.tsx, useMapTiles.ts, useMapTransform.ts) with safe Web Mercator math, zoom level capping to MAX_ZOOM=19, NaN/Infinity guards, coordinate clamping, and tile URL construction fixes. All acceptance criteria for REQ-1 appear to be addressed. No unrequested features were added.",
+  "generatedAt": "2026-02-26T06:22:50.160Z",
+  "summary": "The diff implements fixes to the CustomMapView component and related hooks (useMapTiles, useMapTransform) to address zoom-related failures. The changes include hardened Web Mercator projection math with NaN/Infinity guards, cursor-anchored zoom calculation, sanitized transform state, stable tile fetching, and corrected marker positioning. These changes directly address REQ-1 and its acceptance criteria.",
   "missing_requirements": [],
   "hallucinated_features": [],
-  "confidence": 0.92,
+  "confidence": 0.88,
   "changed_files": [
     "frontend-file-summaries.txt",
     "frontend/src/components/community/CustomMapView.tsx",

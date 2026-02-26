@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { CommunityMapProfile } from '../../backend';
-import { useMapTiles } from '../../hooks/useMapTiles';
+import { useMapTiles, latToTileY, lngToTileX } from '../../hooks/useMapTiles';
 import { useMapTransform } from '../../hooks/useMapTransform';
 import CustomMarker from './CustomMarker';
 import { ZoomIn, ZoomOut, LocateFixed } from 'lucide-react';
@@ -55,25 +55,75 @@ function getBoundsCenter(members: CommunityMapProfile[]): { lat: number; lng: nu
   return { lat: centerLat, lng: centerLng, zoom };
 }
 
-/** Safe Web Mercator lat → fractional tile Y */
-function latToTileYSafe(lat: number, zoom: number): number {
-  const clamped = Math.max(-85.051129, Math.min(85.051129, lat));
-  const latRad = (clamped * Math.PI) / 180;
-  const cosVal = Math.cos(latRad);
-  if (cosVal === 0) return Math.pow(2, zoom) / 2;
-  const logArg = Math.tan(latRad) + 1 / cosVal;
-  if (logArg <= 0) return Math.pow(2, zoom) / 2;
-  const result = (1 - Math.log(logArg) / Math.PI) / 2 * Math.pow(2, zoom);
-  return isFinite(result) ? result : Math.pow(2, zoom) / 2;
-}
+/**
+ * Compute the new map center after a cursor-anchored zoom.
+ *
+ * The invariant: the geographic point under the cursor must remain at the
+ * same screen pixel after the zoom.
+ *
+ * Strategy (all math in tile-coordinate space):
+ *   1. Find the cursor's tile position at the OLD zoom.
+ *   2. The cursor's tile position at the NEW zoom = cursorTile * 2^(newZoom-oldZoom).
+ *   3. New center tile = cursorTile_new - (cursorOffset_pixels / TILE_SIZE).
+ *   4. Convert new center tile back to lat/lng.
+ */
+function computeZoomedCenter(
+  centerLat: number,
+  centerLng: number,
+  oldZoom: number,
+  newZoom: number,
+  cursorOffsetX: number, // pixels from viewport center
+  cursorOffsetY: number,
+): { lat: number; lng: number } {
+  if (oldZoom === newZoom) return { lat: centerLat, lng: centerLng };
 
-/** Safe tile Y → lat */
-function tileYToLatSafe(y: number, zoom: number): number {
-  const maxTile = Math.pow(2, zoom);
-  const clampedY = Math.max(0, Math.min(maxTile, y));
-  const n = Math.PI - (2 * Math.PI * clampedY) / maxTile;
-  const result = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
-  return isFinite(result) ? Math.max(-85.051129, Math.min(85.051129, result)) : 0;
+  const oldScale = Math.pow(2, oldZoom);
+  const newScale = Math.pow(2, newZoom);
+
+  if (!isFinite(oldScale) || !isFinite(newScale) || oldScale === 0) {
+    return { lat: centerLat, lng: centerLng };
+  }
+
+  // Center tile coordinates at old zoom
+  const centerTileX_old = lngToTileX(centerLng, oldZoom);
+  const centerTileY_old = latToTileY(centerLat, oldZoom);
+
+  // Cursor tile coordinates at old zoom
+  const cursorTileX_old = centerTileX_old + cursorOffsetX / TILE_SIZE;
+  const cursorTileY_old = centerTileY_old + cursorOffsetY / TILE_SIZE;
+
+  // Scale factor between old and new zoom
+  const zoomRatio = newScale / oldScale; // 2 for zoom-in, 0.5 for zoom-out
+
+  // Cursor tile coordinates at new zoom
+  const cursorTileX_new = cursorTileX_old * zoomRatio;
+  const cursorTileY_new = cursorTileY_old * zoomRatio;
+
+  // New center tile at new zoom: cursor stays at same pixel offset from center
+  const newCenterTileX = cursorTileX_new - cursorOffsetX / TILE_SIZE;
+  const newCenterTileY = cursorTileY_new - cursorOffsetY / TILE_SIZE;
+
+  if (!isFinite(newCenterTileX) || !isFinite(newCenterTileY)) {
+    return { lat: centerLat, lng: centerLng };
+  }
+
+  // Convert tile X back to longitude
+  const maxTile = newScale;
+  const newCenterLng = (newCenterTileX / maxTile) * 360 - 180;
+
+  // Convert tile Y back to latitude (inverse Mercator)
+  const clampedTileY = Math.max(0, Math.min(maxTile, newCenterTileY));
+  const n = Math.PI - (2 * Math.PI * clampedTileY) / maxTile;
+  const newCenterLat = (180 / Math.PI) * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+
+  if (!isFinite(newCenterLat) || !isFinite(newCenterLng)) {
+    return { lat: centerLat, lng: centerLng };
+  }
+
+  return {
+    lat: Math.max(-85.051129, Math.min(85.051129, newCenterLat)),
+    lng: Math.max(-180, Math.min(180, newCenterLng)),
+  };
 }
 
 export default function CustomMapView({ members, selectedMemberId, onMemberSelect }: CustomMapViewProps) {
@@ -82,6 +132,9 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
   // Keep a ref to viewport size so the wheel handler always reads the latest value
   // without needing to re-register the event listener on every resize
   const viewportSizeRef = useRef({ width: 0, height: 0 });
+  // Keep a ref to the latest transform so the wheel handler can read it without
+  // being re-registered on every transform change
+  const transformRef = useRef({ centerLat: DEFAULT_CENTER.lat, centerLng: DEFAULT_CENTER.lng, zoom: DEFAULT_ZOOM });
   const [hasAutoFit, setHasAutoFit] = useState(false);
 
   const initialBounds = getBoundsCenter(members);
@@ -103,6 +156,11 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
     centerLng: initialBounds.lng,
     zoom: initialBounds.zoom,
   });
+
+  // Keep transformRef in sync with the latest transform state
+  useEffect(() => {
+    transformRef.current = transform;
+  }, [transform]);
 
   // Measure viewport and keep ref in sync
   useEffect(() => {
@@ -133,7 +191,8 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
     setHasAutoFit(true);
   }, [members, hasAutoFit, reset]);
 
-  // Wheel zoom — register once on mount; read viewport size from ref to avoid stale closures
+  // Wheel zoom — registered once on mount.
+  // Reads viewport size and current transform from refs to avoid stale closures.
   useEffect(() => {
     const el = mapContainerRef.current;
     if (!el) return;
@@ -144,58 +203,49 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
       const { width: vpW, height: vpH } = viewportSizeRef.current;
       if (vpW === 0 || vpH === 0) return;
 
+      // Read the latest transform from the ref (avoids stale closure)
+      const t = transformRef.current;
+
+      const delta = e.deltaY > 0 ? -1 : 1;
+      const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, t.zoom + delta));
+      if (newZoom === t.zoom) return;
+
       const rect = el.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top;
 
-      setTransform(t => {
-        // Determine zoom delta — clamp to integer steps for reliability
-        const delta = e.deltaY > 0 ? -1 : 1;
-        const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.round(t.zoom) + delta));
-        if (newZoom === Math.round(t.zoom)) return t;
+      // Cursor offset from viewport center
+      const cursorOffsetX = mouseX - vpW / 2;
+      const cursorOffsetY = mouseY - vpH / 2;
 
-        const zoomFactor = Math.pow(2, newZoom - t.zoom);
-        if (!isFinite(zoomFactor) || zoomFactor === 0) return { ...t, zoom: newZoom };
+      const newCenter = computeZoomedCenter(
+        t.centerLat,
+        t.centerLng,
+        t.zoom,
+        newZoom,
+        cursorOffsetX,
+        cursorOffsetY,
+      );
 
-        const vpCX = vpW / 2;
-        const vpCY = vpH / 2;
-
-        // Vector from viewport center to mouse cursor in pixels
-        const dx = mouseX - vpCX;
-        const dy = mouseY - vpCY;
-
-        // Current scale: pixels per degree-longitude-equivalent
-        const scale = Math.pow(2, t.zoom) * TILE_SIZE;
-        if (!isFinite(scale) || scale === 0) return { ...t, zoom: newZoom };
-
-        // Shift fraction: how much of the offset to absorb into the new center
-        const shiftFraction = 1 - 1 / zoomFactor;
-
-        // Longitude shift (linear in Mercator)
-        const dLng = (dx / scale) * 360;
-        const newCenterLng = t.centerLng + dLng * shiftFraction;
-
-        // Latitude shift (non-linear — work in tile-Y space)
-        const centerTileY = latToTileYSafe(t.centerLat, t.zoom);
-        const newCenterTileY = centerTileY + (dy / TILE_SIZE) * shiftFraction;
-        const newCenterLat = tileYToLatSafe(newCenterTileY, t.zoom);
-
-        if (!isFinite(newCenterLat) || !isFinite(newCenterLng)) {
-          return { ...t, zoom: newZoom };
-        }
-
-        return {
-          centerLat: Math.max(-85.051129, Math.min(85.051129, newCenterLat)),
-          centerLng: newCenterLng,
-          zoom: newZoom,
-        };
+      setTransform({
+        centerLat: newCenter.lat,
+        centerLng: newCenter.lng,
+        zoom: newZoom,
       });
     };
 
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => el.removeEventListener('wheel', handleWheel);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setTransform]); // setTransform is stable; viewportSize is read from ref
+  }, [setTransform]); // setTransform is stable; transform and viewport are read from refs
+
+  // Expose current transform values as data attributes so the drag handler
+  // (which is memoized without transform in its deps) can read them at pointer-down time
+  const dragDataProps = {
+    'data-lat': transform.centerLat.toString(),
+    'data-lng': transform.centerLng.toString(),
+    'data-zoom': transform.zoom.toString(),
+  };
 
   const { tiles, latLngToPixel } = useMapTiles(
     transform.centerLat,
@@ -220,6 +270,7 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerLeave}
+        {...dragDataProps}
       >
         {tiles.map(tile => (
           <img
@@ -256,8 +307,8 @@ export default function CustomMapView({ members, selectedMemberId, onMemberSelec
 
           // Only render if within viewport bounds (with some padding)
           if (
-            x < -50 || x > viewportSize.width + 50 ||
-            y < -50 || y > viewportSize.height + 50
+            x < -60 || x > viewportSize.width + 60 ||
+            y < -60 || y > viewportSize.height + 60
           ) return null;
 
           return (

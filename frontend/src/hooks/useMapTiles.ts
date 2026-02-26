@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 const TILE_SIZE = 256;
 const MAX_ZOOM_LEVEL = 19;
 
-// Web Mercator tile math - with safe clamping
+/** Web Mercator: lat → fractional tile Y at given integer zoom */
 export function latToTileY(lat: number, zoom: number): number {
   const clampedLat = Math.max(-85.051129, Math.min(85.051129, lat));
   const latRad = (clampedLat * Math.PI) / 180;
@@ -15,6 +15,7 @@ export function latToTileY(lat: number, zoom: number): number {
   return isFinite(result) ? result : Math.pow(2, zoom) / 2;
 }
 
+/** Web Mercator: lng → fractional tile X at given integer zoom */
 export function lngToTileX(lng: number, zoom: number): number {
   const clampedLng = Math.max(-180, Math.min(180, lng));
   return ((clampedLng + 180) / 360) * Math.pow(2, zoom);
@@ -46,7 +47,7 @@ export interface UseMapTilesResult {
   latLngToPixel: (lat: number, lng: number) => { x: number; y: number };
 }
 
-// Use CartoDB Voyager tiles - CORS-friendly, no API key needed, supports zoom up to 19
+// Use CartoDB Voyager tiles — CORS-friendly, no API key, supports zoom 0–19
 function getTileUrl(x: number, y: number, z: number): string {
   const subdomains = ['a', 'b', 'c', 'd'];
   const s = subdomains[(x + y) % subdomains.length];
@@ -68,7 +69,7 @@ export function useMapTiles(
       };
     }
 
-    // Clamp zoom to safe integer range [0, 19]
+    // Clamp zoom to safe integer range [0, MAX_ZOOM_LEVEL]
     const z = Math.max(0, Math.min(MAX_ZOOM_LEVEL, Math.round(zoom)));
 
     // Clamp center coordinates to valid ranges
@@ -87,22 +88,31 @@ export function useMapTiles(
       };
     }
 
-    // Pixel offset of center within its tile
-    const centerPixelOffsetX = (centerTileX % 1) * TILE_SIZE;
-    const centerPixelOffsetY = (centerTileY % 1) * TILE_SIZE;
+    // Integer tile index of the center tile
+    const centerTileXInt = Math.floor(centerTileX);
+    const centerTileYInt = Math.floor(centerTileY);
 
-    // How many tiles we need to cover the viewport
-    const tilesX = Math.ceil(viewportWidth / TILE_SIZE) + 2;
-    const tilesY = Math.ceil(viewportHeight / TILE_SIZE) + 2;
+    // Sub-tile pixel offset of the center point within its tile
+    const centerSubPixelX = (centerTileX - centerTileXInt) * TILE_SIZE;
+    const centerSubPixelY = (centerTileY - centerTileYInt) * TILE_SIZE;
 
-    const startTileX = Math.floor(centerTileX) - Math.floor(tilesX / 2);
-    const startTileY = Math.floor(centerTileY) - Math.floor(tilesY / 2);
+    // How many tiles we need to cover the viewport (add extra buffer)
+    const tilesX = Math.ceil(viewportWidth / TILE_SIZE) + 3;
+    const tilesY = Math.ceil(viewportHeight / TILE_SIZE) + 3;
 
-    // Pixel position of the top-left corner of startTile relative to viewport center
-    const startPixelX = viewportWidth / 2 - centerPixelOffsetX - Math.floor(tilesX / 2) * TILE_SIZE;
-    const startPixelY = viewportHeight / 2 - centerPixelOffsetY - Math.floor(tilesY / 2) * TILE_SIZE;
+    const halfTilesX = Math.floor(tilesX / 2);
+    const halfTilesY = Math.floor(tilesY / 2);
 
-    const maxTile = Math.pow(2, z); // z is integer, so maxTile is always a power of 2
+    const startTileX = centerTileXInt - halfTilesX;
+    const startTileY = centerTileYInt - halfTilesY;
+
+    // Pixel position of the top-left corner of the start tile relative to viewport
+    // The center tile's top-left is at: (vpW/2 - centerSubPixelX, vpH/2 - centerSubPixelY)
+    // The start tile is halfTilesX tiles to the left and halfTilesY tiles above
+    const startPixelX = viewportWidth / 2 - centerSubPixelX - halfTilesX * TILE_SIZE;
+    const startPixelY = viewportHeight / 2 - centerSubPixelY - halfTilesY * TILE_SIZE;
+
+    const maxTile = Math.pow(2, z); // always a power of 2 since z is integer
     const tiles: MapTile[] = [];
 
     for (let dy = 0; dy < tilesY; dy++) {
@@ -110,22 +120,22 @@ export function useMapTiles(
         const tileX = startTileX + dx;
         const tileY = startTileY + dy;
 
-        // Wrap X tiles (longitude wraps around)
+        // Skip tiles outside valid Y range (poles)
+        if (tileY < 0 || tileY >= maxTile) continue;
+
+        // Wrap X tiles (longitude wraps around the globe)
         const wrappedX = ((tileX % maxTile) + maxTile) % maxTile;
 
-        // Skip tiles outside valid Y range
-        if (tileY < 0 || tileY >= maxTile) continue;
+        // Ensure tile coordinates are valid integers in range
+        const intX = Math.floor(wrappedX);
+        const intY = Math.floor(tileY);
+        if (intX < 0 || intX >= maxTile || intY < 0 || intY >= maxTile) continue;
 
         const pixelX = startPixelX + dx * TILE_SIZE;
         const pixelY = startPixelY + dy * TILE_SIZE;
 
         // Guard against non-finite pixel positions
         if (!isFinite(pixelX) || !isFinite(pixelY)) continue;
-
-        // Ensure tile coordinates are valid integers
-        const intX = Math.floor(wrappedX);
-        const intY = Math.floor(tileY);
-        if (intX < 0 || intX >= maxTile || intY < 0 || intY >= maxTile) continue;
 
         tiles.push({
           x: intX,
@@ -138,19 +148,31 @@ export function useMapTiles(
       }
     }
 
-    const latLngToPixel = (lat: number, lng: number) => {
+    /**
+     * Convert a lat/lng to a pixel position within the viewport.
+     * Uses the same tile coordinate system as the tile layout above.
+     */
+    const latLngToPixel = (lat: number, lng: number): { x: number; y: number } => {
       const safeLat = Math.max(-85.051129, Math.min(85.051129, isFinite(lat) ? lat : 0));
       const safeLng = Math.max(-180, Math.min(180, isFinite(lng) ? lng : 0));
+
       const tileX = lngToTileX(safeLng, z);
       const tileY = latToTileY(safeLat, z);
+
       if (!isFinite(tileX) || !isFinite(tileY)) {
         return { x: -9999, y: -9999 };
       }
-      const x = viewportWidth / 2 + (tileX - centerTileX) * TILE_SIZE;
-      const y = viewportHeight / 2 + (tileY - centerTileY) * TILE_SIZE;
+
+      // Pixel offset from center tile's top-left corner
+      // = (marker tile position - center tile position) * TILE_SIZE
+      // Then offset by the sub-pixel position of the center within its tile
+      const x = viewportWidth / 2 - centerSubPixelX + (tileX - centerTileXInt) * TILE_SIZE;
+      const y = viewportHeight / 2 - centerSubPixelY + (tileY - centerTileYInt) * TILE_SIZE;
+
       if (!isFinite(x) || !isFinite(y)) {
         return { x: -9999, y: -9999 };
       }
+
       return { x, y };
     };
 

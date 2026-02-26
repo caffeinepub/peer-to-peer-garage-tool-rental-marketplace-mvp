@@ -1,37 +1,38 @@
 {
   "kind": "build_request",
-  "title": "Fix street-level zoom error in CustomMapView",
+  "title": "Fix map zoom failure in CustomMapView",
   "priority": "high",
   "requirements": [
     {
       "id": "REQ-1",
-      "text": "Fix the error that occurs when zooming to street level on the community map. Audit and correct tile URL computation, zoom level capping, and Web Mercator math in CustomMapView, useMapTiles, and useMapTransform so that zooming to the maximum supported zoom level (19) works without errors or broken tiles.",
+      "text": "Fix the CustomMapView component so that zooming in does not cause the map to fail or crash. Ensure that tile fetching, Web Mercator projection math, marker positioning, and viewport bounds recalculation all remain stable and correct at any zoom level within the allowed min/max range. The map must remain interactive and render correctly after zoom in, zoom out, and reset operations.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-4"
         ],
         "quotes": [
-          "the error was not fixed try again"
+          "this time when i zoom in it failed"
         ]
       },
       "acceptanceCriteria": [
-        "User can zoom from overview level all the way to street level (zoom 19) without any runtime error or crash.",
-        "Map tiles load correctly at all zoom levels up to 19.",
-        "No console errors related to tile URL construction or invalid zoom values.",
-        "Pan and zoom interactions remain smooth at maximum zoom level.",
-        "Zoom controls (in/out/reset) function correctly at all zoom levels including the maximum."
+        "Zooming in via scroll wheel or zoom controls does not cause a blank map, error state, or visual glitch.",
+        "Map tiles load correctly and are positioned accurately at all zoom levels.",
+        "Member markers remain correctly positioned on the map after zooming in or out.",
+        "The auto-fit bounds behavior still works correctly after a zoom interaction.",
+        "No JavaScript errors are thrown in the console during zoom operations.",
+        "Zoom in and zoom out can be performed multiple times without degradation."
       ]
     }
   ],
   "constraints": [
-    "Do not change the backend schema or any backend Motoko files.",
-    "Do not modify any files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui."
+    "Do not replace the existing OpenStreetMap/Leaflet-based or custom tile map implementation with a third-party map library.",
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui."
   ],
   "nonGoals": [
-    "Adding new map features or UI beyond fixing the zoom error.",
-    "Switching tile providers or changing the CartoDB Voyager tile source.",
-    "Any backend changes."
+    "Changing the map's visual design or theme.",
+    "Adding new map features such as clustering or new marker types.",
+    "Fixing any non-zoom-related map bugs."
   ],
   "imageRequirements": {
     "required": [],

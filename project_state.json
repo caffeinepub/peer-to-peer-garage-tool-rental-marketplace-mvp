@@ -4,13 +4,13 @@
   "summary": "New project",
   "architectural_notes": [],
   "known_issues": [
-    "Zoom error persists when zooming to street level — not fixed in Version 35"
+    "Map fails when zooming in"
   ],
   "isFixRequest": true,
   "existing_features": [
     {
-      "id": "feature-fix-the-error-that-occurs-when-zooming-to-street-level-on-the-community-map-audit-and-correct-tile-url-computation-zoom-level-capping-and-web-mercator-math-in-custommapview-usemaptiles-and-usemaptransform-so-that-zooming-to-the-maximum-supported-zoom-level-19-works-without-errors-or-broken-tiles",
-      "title": "Fix the error that occurs when zooming to street level on the community map. Audit and correct tile URL computation, zoom level capping, and Web Mercator math in CustomMapView, useMapTiles, and useMapTransform so that zooming to the maximum supported zoom level (19) works without errors or broken tiles.",
+      "id": "feature-fix-the-custommapview-component-so-that-zooming-in-does-not-cause-the-map-to-fail-or-crash-ensure-that-tile-fetching-web-mercator-projection-math-marker-positioning-and-viewport-bounds-recalculation-all-remain-stable-and-correct-at-any-zoom-level-within-the-allowed-min-max-range-the-map-must-remain-interactive-and-render-correctly-after-zoom-in-zoom-out-and-reset-operations",
+      "title": "Fix the CustomMapView component so that zooming in does not cause the map to fail or crash. Ensure that tile fetching, Web Mercator projection math, marker positioning, and viewport bounds recalculation all remain stable and correct at any zoom level within the allowed min/max range. The map must remain interactive and render correctly after zoom in, zoom out, and reset operations.",
       "reqIds": [
         "REQ-1"
       ],
@@ -18,7 +18,7 @@
     }
   ],
   "new_feature_requests": [],
-  "projectName": "Fix street-level zoom error in CustomMapView",
+  "projectName": "Fix map zoom failure in CustomMapView",
   "clarification_mode": "instant",
   "clarification_rounds": 0
 }

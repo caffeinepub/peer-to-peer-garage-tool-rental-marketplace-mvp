@@ -1,33 +1,34 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix street-level zoom error in CustomMapView",
+  "title": "Fix map zoom failure in CustomMapView",
   "requirements": [
     {
       "id": "REQ-1",
-      "summary": "Fix the error that occurs when zooming to street level on the community map by auditing and correcting tile URL computation, zoom level capping, and Web Mercator math in CustomMapView, useMapTiles, and useMapTransform",
+      "summary": "Fix the CustomMapView component so that zooming in does not cause the map to fail or crash. Ensure that tile fetching, Web Mercator projection math, marker positioning, and viewport bounds recalculation all remain stable and correct at any zoom level within the allowed min/max range.",
       "acceptanceCriteria": [
-        "User can zoom from overview level all the way to street level (zoom 19) without any runtime error or crash.",
-        "Map tiles load correctly at all zoom levels up to 19.",
-        "No console errors related to tile URL construction or invalid zoom values.",
-        "Pan and zoom interactions remain smooth at maximum zoom level.",
-        "Zoom controls (in/out/out/reset) function correctly at all zoom levels including the maximum."
+        "Zooming in via scroll wheel or zoom controls does not cause a blank map, error state, or visual glitch.",
+        "Map tiles load correctly and are positioned accurately at all zoom levels.",
+        "Member markers remain correctly positioned on the map after zooming in or out.",
+        "The auto-fit bounds behavior still works correctly after a zoom interaction.",
+        "No JavaScript errors are thrown in the console during zoom operations.",
+        "Zoom in and zoom out can be performed multiple times without degradation."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useMapTiles.ts",
+          "path": "frontend/src/components/community/CustomMapView.tsx",
           "operation": "modify",
-          "description": "Audit and fix Web Mercator coordinate-to-tile calculations to ensure they correctly handle zoom level 19. Verify that tile coordinate computations (tileX, tileY) are clamped to valid ranges for each zoom level (0 to 2^zoom - 1). Ensure the tile URL construction uses integer tile coordinates and does not pass out-of-bounds values to the CartoDB tile server. Add validation to prevent NaN or Infinity values in tile calculations."
+          "description": "Fix zoom stability issues in the custom map component. Review and correct: (1) the useMapTransform hook's coordinate sanitization and bounds recalculation logic to handle all zoom levels correctly, (2) the tile calculation logic in useMapTiles to ensure valid tile coordinates at high zoom levels, (3) marker positioning calculations to remain accurate after zoom changes, (4) the auto-fit bounds calculation to work correctly after manual zoom interactions. Ensure that the transform state (pan/zoom) remains consistent and that no coordinate overflow, NaN, or projection errors occur during zoom operations. Verify that tile URLs are generated correctly and that the viewport dimensions are properly accounted for at all zoom levels."
         },
         {
           "path": "frontend/src/hooks/useMapTransform.ts",
           "operation": "modify",
-          "description": "Review and fix the zoom state management to ensure zoom level 19 is properly supported. Verify that coordinate sanitization correctly handles the valid Web Mercator latitude range (-85.0511 to 85.0511 degrees) and longitude range (-180 to 180 degrees) at all zoom levels including 19. Ensure that pan operations at maximum zoom do not produce invalid coordinates that break tile calculations. Add bounds checking to prevent zoom or pan operations from creating invalid map states."
+          "description": "Review and fix the map transform hook's handling of zoom changes. Ensure that: (1) coordinate sanitization does not produce invalid values at high zoom levels, (2) the transform state updates correctly when zoom changes, (3) bounds calculations remain stable across all allowed zoom levels (min to max), (4) drag handlers correctly account for the current zoom level when translating pixel movements to coordinate offsets. Add defensive checks for NaN, Infinity, or out-of-bounds coordinates."
         },
         {
-          "path": "frontend/src/components/community/CustomMapView.tsx",
+          "path": "frontend/src/hooks/useMapTiles.ts",
           "operation": "modify",
-          "description": "Audit the map rendering logic to ensure it correctly handles zoom level 19 without errors. Verify that the viewport-to-tile coordinate conversion logic passes valid parameters to useMapTiles at all zoom levels. Add error boundaries or defensive checks to catch and log any tile rendering errors before they crash the component. Ensure that wheel zoom events correctly update the zoom level without exceeding the maximum supported zoom (19) or producing invalid tile requests. Test that pan and zoom interactions remain smooth and error-free at street level."
+          "description": "Fix tile calculation logic to handle all zoom levels correctly. Ensure that: (1) tile coordinates are properly clamped to valid ranges for each zoom level (0 to 2^zoom - 1), (2) the number of tiles needed to cover the viewport is calculated correctly at high zoom levels, (3) the lat/lng to pixel conversion remains accurate and does not produce invalid tile indices, (4) tile URLs are generated with valid x, y, and z parameters. Add validation to prevent out-of-range tile requests."
         }
       ]
     }
